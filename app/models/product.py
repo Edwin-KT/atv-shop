@@ -1,4 +1,5 @@
 from app.extensions import db
+from app.money import format_price
 
 
 class Product(db.Model):
@@ -22,7 +23,7 @@ class Product(db.Model):
 
     @property
     def price_display(self) -> str:
-        return f"{self.price_cents / 100:,.2f} EUR"
+        return format_price(self.price_cents)
 
     def get_technical_summary(self) -> str:
         """Each subclass describes itself differently (polymorphism)."""

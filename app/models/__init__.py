@@ -1,5 +1,13 @@
 from app.models.audit_log import AuditLog
 from app.models.product import GearProduct, Product, VehicleProduct
+from app.models.secure_document import SecureDocument
 from app.models.user import User
 
-__all__ = ["AuditLog", "GearProduct", "Product", "User", "VehicleProduct"]
+__all__ = [
+    "AuditLog",
+    "GearProduct",
+    "Product",
+    "SecureDocument",
+    "User",
+    "VehicleProduct",
+]

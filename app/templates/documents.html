@@ -1,0 +1,67 @@
+{% extends "base.html" %} {% block title %}My documents - ATV & Enduro Shop{%
+endblock %} {% block content %}
+<h1 class="mb-4">My documents</h1>
+
+{% if errors %}
+<div class="alert alert-danger">
+  <ul class="mb-0">
+    {% for error in errors %}
+    <li>{{ error }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<form
+  method="post"
+  action="{{ url_for('documents.upload') }}"
+  enctype="multipart/form-data"
+  class="col-md-6 px-0 mb-4"
+>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <div class="mb-3">
+    <label class="form-label" for="document"
+      >Vehicle registration (PDF, max 5 MB)</label
+    >
+    <input
+      class="form-control"
+      id="document"
+      name="document"
+      type="file"
+      accept=".pdf,application/pdf"
+      required
+    />
+  </div>
+  <button class="btn btn-primary" type="submit">Upload</button>
+</form>
+
+{% if documents %}
+<table class="table align-middle">
+  <thead>
+    <tr>
+      <th>File</th>
+      <th>Size</th>
+      <th>Uploaded</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for document in documents %}
+    <tr>
+      <td>{{ document.original_filename }}</td>
+      <td>{{ (document.size_bytes / 1024)|round(1) }} KB</td>
+      <td>{{ document.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+      <td class="text-end">
+        <a
+          class="btn btn-sm btn-outline-secondary"
+          href="{{ url_for('documents.download', document_id=document.id) }}"
+          >Download</a
+        >
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="text-muted">You have not uploaded any documents yet.</p>
+{% endif %} {% endblock %}

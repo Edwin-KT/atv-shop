@@ -9,6 +9,24 @@ Shop{% endblock %} {% block content %}
 <p class="fs-4"><strong>{{ product.price_display }}</strong></p>
 {% if product.stock > 0 %}
 <span class="badge text-bg-success">In stock ({{ product.stock }})</span>
+
+<form
+  method="post"
+  action="{{ url_for('cart.add', product_id=product.id) }}"
+  class="d-flex gap-2 mt-3"
+  style="max-width: 240px"
+>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <input
+    class="form-control"
+    type="number"
+    name="quantity"
+    value="1"
+    min="1"
+    max="{{ [product.stock, 10]|min }}"
+  />
+  <button class="btn btn-primary" type="submit">Add to cart</button>
+</form>
 {% else %}
 <span class="badge text-bg-secondary">Out of stock</span>
 {% endif %} {% endblock %}

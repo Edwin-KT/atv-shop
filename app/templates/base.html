@@ -16,6 +16,12 @@
           >ATV & Enduro Shop</a
         >
         <div class="d-flex align-items-center gap-2">
+          <a
+            class="btn btn-outline-light btn-sm"
+            href="{{ url_for('cart.view_cart') }}"
+            >Cart
+            <span class="badge text-bg-light">{{ cart_item_count }}</span></a
+          >
           {% if current_user.is_authenticated %}
           <span class="text-light small">{{ current_user.email }}</span>
           <form

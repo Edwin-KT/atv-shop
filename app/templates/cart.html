@@ -1,0 +1,74 @@
+{% extends "base.html" %} {% block title %}Cart - ATV & Enduro Shop{% endblock
+%} {% block content %}
+<h1 class="mb-4">Your cart</h1>
+
+{% if not lines %}
+<p class="text-muted">Your cart is empty.</p>
+<a class="btn btn-primary" href="{{ url_for('main.index') }}"
+  >Browse the catalog</a
+>
+{% else %}
+<table class="table align-middle">
+  <thead>
+    <tr>
+      <th>Product</th>
+      <th>Price</th>
+      <th style="width: 200px">Quantity</th>
+      <th class="text-end">Total</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for line in lines %}
+    <tr>
+      <td>
+        <a href="{{ url_for('main.product_detail', slug=line.product.slug) }}"
+          >{{ line.product.name }}</a
+        >
+      </td>
+      <td>{{ line.product.price_display }}</td>
+      <td>
+        <form
+          method="post"
+          action="{{ url_for('cart.update', product_id=line.product.id) }}"
+          class="d-flex gap-2"
+        >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <input
+            class="form-control form-control-sm"
+            type="number"
+            name="quantity"
+            value="{{ line.quantity }}"
+            min="0"
+          />
+          <button class="btn btn-sm btn-outline-secondary" type="submit">
+            Update
+          </button>
+        </form>
+      </td>
+      <td class="text-end">{{ line.line_total_display }}</td>
+      <td class="text-end">
+        <form
+          method="post"
+          action="{{ url_for('cart.remove', product_id=line.product.id) }}"
+        >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <button class="btn btn-sm btn-outline-danger" type="submit">
+            Remove
+          </button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr>
+      <th colspan="3" class="text-end">Total</th>
+      <th class="text-end">{{ total_display }}</th>
+      <th></th>
+    </tr>
+  </tfoot>
+</table>
+
+<button class="btn btn-success" disabled>Checkout (coming soon)</button>
+{% endif %} {% endblock %}

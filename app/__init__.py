@@ -20,8 +20,10 @@ def create_app(test_config=None):
     login_manager.init_app(app)
 
     from app import models  # noqa: F401  (models must be imported before create_all)
+    from app.cli import register_commands
     from app.routes import auth, main
 
+    register_commands(app) 
     app.register_blueprint(main.bp)
     app.register_blueprint(auth.bp)
 

@@ -3,6 +3,7 @@ from sqlalchemy import text
 
 from app.config import Config
 from app.extensions import csrf, db, login_manager
+from app.logging_config import configure_logging
 
 
 def create_app(test_config=None):
@@ -11,6 +12,8 @@ def create_app(test_config=None):
 
     if test_config:
         app.config.update(test_config)
+
+    configure_logging(app)
 
     db.init_app(app)
     csrf.init_app(app)

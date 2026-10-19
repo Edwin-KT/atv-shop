@@ -1,8 +1,9 @@
 from flask import Blueprint, flash, redirect, render_template, request, url_for
-from flask_login import login_user, logout_user
+from flask_login import current_user, login_user, logout_user
 
 from app.extensions import db
 from app.models import User
+from app.services.audit import record_event
 from app.validators import is_valid_email, is_valid_password, is_valid_phone
 
 bp = Blueprint("auth", __name__)
@@ -37,6 +38,7 @@ def register():
     db.session.add(user)
     db.session.commit()
 
+    record_event("user_registered", user_id=user.id)
     flash("Account created. You can log in now.", "success")
     return redirect(url_for("auth.login"))
 
@@ -51,19 +53,26 @@ def login():
 
     user = User.query.filter_by(email=email).first()
     if user is None or not user.check_password(password):
-        # Same message for "unknown email" and "wrong password",
-        # so an attacker cannot discover which emails are registered.
+        # !r escapes newlines: stops "log injection" (a user typing fake log lines)
+        record_event(
+            "login_failed",
+            user_id=user.id if user else None,
+            details=f"email={email[:100]!r}",
+        )
         return render_template(
             "login.html", error="Invalid email or password.", email=email
         ), 401
 
     login_user(user)
+    record_event("login_success", user_id=user.id)
     flash("Logged in.", "success")
     return redirect(url_for("main.index"))
 
 
 @bp.post("/logout")
 def logout():
+    if current_user.is_authenticated:
+        record_event("logout", user_id=current_user.id)  # before logout_user()
     logout_user()
     flash("Logged out.", "info")
     return redirect(url_for("main.index"))

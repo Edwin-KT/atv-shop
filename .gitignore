@@ -5,3 +5,4 @@ __pycache__/
 instance/
 private_uploads/
 .pytest_cache/
+logs/

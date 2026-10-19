@@ -14,8 +14,14 @@ def create_app(test_config=None):
 
     db.init_app(app)
 
+    from app import models  # noqa: F401  (models must be imported before create_all)
+    from app.routes import auth, main
+
+    app.register_blueprint(main.bp)
+    app.register_blueprint(auth.bp)
+
     with app.app_context():
-        db.create_all()  # creates tables for every model that exists
+        db.create_all()
 
     @app.get("/health")
     def health():

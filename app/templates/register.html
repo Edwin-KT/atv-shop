@@ -46,4 +46,5 @@ endblock %} {% block content %}
   </div>
   <button class="btn btn-primary" type="submit">Register</button>
 </form>
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 {% endblock %}

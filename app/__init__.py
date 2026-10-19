@@ -2,7 +2,7 @@ from flask import Flask
 from sqlalchemy import text
 
 from app.config import Config
-from app.extensions import db
+from app.extensions import csrf, db, login_manager
 
 
 def create_app(test_config=None):
@@ -13,6 +13,8 @@ def create_app(test_config=None):
         app.config.update(test_config)
 
     db.init_app(app)
+    csrf.init_app(app)
+    login_manager.init_app(app)
 
     from app import models  # noqa: F401  (models must be imported before create_all)
     from app.routes import auth, main

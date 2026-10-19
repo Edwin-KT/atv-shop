@@ -1,5 +1,7 @@
 Flask
 Flask-SQLAlchemy
+Flask-WTF
+Flask-Login
 psycopg[binary]
 python-dotenv
 pytest

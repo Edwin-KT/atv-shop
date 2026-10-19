@@ -3,3 +3,4 @@ Flask-SQLAlchemy
 psycopg[binary]
 python-dotenv
 pytest
+email-validator

@@ -13,6 +13,7 @@ endblock %} {% block content %}
 {% endif %}
 
 <form method="post" class="col-md-6 px-0">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
   <div class="mb-3">
     <label class="form-label" for="email">Email</label>
     <input
@@ -46,5 +47,4 @@ endblock %} {% block content %}
   </div>
   <button class="btn btn-primary" type="submit">Register</button>
 </form>
-<input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 {% endblock %}

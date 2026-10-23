@@ -1,4 +1,6 @@
-from flask import Flask, render_template
+from pathlib import Path
+
+from flask import Flask, render_template, url_for
 from sqlalchemy import text
 
 from app.config import Config
@@ -34,6 +36,26 @@ def create_app(test_config=None):
     def inject_cart_count():
         """Makes `cart_item_count` available in every template (navbar badge)."""
         return {"cart_item_count": cart_item_count()}
+
+    @app.template_global()
+    def product_image_url(product):
+        """URL of the product photo, or a placeholder if the file does not exist."""
+        if product.image_filename:
+            photo = Path(app.static_folder) / "img" / "products" / product.image_filename
+            if photo.is_file():
+                return url_for("static", filename=f"img/products/{product.image_filename}")
+        return url_for("static", filename="img/placeholder.svg")
+
+    @app.errorhandler(403)
+    def forbidden(error):
+        return (
+            render_template(
+                "error.html",
+                title="Access denied",
+                message="You do not have permission to open this page.",
+            ),
+            403,
+        )
 
     @app.errorhandler(413)
     def file_too_large(error):

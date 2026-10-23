@@ -1,5 +1,6 @@
 from app.seed import seed_products
-
+from app.extensions import db
+from app.models import Product
 
 def seed(app):
     with app.app_context():
@@ -40,3 +41,37 @@ def test_unknown_slug_returns_404(client):
 def test_seed_is_idempotent(app):
     assert seed(app) == 6
     assert seed(app) == 0
+
+
+def test_images_have_alt_text(app, client):
+    seed(app)
+
+    html = client.get("/").get_data(as_text=True)
+
+    assert 'alt="KTM 250 EXC-F"' in html
+    assert 'alt="Enduro Helmet Pro"' in html
+
+
+def test_placeholder_is_used_when_photo_file_is_missing(app, client):
+    seed(app)
+    with app.app_context():
+        product = Product.query.filter_by(slug="ktm-250-exc-f").one()
+        product.image_filename = "does-not-exist.jpg"
+        db.session.commit()
+
+    html = client.get("/product/ktm-250-exc-f").get_data(as_text=True)
+
+    assert "placeholder.svg" in html
+    assert "does-not-exist.jpg" not in html
+
+
+def test_real_photo_is_used_when_file_exists(app, client, tmp_path):
+    photos = tmp_path / "img" / "products"
+    photos.mkdir(parents=True)
+    (photos / "ktm-250-exc-f.jpg").write_bytes(b"fake-image")
+    app.static_folder = str(tmp_path)  # point the app at a temporary static folder
+    seed(app)
+
+    html = client.get("/product/ktm-250-exc-f").get_data(as_text=True)
+
+    assert "img/products/ktm-250-exc-f.jpg" in html

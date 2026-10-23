@@ -22,6 +22,7 @@ class Product(db.Model):
     description = db.Column(db.Text, nullable=False, default="")
     price_cents = db.Column(db.Integer, nullable=False)
     stock = db.Column(db.Integer, nullable=False, default=0)
+    image_filename = db.Column(db.String(255))  # file in static/img/products/ (optional)
 
     __mapper_args__ = {
         "polymorphic_on": product_type,

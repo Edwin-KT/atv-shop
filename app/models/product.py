@@ -3,13 +3,20 @@ from app.money import format_price
 
 
 class Product(db.Model):
-    """Base class. All products share one table (single table inheritance);
-    the `product_type` column tells SQLAlchemy which subclass a row belongs to."""
+    """Base class: columns shared by every product.
+
+    Joined table inheritance: each subclass stores its own columns in a
+    separate table whose primary key is also a foreign key to products.id.
+    This keeps the schema in 3NF (no columns that are NULL for some types)."""
 
     __tablename__ = "products"
+    __table_args__ = (
+        db.CheckConstraint("price_cents >= 0", name="ck_products_price_non_negative"),
+        db.CheckConstraint("stock >= 0", name="ck_products_stock_non_negative"),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
-    product_type = db.Column(db.String(20), nullable=False)
+    product_type = db.Column(db.String(20), nullable=False)  # discriminator
     name = db.Column(db.String(150), nullable=False)
     slug = db.Column(db.String(160), unique=True, nullable=False)
     description = db.Column(db.Text, nullable=False, default="")
@@ -19,6 +26,8 @@ class Product(db.Model):
     __mapper_args__ = {
         "polymorphic_on": product_type,
         "polymorphic_identity": "product",
+        # Load subclass columns in the same query (avoids one extra query per row).
+        "with_polymorphic": "*",
     }
 
     @property
@@ -33,12 +42,20 @@ class Product(db.Model):
 class VehicleProduct(Product):
     """ATVs and enduro motorcycles."""
 
-    # No __tablename__: the columns below are added to the `products` table.
-    # They must be nullable, because gear rows leave them empty.
-    engine_cc = db.Column(db.Integer)
-    horsepower = db.Column(db.Integer)
-    is_street_legal = db.Column(db.Boolean)
-    vehicle_type = db.Column(db.String(20))  # "atv" or "enduro"
+    __tablename__ = "vehicle_details"
+    __table_args__ = (
+        db.CheckConstraint("engine_cc > 0", name="ck_vehicle_engine_positive"),
+        db.CheckConstraint("horsepower > 0", name="ck_vehicle_horsepower_positive"),
+        db.CheckConstraint(
+            "vehicle_type IN ('atv', 'enduro')", name="ck_vehicle_type_allowed"
+        ),
+    )
+
+    id = db.Column(db.Integer, db.ForeignKey("products.id"), primary_key=True)
+    engine_cc = db.Column(db.Integer, nullable=False)
+    horsepower = db.Column(db.Integer, nullable=False)
+    is_street_legal = db.Column(db.Boolean, nullable=False)
+    vehicle_type = db.Column(db.String(20), nullable=False)  # "atv" or "enduro"
 
     __mapper_args__ = {"polymorphic_identity": "vehicle"}
 
@@ -53,7 +70,10 @@ class VehicleProduct(Product):
 class GearProduct(Product):
     """Helmets, boots, gloves and other riding gear."""
 
-    gear_size = db.Column(db.String(10))
+    __tablename__ = "gear_details"
+
+    id = db.Column(db.Integer, db.ForeignKey("products.id"), primary_key=True)
+    gear_size = db.Column(db.String(10), nullable=False)
 
     __mapper_args__ = {"polymorphic_identity": "gear"}
 

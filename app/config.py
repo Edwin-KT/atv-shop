@@ -20,3 +20,5 @@ class Config:
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # Flask rejects bigger requests with 413
     # Outside static/, so the web server never serves it directly.
     UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", str(BASE_DIR / "private_uploads"))
+
+    STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")

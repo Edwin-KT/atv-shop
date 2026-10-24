@@ -22,6 +22,12 @@ def create_app(test_config=None):
     csrf.init_app(app)
     login_manager.init_app(app)
 
+    from app.services.stripe_gateway import StripeGateway
+
+    app.extensions["payment_gateway"] = app.config.get("PAYMENT_GATEWAY") or StripeGateway(
+        app.config.get("STRIPE_SECRET_KEY")
+    )
+
     from app import models  # noqa: F401  (models must be imported before create_all)
     from app.cli import register_commands
     from app.routes import auth, cart, documents, main

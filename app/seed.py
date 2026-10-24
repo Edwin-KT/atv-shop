@@ -12,7 +12,7 @@ def build_sample_products() -> list[Product]:
             name="CFMOTO CFORCE 1000 Overland",
             slug="cfmoto-cforce-1000-overland",
             description="Powerful two-seat ATV for trails and heavy-duty work.",
-            price_cents=1_299_900, stock=3, image_filename="cfmoto-cforce-1000-overland.jpg",
+            price_cents=1_299_900, stock=3, image_filename="cfmoto-cforce-1000-overland.png",
             vehicle_type="atv", engine_cc=963, horsepower=88, is_street_legal=True,
         ),
         VehicleProduct(

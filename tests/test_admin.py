@@ -254,3 +254,12 @@ def test_admin_actions_are_audited(app):
         events = [e.event_type for e in AuditLog.query.order_by(AuditLog.id)]
 
     assert events[-3:] == ["product_created", "product_updated", "product_deleted"]
+
+def test_admin_can_read_audit_log(app):
+    client = admin_client(app)
+    client.post("/admin/products/new?type=vehicle", data=VEHICLE_FORM)
+
+    html = client.get("/admin/logs").get_data(as_text=True)
+
+    assert "product_created" in html
+    assert "login_success" in html

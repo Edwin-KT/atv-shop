@@ -2,7 +2,7 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, u
 from flask_login import current_user
 
 from app.extensions import db
-from app.models import Product
+from app.models import AuditLog, Product
 from app.security import check_admin_access
 from app.services.audit import record_event
 from app.services.products import (
@@ -106,3 +106,9 @@ def delete_product(product_id):
     record_event("product_deleted", user_id=current_user.id, details=f"product_id={deleted_id}")
     flash("Product deleted.", "info")
     return redirect(url_for("admin.dashboard"))
+
+
+@bp.get("/logs")
+def audit_log():
+    entries = AuditLog.query.order_by(AuditLog.id.desc()).limit(100).all()
+    return render_template("admin/audit_log.html", entries=entries)

@@ -8,6 +8,7 @@ from app.extensions import csrf, db, login_manager
 from app.logging_config import configure_logging
 from app.routes import admin, auth, cart, documents, main
 from app.routes import admin, auth, cart, checkout, documents, main
+from app.access_log import configure_access_log
 
 
 def create_app(test_config=None):
@@ -18,6 +19,7 @@ def create_app(test_config=None):
         app.config.update(test_config)
 
     configure_logging(app)
+    configure_access_log(app)
 
     db.init_app(app)
     csrf.init_app(app)

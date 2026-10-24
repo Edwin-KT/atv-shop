@@ -1,0 +1,86 @@
+{% if featured %}
+<section
+  id="heroCarousel"
+  class="carousel slide hero mb-5"
+  data-bs-ride="carousel"
+  data-bs-interval="5000"
+  aria-label="Featured vehicles"
+>
+  <div class="carousel-indicators">
+    {% for product in featured %}
+    <button
+      type="button"
+      data-bs-target="#heroCarousel"
+      data-bs-slide-to="{{ loop.index0 }}"
+      {%
+      if
+      loop.first
+      %}class="active"
+      aria-current="true"
+      {%
+      endif
+      %}
+      aria-label="Slide {{ loop.index }}"
+    ></button>
+    {% endfor %}
+  </div>
+
+  <div class="carousel-inner">
+    {% for product in featured %}
+    <div class="carousel-item {{ 'active' if loop.first }}">
+      <div class="row align-items-center g-4 hero-slide">
+        <div class="col-md-6 order-2 order-md-1">
+          <p class="hero-kicker">
+            Featured &middot; {{ product.vehicle_type|upper }}
+          </p>
+          <h2 class="hero-title">{{ product.name }}</h2>
+          <p class="text-muted">{{ product.get_technical_summary() }}</p>
+          <p class="hero-price">{{ product.price_display }}</p>
+          <a
+            class="btn btn-primary"
+            href="{{ url_for('main.product_detail', slug=product.slug) }}"
+            >View vehicle</a
+          >
+        </div>
+        <div class="col-md-6 order-1 order-md-2">
+          <div class="hero-photo ratio ratio-1x1">
+            <img
+              src="{{ product_image_url(product) }}"
+              alt="{{ product.name }}"
+              class="object-fit-cover"
+              {%
+              if
+              not
+              loop.first
+              %}loading="lazy"
+              {%
+              endif
+              %}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <button
+    class="carousel-control-prev"
+    type="button"
+    data-bs-target="#heroCarousel"
+    data-bs-slide="prev"
+  >
+    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+    <span class="visually-hidden">Previous</span>
+  </button>
+  <button
+    class="carousel-control-next"
+    type="button"
+    data-bs-target="#heroCarousel"
+    data-bs-slide="next"
+  >
+    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+    <span class="visually-hidden">Next</span>
+  </button>
+</section>
+{% endif %}

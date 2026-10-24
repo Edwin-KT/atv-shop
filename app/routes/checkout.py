@@ -34,18 +34,15 @@ def _own_order_or_404(order_id: int) -> Order:
 
 
 def _review_context(lines):
-    needs_document = any(line.product.product_type == "vehicle" for line in lines)
-    documents = []
-    if needs_document:
-        documents = (
-            SecureDocument.query.filter_by(user_id=current_user.id)
-            .order_by(SecureDocument.created_at.desc())
-            .all()
-        )
+    documents = (
+        SecureDocument.query.filter_by(user_id=current_user.id)
+        .order_by(SecureDocument.created_at.desc())
+        .all()
+    )
     return {
         "lines": lines,
         "total_display": format_price(cart_total_cents(lines)),
-        "needs_document": needs_document,
+        "has_vehicle": any(line.product.product_type == "vehicle" for line in lines),
         "documents": documents,
     }
 
@@ -63,11 +60,11 @@ def start():
         return render_template("checkout/review.html", errors=[], **context)
 
     document_id = None
-    if context["needs_document"]:
-        chosen = request.form.get("document_id", type=int)
-        document = db.session.get(SecureDocument, chosen) if chosen else None
+    chosen = request.form.get("document_id", type=int)
+    if chosen:  # optional: only validated when the customer picked one
+        document = db.session.get(SecureDocument, chosen)
         if document is None or document.user_id != current_user.id:
-            errors = ["Choose one of your uploaded vehicle registration documents."]
+            errors = ["The selected document is not valid."]
             return render_template("checkout/review.html", errors=errors, **context), 400
         document_id = document.id
 

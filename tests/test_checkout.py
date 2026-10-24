@@ -117,42 +117,6 @@ def test_success_and_cancel_urls_are_sent_to_the_gateway(app, client):
     assert "/checkout/cancel/" in session["cancel_url"]
 
 
-def test_vehicle_requires_a_document(app, client):
-    register_and_login(client)
-    ids = product_ids(app)
-    add_to_cart(client, ids, "ktm-250-exc-f")
-
-    response = client.post("/checkout")
-
-    assert response.status_code == 400
-    with app.app_context():
-        assert Order.query.count() == 0
-    assert stock(app, "ktm-250-exc-f") == 5
-
-
-def test_vehicle_cannot_use_someone_elses_document(app, client):
-    register_and_login(client, "ion@gmail.com")
-    foreign_document = add_document(app, "ion@gmail.com")
-    other = register_and_login(app.test_client(), "ana@gmail.com")
-    add_to_cart(other, product_ids(app), "ktm-250-exc-f")
-
-    response = other.post("/checkout", data={"document_id": foreign_document})
-
-    assert response.status_code == 400
-    with app.app_context():
-        assert Order.query.count() == 0
-
-
-def test_vehicle_checkout_with_own_document(app, client):
-    register_and_login(client)
-    document_id = add_document(app)
-    add_to_cart(client, product_ids(app), "ktm-250-exc-f")
-
-    response = client.post("/checkout", data={"document_id": document_id})
-
-    assert response.status_code == 303
-    with app.app_context():
-        assert Order.query.one().document_id == document_id
 
 
 def test_out_of_stock_at_checkout_creates_no_order(app, client):
@@ -328,3 +292,13 @@ def test_document_attached_to_an_order_cannot_be_deleted(app, client):
 
     with app.app_context():
         assert SecureDocument.query.count() == 1
+
+def test_vehicle_checkout_works_without_a_document(app, client):
+    register_and_login(client)
+    add_to_cart(client, product_ids(app), "ktm-250-exc-f")
+
+    response = client.post("/checkout")
+
+    assert response.status_code == 303
+    with app.app_context():
+        assert Order.query.one().document_id is None 

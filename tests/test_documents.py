@@ -141,3 +141,62 @@ def test_upload_events_are_audited(app, client):
 
     assert "document_uploaded" in events
     assert "document_upload_rejected" in events
+
+
+def test_owner_can_delete_document(app, client):
+    login(client)
+    post_file(client, make_pdf(), "talon.pdf")
+
+    response = client.post("/documents/1/delete")
+
+    assert response.status_code == 302
+    assert stored_files(app) == []  # the file is gone from disk
+    with app.app_context():
+        assert SecureDocument.query.count() == 0
+
+
+def test_deleted_document_cannot_be_downloaded(client):
+    login(client)
+    post_file(client, make_pdf(), "talon.pdf")
+    client.post("/documents/1/delete")
+
+    assert client.get("/documents/1/download").status_code == 404
+
+
+def test_other_user_cannot_delete_document(app):
+    owner = login(app.test_client(), "ana@gmail.com")
+    post_file(owner, make_pdf(), "talon.pdf")
+    intruder = login(app.test_client(), "ion@gmail.com")
+
+    assert intruder.post("/documents/1/delete").status_code == 404
+    assert len(stored_files(app)) == 1
+    with app.app_context():
+        assert SecureDocument.query.count() == 1
+
+
+def test_anonymous_cannot_delete_document(app, client):
+    owner = login(app.test_client())
+    post_file(owner, make_pdf(), "talon.pdf")
+
+    response = client.post("/documents/1/delete")
+
+    assert response.status_code == 302
+    assert len(stored_files(app)) == 1
+
+
+def test_delete_requires_post(client):
+    login(client)
+    post_file(client, make_pdf(), "talon.pdf")
+
+    assert client.get("/documents/1/delete").status_code == 405
+
+
+def test_document_deletion_is_audited(app, client):
+    login(client)
+    post_file(client, make_pdf(), "talon.pdf")
+    client.post("/documents/1/delete")
+
+    with app.app_context():
+        events = [e.event_type for e in AuditLog.query.order_by(AuditLog.id)]
+
+    assert "document_deleted" in events

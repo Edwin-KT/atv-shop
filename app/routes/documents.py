@@ -16,6 +16,8 @@ from app.models import SecureDocument
 from app.services.audit import record_event
 from app.services.file_security import UploadRejected, store_uploaded_pdf
 
+from pathlib import Path
+
 bp = Blueprint("documents", __name__)
 
 
@@ -82,3 +84,21 @@ def download(document_id):
     )
     response.headers["X-Content-Type-Options"] = "nosniff"
     return response
+
+
+@bp.post("/documents/<int:document_id>/delete")
+@login_required
+def delete(document_id):
+    document = db.session.get(SecureDocument, document_id)
+    if document is None or document.user_id != current_user.id:
+        abort(404)
+
+    deleted_id = document.id
+    file_path = Path(current_app.config["UPLOAD_FOLDER"]) / document.stored_filename
+    db.session.delete(document)
+    db.session.commit()
+    file_path.unlink(missing_ok=True)
+
+    record_event("document_deleted", user_id=current_user.id, details=f"document_id={deleted_id}")
+    flash("Document deleted.", "info")
+    return redirect(url_for("documents.list_documents"))

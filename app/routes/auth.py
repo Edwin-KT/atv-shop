@@ -4,9 +4,12 @@ from flask_login import current_user, login_user, logout_user
 from app.extensions import db, limiter
 from app.models import User
 from app.services.audit import record_event
+from app.services.captcha import captcha_passed
 from app.validators import is_valid_email, is_valid_password, is_valid_phone
 
 bp = Blueprint("auth", __name__)
+
+CAPTCHA_ERROR = "Please confirm that you are not a robot."
 
 
 @bp.route("/register", methods=["GET", "POST"])
@@ -18,6 +21,11 @@ def register():
     email = request.form.get("email", "").strip().lower()
     phone = request.form.get("phone", "").strip()
     password = request.form.get("password", "")
+
+    if not captcha_passed():
+        return render_template(
+            "register.html", errors=[CAPTCHA_ERROR], email=email, phone=phone
+        ), 400
 
     errors = []
     if not is_valid_email(email):
@@ -52,6 +60,10 @@ def login():
 
     email = request.form.get("email", "").strip().lower()
     password = request.form.get("password", "")
+
+    # Checked BEFORE the password: a bot without a token cannot test passwords.
+    if not captcha_passed():
+        return render_template("login.html", error=CAPTCHA_ERROR, email=email), 400
 
     user = User.query.filter_by(email=email).first()
     if user is None or not user.check_password(password):

@@ -9,3 +9,4 @@ email-validator
 pypdf
 stripe
 Flask-Limiter
+requests

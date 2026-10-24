@@ -24,3 +24,11 @@ class Config:
     UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", str(BASE_DIR / "private_uploads"))
 
     STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")
+    
+    CAPTCHA_ENABLED = os.environ.get("CAPTCHA_ENABLED", "true").lower() == "true"
+    RECAPTCHA_SITE_KEY = os.environ.get(
+        "RECAPTCHA_SITE_KEY", "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+    )
+    RECAPTCHA_SECRET_KEY = os.environ.get(
+        "RECAPTCHA_SECRET_KEY", "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"
+    )

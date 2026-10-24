@@ -32,6 +32,12 @@ def create_app(test_config=None):
         app.config.get("STRIPE_SECRET_KEY")
     )
 
+    from app.services.captcha import RecaptchaVerifier
+
+    app.extensions["captcha_verifier"] = app.config.get("CAPTCHA_VERIFIER") or RecaptchaVerifier(
+        app.config.get("RECAPTCHA_SECRET_KEY")
+    )
+
     from app import models  # noqa: F401  (models must be imported before create_all)
     from app.cli import register_commands
     from app.routes import admin, auth, cart, checkout, documents, main
@@ -49,6 +55,13 @@ def create_app(test_config=None):
     def inject_cart_count():
         """Makes `cart_item_count` available in every template (navbar badge)."""
         return {"cart_item_count": cart_item_count()}
+
+    @app.context_processor
+    def inject_captcha():
+        return {
+            "captcha_enabled": app.config["CAPTCHA_ENABLED"],
+            "captcha_site_key": app.config["RECAPTCHA_SITE_KEY"],
+        }
 
     @app.template_global()
     def product_image_url(product):

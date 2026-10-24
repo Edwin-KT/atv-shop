@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit product' if product else 'New product' }} - ATV & Enduro Shop{% endblock %}
+{% block content %}
+  <h1 class="mb-4">{{ 'Edit' if product else 'New' }} {{ product_type }} product</h1>
+
+  {% if errors %}
+    <div class="alert alert-danger">
+      <ul class="mb-0">
+        {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <form method="post" action="{{ action_url }}" class="col-lg-8 px-0">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="mb-3">
+      <label class="form-label" for="name">Name</label>
+      <input class="form-control" id="name" name="name" value="{{ values.get('name', '') }}" required maxlength="150">
+    </div>
+    <div class="mb-3">
+      <label class="form-label" for="description">Description</label>
+      <textarea class="form-control" id="description" name="description" rows="3" maxlength="2000">{{ values.get('description', '') }}</textarea>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label" for="price">Price (EUR)</label>
+        <input class="form-control" id="price" name="price" inputmode="decimal" value="{{ values.get('price', '') }}" required>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label" for="stock">Stock</label>
+        <input class="form-control" id="stock" name="stock" type="number" min="0" value="{{ values.get('stock', '') }}" required>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="image_filename">Image file name</label>
+      <input class="form-control" id="image_filename" name="image_filename" value="{{ values.get('image_filename', '') }}" placeholder="ktm-250-exc-f.jpg">
+      <div class="form-text">File placed in app/static/img/products/ (lowercase; .jpg, .png or .webp). Leave empty for the placeholder.</div>
+    </div>
+
+    {% if product_type == 'vehicle' %}
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label class="form-label" for="vehicle_type">Vehicle type</label>
+          <select class="form-select" id="vehicle_type" name="vehicle_type" required>
+            {% for option in ['atv', 'enduro'] %}
+              <option value="{{ option }}" {{ 'selected' if values.get('vehicle_type') == option }}>{{ option|upper }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label" for="engine_cc">Engine (cc)</label>
+          <input class="form-control" id="engine_cc" name="engine_cc" type="number" min="1" value="{{ values.get('engine_cc', '') }}" required>
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label" for="horsepower">Horsepower</label>
+          <input class="form-control" id="horsepower" name="horsepower" type="number" min="1" value="{{ values.get('horsepower', '') }}" required>
+        </div>
+      </div>
+      <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" id="is_street_legal" name="is_street_legal" {{ 'checked' if values.get('is_street_legal') }}>
+        <label class="form-check-label" for="is_street_legal">Street legal</label>
+      </div>
+    {% else %}
+      <div class="mb-3">
+        <label class="form-label" for="gear_size">Size</label>
+        <input class="form-control" id="gear_size" name="gear_size" maxlength="10" value="{{ values.get('gear_size', '') }}" required>
+      </div>
+    {% endif %}
+
+    <button class="btn btn-primary" type="submit">Save</button>
+    <a class="btn btn-link" href="{{ url_for('admin.dashboard') }}">Cancel</a>
+  </form>
+{% endblock %}

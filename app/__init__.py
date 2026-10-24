@@ -6,6 +6,7 @@ from sqlalchemy import text
 from app.config import Config
 from app.extensions import csrf, db, login_manager
 from app.logging_config import configure_logging
+from app.routes import admin, auth, cart, documents, main
 
 
 def create_app(test_config=None):
@@ -31,6 +32,7 @@ def create_app(test_config=None):
     app.register_blueprint(auth.bp)
     app.register_blueprint(cart.bp)
     app.register_blueprint(documents.bp)
+    app.register_blueprint(admin.bp)
 
     @app.context_processor
     def inject_cart_count():

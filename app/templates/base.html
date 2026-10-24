@@ -28,6 +28,13 @@
             href="{{ url_for('documents.list_documents') }}"
             >Documents</a
           >
+          {% if current_user.is_admin %}
+          <a
+            class="btn btn-warning btn-sm"
+            href="{{ url_for('admin.dashboard') }}"
+            >Admin</a
+          >
+          {% endif %}
           <span class="text-light small">{{ current_user.email }}</span>
           <form
             method="post"
@@ -60,5 +67,9 @@
       <div class="alert alert-{{ category }}">{{ message }}</div>
       {% endfor %} {% block content %}{% endblock %}
     </main>
+    <script
+      src="{{ url_for('static', filename='js/confirm.js') }}"
+      defer
+    ></script>
   </body>
 </html>

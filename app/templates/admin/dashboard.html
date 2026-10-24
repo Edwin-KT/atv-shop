@@ -1,0 +1,81 @@
+{% extends "base.html" %} {% block title %}Admin - ATV & Enduro Shop{% endblock
+%} {% block content %}
+<div
+  class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4"
+>
+  <h1 class="mb-0">Products</h1>
+  <div class="d-flex gap-2">
+    <a
+      class="btn btn-primary"
+      href="{{ url_for('admin.new_product', type='vehicle') }}"
+      >Add vehicle</a
+    >
+    <a
+      class="btn btn-primary"
+      href="{{ url_for('admin.new_product', type='gear') }}"
+      >Add gear</a
+    >
+    <a class="btn btn-outline-secondary" href="{{ url_for('admin.audit_log') }}"
+      >Audit log</a
+    >
+  </div>
+</div>
+
+{% if products %}
+<div class="table-responsive">
+  <table class="table align-middle">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Price</th>
+        <th>Stock</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for product in products %}
+      <tr>
+        <td>
+          <a href="{{ url_for('main.product_detail', slug=product.slug) }}"
+            >{{ product.name }}</a
+          >
+        </td>
+        <td>
+          <span class="badge text-bg-secondary"
+            >{{ product.product_type }}</span
+          >
+        </td>
+        <td>{{ product.price_display }}</td>
+        <td>{{ product.stock }}</td>
+        <td class="text-end">
+          <div class="d-flex justify-content-end gap-2">
+            <a
+              class="btn btn-sm btn-outline-secondary"
+              href="{{ url_for('admin.edit_product', product_id=product.id) }}"
+              >Edit</a
+            >
+            <form
+              method="post"
+              action="{{ url_for('admin.delete_product', product_id=product.id) }}"
+              data-confirm="Delete {{ product.name }}?"
+            >
+              <input
+                type="hidden"
+                name="csrf_token"
+                value="{{ csrf_token() }}"
+              />
+              <button class="btn btn-sm btn-outline-danger" type="submit">
+                Delete
+              </button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="text-muted">No products yet.</p>
+{% endif %} {% endblock %}

@@ -14,6 +14,8 @@ class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-change-me")
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
 
+    RATELIMIT_ENABLED = True
+
     SESSION_COOKIE_HTTPONLY = True   # JavaScript cannot read the session cookie
     SESSION_COOKIE_SAMESITE = "Lax"  # cookie is not sent on cross-site POSTs
 

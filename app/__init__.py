@@ -4,7 +4,7 @@ from flask import Flask, render_template, url_for
 from sqlalchemy import text
 
 from app.config import Config
-from app.extensions import csrf, db, login_manager
+from app.extensions import csrf, db, limiter, login_manager
 from app.logging_config import configure_logging
 from app.routes import admin, auth, cart, documents, main
 from app.routes import admin, auth, cart, checkout, documents, main
@@ -24,6 +24,7 @@ def create_app(test_config=None):
     db.init_app(app)
     csrf.init_app(app)
     login_manager.init_app(app)
+    limiter.init_app(app)
 
     from app.services.stripe_gateway import StripeGateway
 
@@ -80,6 +81,17 @@ def create_app(test_config=None):
             ),
             413,
         )
+    @app.errorhandler(429)
+    def too_many_requests(error):
+        from app.services.audit import record_event
+
+        record_event("rate_limited", details=str(error.description)[:200])
+        response = render_template(
+            "error.html",
+            title="Too many requests",
+            message="You are sending requests too fast. Please wait a minute and try again.",
+        )
+        return response, 429, {"Retry-After": "60"}
 
     with app.app_context():
         db.create_all()

@@ -8,3 +8,4 @@ pytest
 email-validator
 pypdf
 stripe
+Flask-Limiter

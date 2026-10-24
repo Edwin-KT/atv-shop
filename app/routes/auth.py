@@ -1,7 +1,7 @@
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_user, logout_user
 
-from app.extensions import db
+from app.extensions import db, limiter
 from app.models import User
 from app.services.audit import record_event
 from app.validators import is_valid_email, is_valid_password, is_valid_phone
@@ -10,6 +10,7 @@ bp = Blueprint("auth", __name__)
 
 
 @bp.route("/register", methods=["GET", "POST"])
+@limiter.limit("5 per minute", methods=["POST"])
 def register():
     if request.method == "GET":
         return render_template("register.html", errors=[], email="", phone="")
@@ -44,6 +45,7 @@ def register():
 
 
 @bp.route("/login", methods=["GET", "POST"])
+@limiter.limit("10 per minute", methods=["POST"])
 def login():
     if request.method == "GET":
         return render_template("login.html", error=None, email="")

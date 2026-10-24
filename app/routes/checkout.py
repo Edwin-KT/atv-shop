@@ -11,7 +11,7 @@ from flask import (
 from flask_login import current_user, login_required
 
 from app.exceptions import OutOfStockError, PaymentError
-from app.extensions import db
+from app.extensions import db, limiter
 from app.models import Order, SecureDocument
 from app.models.order import STATUS_PAID
 from app.money import format_price
@@ -49,6 +49,7 @@ def _review_context(lines):
 
 @bp.route("/checkout", methods=["GET", "POST"])
 @login_required
+@limiter.limit("10 per minute", methods=["POST"])
 def start():
     lines = get_cart_lines()
     if not lines:

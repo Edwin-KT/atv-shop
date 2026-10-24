@@ -1,0 +1,118 @@
+/* Components: cards, buttons, forms, tables, alerts. */
+
+/* ---------- cards ---------- */
+
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.product-card {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 0.75rem 1.5rem rgba(31, 36, 33, 0.18);
+}
+
+.product-card .card-title a {
+  color: var(--color-ink);
+}
+
+.card-footer {
+  background-color: transparent;
+  border-top: 1px solid var(--color-line);
+}
+
+/* ---------- buttons ---------- */
+
+.btn {
+  border-radius: var(--radius);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  --bs-btn-bg: var(--color-accent);
+  --bs-btn-border-color: var(--color-accent);
+  --bs-btn-hover-bg: var(--color-accent-dark);
+  --bs-btn-hover-border-color: var(--color-accent-dark);
+  --bs-btn-active-bg: var(--color-accent-dark);
+  --bs-btn-active-border-color: var(--color-accent-dark);
+  --bs-btn-disabled-bg: var(--color-accent);
+  --bs-btn-disabled-border-color: var(--color-accent);
+  --bs-btn-focus-shadow-rgb: 232, 89, 12;
+}
+
+/* ---------- forms ---------- */
+
+.form-control,
+.form-select {
+  border-color: var(--color-line);
+  border-radius: var(--radius);
+}
+
+/* Visible orange focus ring on every form field (also keyboard users). */
+main .form-control:focus,
+main .form-select:focus {
+  border-color: var(--color-accent);
+  outline: 0;
+  box-shadow: 0 0 0 0.25rem rgba(232, 89, 12, 0.35);
+}
+
+main .form-check-input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 0.25rem rgba(232, 89, 12, 0.35);
+}
+
+main .form-check-input:checked {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.form-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* Replace the inline styles that used to sit in product.html and cart.html. */
+.qty-form {
+  max-width: 240px;
+}
+
+.col-qty {
+  width: 200px;
+}
+
+/* ---------- tables, badges, alerts ---------- */
+
+.table > thead {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.badge {
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.alert {
+  border-left-width: 0.3rem;
+  border-radius: var(--radius);
+}

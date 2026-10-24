@@ -4,7 +4,7 @@ Shop{% endblock %} {% block content %}
 
 <div class="row g-4 mt-1">
   <div class="col-md-6">
-    <div class="ratio ratio-4x3">
+    <div class="ratio ratio-1x1">
       <img
         src="{{ product_image_url(product) }}"
         alt="{{ product.name }}"
@@ -25,8 +25,7 @@ Shop{% endblock %} {% block content %}
     <form
       method="post"
       action="{{ url_for('cart.add', product_id=product.id) }}"
-      class="d-flex gap-2 mt-3"
-      style="max-width: 240px"
+      class="d-flex gap-2 mt-3 qty-form"
     >
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
       <input

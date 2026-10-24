@@ -1,0 +1,108 @@
+/* Layout: design tokens, page structure, navbar, footer, responsive rules. */
+
+:root {
+  --color-accent: #e8590c;
+  --color-accent-dark: #c2410c;
+  --color-ink: #1f2421;
+  --color-muted: #6b7280;
+  --color-bg: #f4f1ea;
+  --color-surface: #ffffff;
+  --color-line: #d9d4c7;
+  --radius: 0.5rem;
+  --shadow: 0 0.25rem 1rem rgba(31, 36, 33, 0.08);
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* Make Bootstrap's own links follow our accent colour. */
+  --bs-link-color: #c2410c;
+  --bs-link-color-rgb: 194, 65, 12;
+  --bs-link-hover-color: #9a3412;
+  --bs-link-hover-color-rgb: 154, 52, 18;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  line-height: 1.55;
+}
+
+main {
+  flex: 1;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+h1 {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+}
+
+/* Short accent bar under every page title. */
+main h1::after {
+  content: "";
+  display: block;
+  width: 3rem;
+  height: 0.3rem;
+  margin-top: 0.5rem;
+  background-color: var(--color-accent);
+}
+
+/* ---------- navbar ---------- */
+
+.site-nav {
+  background-color: var(--color-surface);
+  border-bottom: 0.25rem solid var(--color-accent);
+}
+
+.site-nav .navbar-brand {
+  color: var(--color-ink);
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.brand-accent {
+  color: var(--color-accent);
+}
+
+/* The cart counter keeps Bootstrap's "text-bg-light" class (a test checks it),
+   but is restyled here. !important is needed to beat Bootstrap's own !important. */
+.site-nav .badge {
+  background-color: var(--color-accent) !important;
+  color: #ffffff !important;
+}
+
+/* ---------- footer ---------- */
+
+.site-footer {
+  margin-top: 3rem;
+  padding: 1.5rem 0;
+  background-color: var(--color-ink);
+  color: #cfcfc8;
+  font-size: 0.9rem;
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 991.98px) {
+  /* Collapsed menu: stack the buttons and give them room. */
+  .site-nav .nav-actions {
+    margin-top: 0.75rem;
+    padding-bottom: 0.5rem;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .site-footer {
+    text-align: center;
+  }
+}

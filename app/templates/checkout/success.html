@@ -1,0 +1,13 @@
+{% extends "base.html" %} {% block title %}Order {{ order.id }} - ATV & Enduro
+Shop{% endblock %} {% block content %} {% if paid %}
+<h1>Thank you for your order</h1>
+<p>Order #{{ order.id }} is paid ({{ order.total_display }}).</p>
+{% else %}
+<h1>Payment not completed</h1>
+<p>
+  We have not received the payment for order #{{ order.id }}. The items are
+  still reserved for you.
+</p>
+{% endif %}
+<a class="btn btn-primary" href="{{ url_for('checkout.orders') }}">My orders</a>
+{% endblock %}

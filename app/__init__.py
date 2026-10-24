@@ -7,6 +7,7 @@ from app.config import Config
 from app.extensions import csrf, db, login_manager
 from app.logging_config import configure_logging
 from app.routes import admin, auth, cart, documents, main
+from app.routes import admin, auth, cart, checkout, documents, main
 
 
 def create_app(test_config=None):
@@ -30,7 +31,7 @@ def create_app(test_config=None):
 
     from app import models  # noqa: F401  (models must be imported before create_all)
     from app.cli import register_commands
-    from app.routes import auth, cart, documents, main
+    from app.routes import admin, auth, cart, checkout, documents, main
     from app.services.cart import cart_item_count
 
     register_commands(app)
@@ -39,6 +40,7 @@ def create_app(test_config=None):
     app.register_blueprint(cart.bp)
     app.register_blueprint(documents.bp)
     app.register_blueprint(admin.bp)
+    app.register_blueprint(checkout.bp)
 
     @app.context_processor
     def inject_cart_count():

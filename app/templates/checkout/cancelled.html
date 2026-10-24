@@ -1,0 +1,21 @@
+{% extends "base.html" %} {% block title %}Payment cancelled - ATV & Enduro
+Shop{% endblock %} {% block content %}
+<h1>Payment cancelled</h1>
+<p>
+  Order #{{ order.id }} was not paid. The items stay reserved until you cancel
+  the order.
+</p>
+
+{% if order.status == 'pending' %}
+<form
+  method="post"
+  action="{{ url_for('checkout.cancel', order_id=order.id) }}"
+  data-confirm="Cancel this order and release the items?"
+>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <button class="btn btn-outline-danger" type="submit">Cancel order</button>
+  <a class="btn btn-link" href="{{ url_for('cart.view_cart') }}"
+    >Back to cart</a
+  >
+</form>
+{% endif %} {% endblock %}

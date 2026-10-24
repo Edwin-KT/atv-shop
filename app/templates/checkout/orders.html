@@ -1,0 +1,49 @@
+{% extends "base.html" %} {% block title %}My orders - ATV & Enduro Shop{%
+endblock %} {% block content %}
+<h1 class="mb-4">My orders</h1>
+
+{% for order in orders %}
+<div class="card mb-3">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span
+      >Order #{{ order.id }} &middot; {{ order.created_at.strftime('%Y-%m-%d
+      %H:%M') }}</span
+    >
+    {% if order.status == 'paid' %}
+    <span class="badge text-bg-success">Paid</span>
+    {% elif order.status == 'pending' %}
+    <span class="badge text-bg-warning">Awaiting payment</span>
+    {% else %}
+    <span class="badge text-bg-secondary">Cancelled</span>
+    {% endif %}
+  </div>
+  <ul class="list-group list-group-flush">
+    {% for item in order.items %}
+    <li class="list-group-item d-flex justify-content-between">
+      <span
+        >{{ item.quantity }} &times; {{ item.product.name }} ({{
+        item.unit_price_display }})</span
+      >
+      <span>{{ item.line_total_display }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  <div class="card-footer d-flex justify-content-between align-items-center">
+    <strong>Total: {{ order.total_display }}</strong>
+    {% if order.status == 'pending' %}
+    <form
+      method="post"
+      action="{{ url_for('checkout.cancel', order_id=order.id) }}"
+      data-confirm="Cancel this order and release the items?"
+    >
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <button class="btn btn-sm btn-outline-danger" type="submit">
+        Cancel order
+      </button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% else %}
+<p class="text-muted">You have no orders yet.</p>
+{% endfor %} {% endblock %}

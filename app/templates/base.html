@@ -28,6 +28,11 @@
             href="{{ url_for('documents.list_documents') }}"
             >Documents</a
           >
+          <a
+            class="btn btn-outline-light btn-sm"
+            href="{{ url_for('checkout.orders') }}"
+            >Orders</a
+          >
           {% if current_user.is_admin %}
           <a
             class="btn btn-warning btn-sm"

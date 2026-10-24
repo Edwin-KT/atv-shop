@@ -2,7 +2,7 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, u
 from flask_login import current_user
 
 from app.extensions import db
-from app.models import AuditLog, Product
+from app.models import AuditLog, OrderItem, Product
 from app.security import check_admin_access
 from app.services.audit import record_event
 from app.services.products import (
@@ -74,6 +74,12 @@ def new_product():
 @bp.route("/products/<int:product_id>/edit", methods=["GET", "POST"])
 def edit_product(product_id):
     product = db.get_or_404(Product, product_id)
+    if OrderItem.query.filter_by(product_id=product.id).first():
+        flash(
+            "This product appears in orders and cannot be deleted. Set its stock to 0 instead.",
+            "warning",
+        )
+        return redirect(url_for("admin.dashboard"))
     action_url = url_for("admin.edit_product", product_id=product.id)
 
     if request.method == "GET":
@@ -99,6 +105,14 @@ def edit_product(product_id):
 @bp.post("/products/<int:product_id>/delete")
 def delete_product(product_id):
     product = db.get_or_404(Product, product_id)
+
+    if OrderItem.query.filter_by(product_id=product.id).first():
+        flash(
+            "This product appears in orders and cannot be deleted. Set its stock to 0 instead.",
+            "warning",
+        )
+        return redirect(url_for("admin.dashboard"))
+
     deleted_id = product.id
     db.session.delete(product)
     db.session.commit()

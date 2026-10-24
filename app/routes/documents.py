@@ -12,7 +12,7 @@ from flask import (
 from flask_login import current_user, login_required
 
 from app.extensions import db
-from app.models import SecureDocument
+from app.models import Order, SecureDocument
 from app.services.audit import record_event
 from app.services.file_security import UploadRejected, store_uploaded_pdf
 
@@ -92,6 +92,10 @@ def delete(document_id):
     document = db.session.get(SecureDocument, document_id)
     if document is None or document.user_id != current_user.id:
         abort(404)
+
+    if Order.query.filter_by(document_id=document.id).first():
+        flash("This document is attached to an order and cannot be deleted.", "warning")
+        return redirect(url_for("documents.list_documents"))
 
     deleted_id = document.id
     file_path = Path(current_app.config["UPLOAD_FOLDER"]) / document.stored_filename

@@ -21,6 +21,9 @@ def create_app(test_config=None):
     configure_logging(app)
     configure_access_log(app)
 
+    from app.security_headers import register_security_headers
+    register_security_headers(app)
+
     db.init_app(app)
     csrf.init_app(app)
     login_manager.init_app(app)

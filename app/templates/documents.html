@@ -36,44 +36,50 @@ endblock %} {% block content %}
 </form>
 
 {% if documents %}
-<table class="table align-middle">
-  <thead>
-    <tr>
-      <th>File</th>
-      <th>Size</th>
-      <th>Uploaded</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for document in documents %}
-    <tr>
-      <td>{{ document.original_filename }}</td>
-      <td>{{ (document.size_bytes / 1024)|round(1) }} KB</td>
-      <td>{{ document.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-      <td class="text-end">
-        <div class="d-flex justify-content-end gap-2">
-          <a
-            class="btn btn-sm btn-outline-secondary"
-            href="{{ url_for('documents.download', document_id=document.id) }}"
-            >Download</a
-          >
-          <form
-            method="post"
-            action="{{ url_for('documents.delete', document_id=document.id) }}"
-            data-confirm="Delete this document permanently?"
-          >
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            <button class="btn btn-sm btn-outline-danger" type="submit">
-              Delete
-            </button>
-          </form>
-        </div>
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="table-responsive">
+  <table class="table align-middle">
+    <thead>
+      <tr>
+        <th>File</th>
+        <th>Size</th>
+        <th>Uploaded</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for document in documents %}
+      <tr>
+        <td>{{ document.original_filename }}</td>
+        <td>{{ (document.size_bytes / 1024)|round(1) }} KB</td>
+        <td>{{ document.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td class="text-end">
+          <div class="d-flex justify-content-end gap-2">
+            <a
+              class="btn btn-sm btn-outline-secondary"
+              href="{{ url_for('documents.download', document_id=document.id) }}"
+              >Download</a
+            >
+            <form
+              method="post"
+              action="{{ url_for('documents.delete', document_id=document.id) }}"
+              data-confirm="Delete this document permanently?"
+            >
+              <input
+                type="hidden"
+                name="csrf_token"
+                value="{{ csrf_token() }}"
+              />
+              <button class="btn btn-sm btn-outline-danger" type="submit">
+                Delete
+              </button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% else %}
 <p class="text-muted">You have not uploaded any documents yet.</p>
 {% endif %} {% endblock %}

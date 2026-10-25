@@ -111,3 +111,41 @@ def test_title_bar_and_hover_effects_exist():
 
     assert "@keyframes grow-bar" in css
     assert "scaleX(1)" in css
+
+def test_every_page_has_the_viewport_meta(client):
+    for url in ("/", "/login", "/register", "/cart"):
+        assert 'name="viewport"' in client.get(url).get_data(as_text=True)
+
+
+def test_catalog_grid_adapts_to_screen_size(app, client):
+    from app.seed import seed_products
+
+    with app.app_context():
+        seed_products()
+
+    html = client.get("/").get_data(as_text=True)
+
+    assert "row-cols-1" in html      # phone
+    assert "row-cols-sm-2" in html   # tablet
+    assert "row-cols-lg-3" in html   # desktop
+
+
+def test_tables_scroll_instead_of_overflowing():
+    for name in ("cart.html", "documents.html", "checkout/review.html"):
+        text = (TEMPLATES / name).read_text(encoding="utf-8")
+        if "<table" in text:
+            assert "table-responsive" in text, f"{name} has a table without table-responsive"
+
+
+def test_css_has_media_queries_for_phone_and_tablet():
+    css = (STATIC / "css" / "layout.css").read_text(encoding="utf-8")
+
+    assert "max-width: 575.98px" in css                    # phone
+    assert "min-width: 768px" in css                       # tablet
+    assert "max-width: 991.98px" in css                    # collapsed menu
+
+def test_css_does_not_break_words_everywhere():
+    css = (STATIC / "css" / "layout.css").read_text(encoding="utf-8")
+
+    assert "main {\n  overflow-wrap: anywhere" not in css
+    assert "white-space: nowrap" in css  # prices and quantities stay on one line

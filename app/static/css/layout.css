@@ -172,3 +172,62 @@ main h1::after {
     text-align: center;
   }
 }
+
+/* ---------- extra responsive rules ---------- */
+
+/* Never let media or long words push the page wider than the screen. */
+img,
+svg {
+  max-width: 100%;
+}
+
+/* Break very long words (emails, file names) only where they appear as text. */
+.card-title,
+.card-text,
+.alert,
+.list-group-item {
+  overflow-wrap: anywhere;
+}
+
+/* Table cells keep prices and quantities on one line; the table scrolls sideways instead. */
+.table td,
+.table th {
+  overflow-wrap: normal;
+}
+
+.table td:not(:first-child),
+.table th:not(:first-child) {
+  white-space: nowrap;
+}
+
+.table-responsive .table {
+  min-width: 36rem;
+}
+
+@media (max-width: 575.98px) {
+  /* Buttons grouped in a row (cart, admin) wrap instead of overflowing. */
+  .card-footer,
+  .d-flex.gap-2 {
+    flex-wrap: wrap;
+  }
+
+  /* Wider tap targets for small buttons on touch screens. */
+  .btn-sm {
+    padding: 0.4rem 0.75rem;
+  }
+
+  .hero-price {
+    font-size: 1.3rem;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  /* Tablet: slightly tighter hero so the photo does not dominate. */
+  .hero-slide {
+    padding: 2rem 3.5rem 3.5rem;
+  }
+
+  .hero-photo {
+    max-width: 320px;
+  }
+}

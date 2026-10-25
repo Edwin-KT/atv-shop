@@ -16,6 +16,10 @@
       href="{{ url_for('static', filename='css/components.css') }}"
       rel="stylesheet"
     />
+    <link
+      href="{{ url_for('static', filename='css/animations.css') }}"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <nav class="navbar navbar-expand-lg site-nav mb-4">
@@ -107,6 +111,10 @@
     <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
     <script
       src="{{ url_for('static', filename='js/confirm.js') }}"
+      defer
+    ></script>
+    <script
+      src="{{ url_for('static', filename='js/reduced-motion.js') }}"
       defer
     ></script>
   </body>

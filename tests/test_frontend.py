@@ -63,3 +63,51 @@ def test_navbar_collapses_on_small_screens(client):
 
     assert "navbar-toggler" in html
     assert 'name="viewport"' in html
+
+
+def test_animations_are_defined_in_css():
+    css = (STATIC / "css" / "animations.css").read_text(encoding="utf-8")
+
+    assert "@keyframes" in css
+    assert "animation:" in css
+
+
+def test_animations_respect_reduced_motion():
+    css = (STATIC / "css" / "animations.css").read_text(encoding="utf-8")
+
+    assert "prefers-reduced-motion: reduce" in css
+
+
+def test_animation_stylesheet_and_script_are_linked(client):
+    html = client.get("/").get_data(as_text=True)
+
+    assert "css/animations.css" in html
+    assert "js/reduced-motion.js" in html
+
+
+def test_scroll_reveal_is_gone(app, client):
+    from app.seed import seed_products
+
+    with app.app_context():
+        seed_products()
+
+    html = client.get("/").get_data(as_text=True)
+
+    assert "reveal" not in html
+
+
+def test_hero_light_sweep_is_hidden_unless_animated():
+    css = (STATIC / "css" / "animations.css").read_text(encoding="utf-8")
+
+    assert "@keyframes sweep" in css
+    assert ".carousel-item.active .hero-photo::after" in css
+    # the light must be invisible by default, so it can never stay stuck on the photo
+    base_rule = css.split(".hero-photo::after {")[1].split("}")[0]
+    assert "opacity: 0" in base_rule
+
+
+def test_title_bar_and_hover_effects_exist():
+    css = (STATIC / "css" / "animations.css").read_text(encoding="utf-8")
+
+    assert "@keyframes grow-bar" in css
+    assert "scaleX(1)" in css

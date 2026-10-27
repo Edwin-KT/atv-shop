@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 .env
 instance/
-private_uploads/
+private_uploads/*
+!private_uploads/.htaccess
 .pytest_cache/
 logs/

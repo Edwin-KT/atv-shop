@@ -1,0 +1,2 @@
+# Never serve uploaded documents directly.
+Require all denied

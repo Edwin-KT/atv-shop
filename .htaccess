@@ -1,0 +1,16 @@
+# Block direct access to sensitive files and folders.
+<FilesMatch "^(\.env.*|.*\.(py|sql|log|md|ini|yml|yaml|txt|pyc))$">
+    Require all denied
+</FilesMatch>
+
+# Source code, tests, logs and uploads must never be web-accessible.
+RedirectMatch 404 ^/(app|tests|logs|private_uploads|\.git|\.github|\.venv)(/|$)
+
+# No directory listings.
+Options -Indexes
+
+# Defence in depth: same headers as the application sets.
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+</IfModule>

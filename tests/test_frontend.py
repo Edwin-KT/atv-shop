@@ -4,7 +4,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 STATIC = ROOT / "app" / "static"
 TEMPLATES = ROOT / "app" / "templates"
-CSS_FILES = [STATIC / "css" / "layout.css", STATIC / "css" / "components.css"]
+CSS_FILES = [
+    STATIC / "css" / name
+    for name in ("base.css", "layout.css", "components.css", "pages.css", "animations.css")
+]
+
+
+def all_css() -> str:
+    return "\n".join(path.read_text(encoding="utf-8") for path in CSS_FILES)
 
 
 def css_properties(path: Path) -> set[str]:
@@ -20,17 +27,7 @@ def css_properties(path: Path) -> set[str]:
     return names
 
 
-def test_project_has_two_css_files_with_enough_distinct_properties():
-    assert all(path.is_file() for path in CSS_FILES)
-    all_properties = set().union(*(css_properties(path) for path in CSS_FILES))
-    assert len(all_properties) >= 15  # the requirement is 10
 
-
-def test_each_css_file_is_linked_from_the_pages(client):
-    html = client.get("/").get_data(as_text=True)
-
-    assert "css/layout.css" in html
-    assert "css/components.css" in html
 
 
 def test_bootstrap_is_served_locally(client):
@@ -136,16 +133,45 @@ def test_tables_scroll_instead_of_overflowing():
         if "<table" in text:
             assert "table-responsive" in text, f"{name} has a table without table-responsive"
 
+def test_project_has_several_css_files_with_enough_distinct_properties():
+    assert len(CSS_FILES) >= 2
+    assert all(path.is_file() for path in CSS_FILES)
+    all_properties = set().union(*(css_properties(path) for path in CSS_FILES))
+    assert len(all_properties) >= 15  # the requirement is 10
+
+
+def test_each_css_file_is_linked_from_the_pages(client):
+    html = client.get("/").get_data(as_text=True)
+
+    for path in CSS_FILES:
+        assert f"css/{path.name}" in html
+
+
+def test_css_files_are_linked_from_general_to_specific(client):
+    html = client.get("/").get_data(as_text=True)
+
+    order = [html.index(f"css/{name}") for name in
+             ("base.css", "layout.css", "components.css", "pages.css", "animations.css")]
+    assert order == sorted(order)
+
 
 def test_css_has_media_queries_for_phone_and_tablet():
-    css = (STATIC / "css" / "layout.css").read_text(encoding="utf-8")
+    css = all_css()
 
-    assert "max-width: 575.98px" in css                    # phone
-    assert "min-width: 768px" in css                       # tablet
-    assert "max-width: 991.98px" in css                    # collapsed menu
+    assert "max-width: 575.98px" in css   # phone
+    assert "min-width: 768px" in css      # tablet
+    assert "max-width: 991.98px" in css   # collapsed menu
+
 
 def test_css_does_not_break_words_everywhere():
-    css = (STATIC / "css" / "layout.css").read_text(encoding="utf-8")
+    css = all_css()
 
     assert "main {\n  overflow-wrap: anywhere" not in css
     assert "white-space: nowrap" in css  # prices and quantities stay on one line
+
+
+def test_variables_are_defined_once_in_base_css():
+    for path in CSS_FILES:
+        text = path.read_text(encoding="utf-8")
+        if path.name != "base.css":
+            assert ":root" not in text, f"{path.name} must not redefine design tokens"

@@ -1,0 +1,95 @@
+/* Pages: rules that belong to one specific page. */
+
+/* ---------- product page and cart ---------- */
+
+.qty-form {
+  max-width: 240px;
+}
+
+.col-qty {
+  width: 200px;
+}
+
+/* ---------- home page: hero carousel ---------- */
+
+.hero {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.hero-slide {
+  margin: 0;
+  padding: 2rem 4rem 3.5rem;
+}
+
+.hero-kicker {
+  margin-bottom: 0.5rem;
+  color: var(--color-accent-dark);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hero-title {
+  font-size: clamp(1.5rem, 3.5vw, 2.4rem);
+}
+
+.hero-price {
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.hero-photo {
+  max-width: 420px;
+  margin: 0 auto;
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+/* Bootstrap's default controls are white; ours sit on a light surface. */
+.hero .carousel-control-prev,
+.hero .carousel-control-next {
+  width: 3.5rem;
+}
+
+.hero .carousel-control-prev-icon,
+.hero .carousel-control-next-icon {
+  filter: invert(1);
+}
+
+.hero .carousel-indicators [data-bs-target] {
+  background-color: var(--color-ink);
+}
+
+.hero .carousel-indicators .active {
+  background-color: var(--color-accent);
+}
+
+/* Tablet: slightly tighter hero so the photo does not dominate. */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .hero-slide {
+    padding: 2rem 3.5rem 3.5rem;
+  }
+
+  .hero-photo {
+    max-width: 320px;
+  }
+}
+
+/* Phone: photo above the text, centred. */
+@media (max-width: 767.98px) {
+  .hero-slide {
+    padding: 1.5rem 1rem 3.5rem;
+    text-align: center;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .hero-price {
+    font-size: 1.3rem;
+  }
+}

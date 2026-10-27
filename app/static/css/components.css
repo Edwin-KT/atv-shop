@@ -1,4 +1,4 @@
-/* Components: cards, buttons, forms, tables, alerts. */
+/* Components: reusable pieces used on several pages. */
 
 /* ---------- cards ---------- */
 
@@ -66,7 +66,7 @@
   border-radius: var(--radius);
 }
 
-/* Visible orange focus ring on every form field (also keyboard users). */
+/* Visible orange focus ring on every form field (also for keyboard users). */
 main .form-control:focus,
 main .form-select:focus {
   border-color: var(--color-accent);
@@ -89,16 +89,7 @@ main .form-check-input:checked {
   font-weight: 600;
 }
 
-/* Replace the inline styles that used to sit in product.html and cart.html. */
-.qty-form {
-  max-width: 240px;
-}
-
-.col-qty {
-  width: 200px;
-}
-
-/* ---------- tables, badges, alerts ---------- */
+/* ---------- tables ---------- */
 
 .table > thead {
   color: var(--color-muted);
@@ -106,6 +97,23 @@ main .form-check-input:checked {
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
+
+/* Prices and quantities stay on one line; the table scrolls sideways instead. */
+.table td,
+.table th {
+  overflow-wrap: normal;
+}
+
+.table td:not(:first-child),
+.table th:not(:first-child) {
+  white-space: nowrap;
+}
+
+.table-responsive .table {
+  min-width: 36rem;
+}
+
+/* ---------- badges and alerts ---------- */
 
 .badge {
   font-weight: 700;
@@ -115,4 +123,27 @@ main .form-check-input:checked {
 .alert {
   border-left-width: 0.3rem;
   border-radius: var(--radius);
+}
+
+/* Break very long words (emails, file names) only where they appear as text. */
+.card-title,
+.card-text,
+.alert,
+.list-group-item {
+  overflow-wrap: anywhere;
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 575.98px) {
+  /* Buttons grouped in a row wrap instead of overflowing. */
+  .card-footer,
+  .d-flex.gap-2 {
+    flex-wrap: wrap;
+  }
+
+  /* Bigger tap targets on touch screens. */
+  .btn-sm {
+    padding: 0.4rem 0.75rem;
+  }
 }

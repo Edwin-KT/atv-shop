@@ -40,7 +40,7 @@ endblock %} {% block content %} {% include "_hero_carousel.html" %}
         <strong>{{ product.price_display }}</strong>
         <a
           class="btn btn-sm btn-primary"
-          href="..."
+          href="{{ url_for('main.product_detail', slug=product.slug) }}"
           aria-label="View {{ product.name }}"
           >View</a
         >

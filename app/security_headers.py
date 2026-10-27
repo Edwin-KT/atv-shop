@@ -23,7 +23,9 @@ PERMISSIONS_POLICY = (
 
 HSTS = "max-age=31536000; includeSubDomains"
 
-
+PRIVATE_PREFIXES = (
+    "/admin", "/cart", "/checkout", "/orders", "/documents", "/login", "/register",
+)
 def register_security_headers(app):
     @app.after_request
     def add_security_headers(response):
@@ -41,4 +43,7 @@ def register_security_headers(app):
         # Pages for logged-in users must not be stored by shared caches.
         if response.mimetype == "text/html":
             response.headers.setdefault("Cache-Control", "no-store")
+
+        if request.path.startswith(PRIVATE_PREFIXES):
+            response.headers["X-Robots-Tag"] = "noindex, nofollow"
         return response

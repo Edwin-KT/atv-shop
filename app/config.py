@@ -16,6 +16,9 @@ class Config:
 
     RATELIMIT_ENABLED = True
 
+    SITE_URL = os.environ.get("SITE_URL", "http://127.0.0.1:5000").rstrip("/")
+    SITE_NAME = "ATV & Enduro Shop"
+
     SESSION_COOKIE_HTTPONLY = True   # JavaScript cannot read the session cookie
     SESSION_COOKIE_SAMESITE = "Lax"  # cookie is not sent on cross-site POSTs
 

@@ -1,5 +1,7 @@
-{% extends "base.html" %} {% block content %} {% include "_hero_carousel.html"
-%}
+{% extends "base.html" %} {% block title %}ATV & Enduro Shop - ATVs, enduro
+bikes and riding gear{% endblock %} {% block meta_description %}Browse ATVs,
+enduro motorcycles, helmets, boots and gloves. Secure online checkout.{%
+endblock %} {% block content %} {% include "_hero_carousel.html" %}
 <h1 class="mb-4">Catalog</h1>
 
 {% if not products %}
@@ -38,7 +40,8 @@
         <strong>{{ product.price_display }}</strong>
         <a
           class="btn btn-sm btn-primary"
-          href="{{ url_for('main.product_detail', slug=product.slug) }}"
+          href="..."
+          aria-label="View {{ product.name }}"
           >View</a
         >
       </div>

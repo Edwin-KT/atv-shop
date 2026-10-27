@@ -64,7 +64,7 @@ def test_templates_never_disable_escaping():
 def test_no_inline_scripts_or_handlers():
     for template in TEMPLATES.rglob("*.html"):
         text = template.read_text(encoding="utf-8")
-        for match in re.finditer(r"<script(?![^>]*\bsrc=)[^>]*>", text):
+        for match in re.finditer(r'<script(?![^>]*\bsrc=)(?![^>]*application/ld\+json)[^>]*>', text):
             raise AssertionError(f"inline <script> in {template.name}: {match.group(0)}")
         assert not re.search(r"\son[a-z]+=", text), template.name
 

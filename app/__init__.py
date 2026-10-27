@@ -3,12 +3,11 @@ from pathlib import Path
 from flask import Flask, render_template, url_for
 from sqlalchemy import text
 
+from app.access_log import configure_access_log
 from app.config import Config
 from app.extensions import csrf, db, limiter, login_manager
 from app.logging_config import configure_logging
-from app.routes import admin, auth, cart, documents, main
-from app.routes import admin, auth, cart, checkout, documents, main
-from app.access_log import configure_access_log
+from app.security_headers import register_security_headers
 
 
 def create_app(test_config=None):
@@ -20,8 +19,6 @@ def create_app(test_config=None):
 
     configure_logging(app)
     configure_access_log(app)
-
-    from app.security_headers import register_security_headers
     register_security_headers(app)
 
     db.init_app(app)
@@ -43,7 +40,7 @@ def create_app(test_config=None):
 
     from app import models  # noqa: F401  (models must be imported before create_all)
     from app.cli import register_commands
-    from app.routes import admin, auth, cart, checkout, documents, main
+    from app.routes import admin, auth, cart, checkout, documents, main, seo
     from app.services.cart import cart_item_count
 
     register_commands(app)
@@ -53,6 +50,7 @@ def create_app(test_config=None):
     app.register_blueprint(documents.bp)
     app.register_blueprint(admin.bp)
     app.register_blueprint(checkout.bp)
+    app.register_blueprint(seo.bp)
 
     @app.context_processor
     def inject_cart_count():
@@ -66,14 +64,23 @@ def create_app(test_config=None):
             "captcha_site_key": app.config["RECAPTCHA_SITE_KEY"],
         }
 
-    @app.template_global()
-    def product_image_url(product):
-        """URL of the product photo, or a placeholder if the file does not exist."""
+    @app.context_processor
+    def inject_seo():
+        return {
+            "site_url": app.config["SITE_URL"],
+            "site_name": app.config["SITE_NAME"],
+        }
+
+    def product_image_path(product):
+        """Path of the product photo, or of the placeholder if the file does not exist."""
         if product.image_filename:
             photo = Path(app.static_folder) / "img" / "products" / product.image_filename
             if photo.is_file():
                 return url_for("static", filename=f"img/products/{product.image_filename}")
         return url_for("static", filename="img/placeholder.svg")
+
+    app.jinja_env.globals["product_image_url"] = product_image_path
+    app.extensions["product_image_path"] = product_image_path
 
     @app.errorhandler(403)
     def forbidden(error):
@@ -97,17 +104,18 @@ def create_app(test_config=None):
             ),
             413,
         )
+
     @app.errorhandler(429)
     def too_many_requests(error):
         from app.services.audit import record_event
 
         record_event("rate_limited", details=str(error.description)[:200])
-        response = render_template(
+        page = render_template(
             "error.html",
             title="Too many requests",
             message="You are sending requests too fast. Please wait a minute and try again.",
         )
-        return response, 429, {"Retry-After": "60"}
+        return page, 429, {"Retry-After": "60"}
 
     with app.app_context():
         db.create_all()

@@ -1,5 +1,15 @@
-{% extends "base.html" %} {% block title %}{{ product.name }} - ATV & Enduro
-Shop{% endblock %} {% block content %}
+{% extends "base.html" %}{% block title %}{{ product.name }} - ATV & Enduro
+Shop{% endblock %} {% block meta_description %}{{ product.name }}: {{
+product.get_technical_summary() }}. {{ product.description[:110] }}{% endblock
+%} {% block og_type %}product{% endblock %} {% block og_title %}{{ product.name
+}}{% endblock %} {% block og_image %}<meta
+  property="og:image"
+  content="{{ site_url }}{{ product_image_url(product) }}"
+/>{% endblock %} {% block head_extra %}
+<script type="application/ld+json">
+  {{ structured_data|tojson }}
+</script>
+{% endblock %}{% block content %}
 <a href="{{ url_for('main.index') }}">&larr; Back to catalog</a>
 
 <div class="row g-4 mt-1">

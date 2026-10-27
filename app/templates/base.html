@@ -4,6 +4,29 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{% block title %}ATV & Enduro Shop{% endblock %}</title>
+    <meta
+      name="description"
+      content="{% block meta_description %}Buy ATVs, enduro motorcycles and riding gear online. Quality off-road vehicles and protective equipment.{% endblock %}"
+    />
+    {% if noindex %}
+    <meta name="robots" content="noindex, nofollow" />
+    {% endif %}
+    <link
+      rel="canonical"
+      href="{% block canonical %}{{ site_url }}{{ request.path }}{% endblock %}"
+    />
+    <meta property="og:site_name" content="{{ site_name }}" />
+    <meta
+      property="og:type"
+      content="{% block og_type %}website{% endblock %}"
+    />
+    <meta
+      property="og:title"
+      content="{% block og_title %}{{ site_name }}{% endblock %}"
+    />
+    <meta property="og:description" content="{{ self.meta_description() }}" />
+    <meta property="og:url" content="{{ site_url }}{{ request.path }}" />
+    {% block og_image %}{% endblock %} {% block head_extra %}{% endblock %}
     <link
       href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}"
       rel="stylesheet"

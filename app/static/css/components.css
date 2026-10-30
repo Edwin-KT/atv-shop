@@ -1,24 +1,23 @@
-/* Components: reusable pieces used on several pages. */
-
 /* ---------- cards ---------- */
 
 .card {
   background-color: var(--color-surface);
   border: 1px solid var(--color-line);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
   overflow: hidden;
 }
 
 .product-card {
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 
 .product-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 0.75rem 1.5rem rgba(31, 36, 33, 0.18);
+  border-color: var(--color-ink);
+}
+
+/* Product photos sit on a light grey tile, like in a shop window. */
+.product-card .ratio {
+  background-color: var(--color-tile);
 }
 
 .product-card .card-title a {
@@ -34,8 +33,10 @@
 
 .btn {
   border-radius: var(--radius);
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   transition:
     background-color 0.15s ease,
     border-color 0.15s ease,
@@ -46,104 +47,15 @@
   transform: translateY(1px);
 }
 
+/* The darker orange keeps white button text readable (contrast 5:1). */
 .btn-primary {
-  --bs-btn-bg: var(--color-accent);
-  --bs-btn-border-color: var(--color-accent);
-  --bs-btn-hover-bg: var(--color-accent-dark);
-  --bs-btn-hover-border-color: var(--color-accent-dark);
-  --bs-btn-active-bg: var(--color-accent-dark);
-  --bs-btn-active-border-color: var(--color-accent-dark);
-  --bs-btn-disabled-bg: var(--color-accent);
-  --bs-btn-disabled-border-color: var(--color-accent);
-  --bs-btn-focus-shadow-rgb: 232, 89, 12;
-}
-
-/* ---------- forms ---------- */
-
-.form-control,
-.form-select {
-  border-color: var(--color-line);
-  border-radius: var(--radius);
-}
-
-/* Visible orange focus ring on every form field (also for keyboard users). */
-main .form-control:focus,
-main .form-select:focus {
-  border-color: var(--color-accent);
-  outline: 0;
-  box-shadow: 0 0 0 0.25rem rgba(232, 89, 12, 0.35);
-}
-
-main .form-check-input:focus {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 0.25rem rgba(232, 89, 12, 0.35);
-}
-
-main .form-check-input:checked {
-  background-color: var(--color-accent);
-  border-color: var(--color-accent);
-}
-
-.form-label {
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-/* ---------- tables ---------- */
-
-.table > thead {
-  color: var(--color-muted);
-  font-size: 0.8rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-/* Prices and quantities stay on one line; the table scrolls sideways instead. */
-.table td,
-.table th {
-  overflow-wrap: normal;
-}
-
-.table td:not(:first-child),
-.table th:not(:first-child) {
-  white-space: nowrap;
-}
-
-.table-responsive .table {
-  min-width: 36rem;
-}
-
-/* ---------- badges and alerts ---------- */
-
-.badge {
-  font-weight: 700;
-  letter-spacing: 0.03em;
-}
-
-.alert {
-  border-left-width: 0.3rem;
-  border-radius: var(--radius);
-}
-
-/* Break very long words (emails, file names) only where they appear as text. */
-.card-title,
-.card-text,
-.alert,
-.list-group-item {
-  overflow-wrap: anywhere;
-}
-
-/* ---------- responsive ---------- */
-
-@media (max-width: 575.98px) {
-  /* Buttons grouped in a row wrap instead of overflowing. */
-  .card-footer,
-  .d-flex.gap-2 {
-    flex-wrap: wrap;
-  }
-
-  /* Bigger tap targets on touch screens. */
-  .btn-sm {
-    padding: 0.4rem 0.75rem;
-  }
+  --bs-btn-bg: var(--color-accent-dark);
+  --bs-btn-border-color: var(--color-accent-dark);
+  --bs-btn-hover-bg: #9a3412;
+  --bs-btn-hover-border-color: #9a3412;
+  --bs-btn-active-bg: #9a3412;
+  --bs-btn-active-border-color: #9a3412;
+  --bs-btn-disabled-bg: var(--color-accent-dark);
+  --bs-btn-disabled-border-color: var(--color-accent-dark);
+  --bs-btn-focus-shadow-rgb: 194, 65, 12;
 }

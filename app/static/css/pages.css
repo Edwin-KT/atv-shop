@@ -10,24 +10,48 @@
   width: 200px;
 }
 
-/* ---------- home page: hero carousel ---------- */
+/* ---------- home page: category tiles ---------- */
+
+.category-tile {
+  display: block;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.tile-image {
+  background-color: var(--color-tile);
+  overflow: hidden;
+}
+
+.category-tile-label {
+  display: inline-block;
+  margin-top: 0.6rem;
+  border-bottom: 0.15rem solid var(--color-ink);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.category-tile:hover .category-tile-label {
+  border-bottom-color: var(--color-accent);
+}
+
+/* ---------- home page: hero carousel (dark, full width) ---------- */
 
 .hero {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  overflow: hidden;
+  background-color: var(--color-ink);
+  color: #ffffff;
 }
 
 .hero-slide {
   margin: 0;
-  padding: 2rem 4rem 3.5rem;
+  padding: 3rem 3.5rem 4rem;
 }
 
 .hero-kicker {
   margin-bottom: 0.5rem;
-  color: var(--color-accent-dark);
+  color: var(--color-accent-light);
   font-size: 0.8rem;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -35,34 +59,34 @@
 }
 
 .hero-title {
-  font-size: clamp(1.5rem, 3.5vw, 2.4rem);
+  color: #ffffff;
+  font-size: clamp(1.8rem, 5vw, 3.2rem);
+  line-height: 1.1;
+}
+
+.hero-summary {
+  color: #b9b9c0;
 }
 
 .hero-price {
+  margin-bottom: 1.5rem;
   font-size: 1.6rem;
   font-weight: 800;
 }
 
 .hero-photo {
-  max-width: 420px;
+  max-width: 380px;
   margin: 0 auto;
-  border-radius: var(--radius);
   overflow: hidden;
 }
 
-/* Bootstrap's default controls are white; ours sit on a light surface. */
 .hero .carousel-control-prev,
 .hero .carousel-control-next {
   width: 3.5rem;
 }
 
-.hero .carousel-control-prev-icon,
-.hero .carousel-control-next-icon {
-  filter: invert(1);
-}
-
 .hero .carousel-indicators [data-bs-target] {
-  background-color: var(--color-ink);
+  background-color: #ffffff;
 }
 
 .hero .carousel-indicators .active {
@@ -72,19 +96,23 @@
 /* Tablet: slightly tighter hero so the photo does not dominate. */
 @media (min-width: 768px) and (max-width: 991.98px) {
   .hero-slide {
-    padding: 2rem 3.5rem 3.5rem;
+    padding: 2.5rem 3rem 3.5rem;
   }
 
   .hero-photo {
-    max-width: 320px;
+    max-width: 300px;
   }
 }
 
 /* Phone: photo above the text, centred. */
 @media (max-width: 767.98px) {
   .hero-slide {
-    padding: 1.5rem 1rem 3.5rem;
+    padding: 1.5rem 0.5rem 3.5rem;
     text-align: center;
+  }
+
+  .hero-photo {
+    max-width: 260px;
   }
 }
 

@@ -71,6 +71,12 @@ def create_app(test_config=None):
             "site_name": app.config["SITE_NAME"],
         }
 
+    @app.context_processor
+    def inject_navigation():
+        from app.catalog import CATEGORIES
+
+        return {"nav_categories": [(key, info["label"]) for key, info in CATEGORIES.items()]}
+    
     def product_image_path(product):
         """Path of the product photo, or of the placeholder if the file does not exist."""
         if product.image_filename:

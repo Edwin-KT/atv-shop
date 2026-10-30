@@ -1,15 +1,16 @@
-/* Base: design tokens, element defaults, typography. No classes for components here. */
+/* Base: design tokens, element defaults, typography. */
 
 :root {
   --color-accent: #e8590c;
   --color-accent-dark: #c2410c;
-  --color-ink: #1f2421;
-  --color-muted: #6b7280;
-  --color-bg: #f4f1ea;
+  --color-accent-light: #ff7a33;
+  --color-ink: #1a1918;
+  --color-muted: #6b6b73;
+  --color-bg: #ffffff;
   --color-surface: #ffffff;
-  --color-line: #d9d4c7;
-  --radius: 0.4rem;
-  --shadow: 0 0.25rem 1rem rgba(31, 36, 33, 0.08);
+  --color-tile: #f2f2f4;
+  --color-line: #dcdce6;
+  --radius: 0.125rem;
   --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   /* Make Bootstrap's own links follow our accent colour. */
@@ -57,4 +58,10 @@ main h1::after {
   height: 0.3rem;
   margin-top: 0.5rem;
   background-color: var(--color-accent);
+}
+
+.section-title {
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  letter-spacing: 0.08em;
 }

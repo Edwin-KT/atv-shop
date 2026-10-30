@@ -1,19 +1,70 @@
-/* Layout: page structure only (main area, navbar, footer). */
+/* Layout: page structure (top bar, navbar, category row, main area, footer). */
 
 main {
   flex: 1;
+  padding-top: 2rem;
 }
 
-/* ---------- navbar ---------- */
+/* ---------- top bar ---------- */
+
+.topbar {
+  background-color: var(--color-ink);
+  color: #c9c9cf;
+  font-size: 0.75rem;
+}
+
+.topbar-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding-top: 0.45rem;
+  padding-bottom: 0.45rem;
+}
+
+.topbar-links {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-left: auto;
+}
+
+.topbar a,
+.link-button {
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.topbar a:hover,
+.link-button:hover {
+  text-decoration: underline;
+}
+
+.topbar-admin {
+  color: var(--color-accent-light) !important;
+  font-weight: 700;
+}
+
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* ---------- main navbar ---------- */
 
 .site-nav {
+  padding: 0.85rem 0;
   background-color: var(--color-surface);
-  border-bottom: 0.25rem solid var(--color-accent);
+  border-bottom: 1px solid var(--color-line);
 }
 
 .site-nav .navbar-brand {
   color: var(--color-ink);
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -23,42 +74,124 @@ main {
   color: var(--color-accent);
 }
 
+.search-form {
+  display: flex;
+  width: 100%;
+  max-width: 32rem;
+}
+
+.search-form .form-control {
+  border-right: 0;
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+
+.search-form .btn {
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
 /* The cart counter keeps Bootstrap's "text-bg-light" class (a test checks it),
    but is restyled here. !important is needed to beat Bootstrap's own !important. */
 .site-nav .badge {
-  background-color: var(--color-accent) !important;
+  background-color: var(--color-accent-dark) !important;
   color: #ffffff !important;
+}
+
+/* ---------- category row ---------- */
+
+.category-nav {
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-line);
+}
+
+.category-nav .container {
+  display: flex;
+  gap: 1.75rem;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.category-nav a {
+  padding: 0.7rem 0 0.55rem;
+  border-bottom: 0.2rem solid transparent;
+  color: var(--color-ink);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.category-nav a:hover,
+.category-nav a.is-active {
+  border-bottom-color: var(--color-accent);
 }
 
 /* ---------- footer ---------- */
 
 .site-footer {
-  margin-top: 3rem;
-  padding: 1.5rem 0;
+  margin-top: 4rem;
+  padding: 2.5rem 0 1.5rem;
   background-color: var(--color-ink);
-  color: #cfcfc8;
+  color: #c9c9cf;
   font-size: 0.9rem;
+}
+
+.site-footer h2 {
+  margin-bottom: 0.75rem;
+  color: #ffffff;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+}
+
+.footer-links {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.footer-links li {
+  margin-bottom: 0.35rem;
+}
+
+.site-footer a {
+  color: #c9c9cf;
+  text-decoration: none;
+}
+
+.site-footer a:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.footer-note {
+  margin: 2rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid #3a3836;
+  font-size: 0.8rem;
 }
 
 /* ---------- responsive ---------- */
 
-/* Tablet and smaller: the navbar collapses into a menu. */
+/* Tablet and smaller: the search sits in the collapsed menu. */
 @media (max-width: 991.98px) {
-  .site-nav .nav-actions {
-    margin-top: 0.75rem;
-    padding-bottom: 0.5rem;
+  .search-form {
+    max-width: none;
   }
 }
 
 /* Tablet range. */
 @media (min-width: 768px) and (max-width: 991.98px) {
-  .site-footer {
-    font-size: 0.95rem;
+  .category-nav .container {
+    gap: 2.25rem;
   }
 }
 
 /* Phone. */
 @media (max-width: 575.98px) {
+  .topbar-links {
+    gap: 0.85rem;
+  }
+
   .site-footer {
     text-align: center;
   }

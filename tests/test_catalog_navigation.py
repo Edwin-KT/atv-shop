@@ -72,3 +72,23 @@ def test_home_page_links_to_every_category_with_products(seeded, client):
 
 def test_home_page_has_no_category_tiles_without_products(client):
     assert "Shop by category" not in client.get("/").get_data(as_text=True)
+
+
+def test_navigation_links_to_every_category(client):
+    html = client.get("/").get_data(as_text=True)
+
+    for key in ("atv", "enduro", "gear"):
+        assert f"/category/{key}" in html
+    assert 'role="search"' in html
+
+
+def test_active_category_is_highlighted(client):
+    html = client.get("/category/gear").get_data(as_text=True)
+
+    assert html.count("is-active") == 1
+
+
+def test_hero_is_outside_the_main_container(seeded, client):
+    html = client.get("/").get_data(as_text=True)
+
+    assert html.index('id="heroCarousel"') < html.index("<main")

@@ -1,8 +1,8 @@
 {% extends "base.html" %} {% block title %}ATV & Enduro Shop - ATVs, enduro
 bikes and riding gear{% endblock %} {% block meta_description %}Browse ATVs,
 enduro motorcycles, helmets, boots and gloves. Secure online checkout.{%
-endblock %} {% block content %} {% include "_hero_carousel.html" %} {% if tiles
-%}
+endblock %} {% block hero %} {% include "_hero_carousel.html" %} {% endblock %}
+{% block content %} {% if tiles %}
 <h2 class="section-title">Shop by category</h2>
 <div class="row row-cols-3 g-2 g-md-3 mb-5">
   {% for tile in tiles %}

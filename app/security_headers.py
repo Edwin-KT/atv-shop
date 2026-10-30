@@ -24,7 +24,7 @@ PERMISSIONS_POLICY = (
 HSTS = "max-age=31536000; includeSubDomains"
 
 PRIVATE_PREFIXES = (
-    "/admin", "/cart", "/checkout", "/orders", "/documents", "/login", "/register",
+    "/admin", "/cart", "/checkout", "/orders", "/documents", "/login", "/register", "/search",
 )
 def register_security_headers(app):
     @app.after_request

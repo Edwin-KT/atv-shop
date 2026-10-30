@@ -26,7 +26,8 @@ def robots():
         "Disallow: /orders",
         "Disallow: /documents",
         "Disallow: /login",
-        "Disallow: /register",
+        "Disallow: /register"
+        "Disallow: /search",
         "",
         f"Sitemap: {site}/sitemap.xml",
         "",

@@ -1,0 +1,13 @@
+{% extends "base.html" %} {% block title %}Search - ATV & Enduro Shop{% endblock
+%} {% block content %}
+<h1 class="mb-3">Search</h1>
+
+{% if q %}
+<p class="text-muted mb-4">
+  {{ products|length }} result{{ '' if products|length == 1 else 's' }} for
+  &ldquo;{{ q }}&rdquo;
+</p>
+{% with empty_message='No products match your search.' %} {% include
+"_product_grid.html" %} {% endwith %} {% else %}
+<p class="text-muted">Type a product name in the search box.</p>
+{% endif %} {% endblock %}

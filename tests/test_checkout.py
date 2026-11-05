@@ -390,3 +390,55 @@ def test_session_id_format_accepts_stripe_ids(session_id):
 )
 def test_session_id_format_rejects_anything_else(session_id):
     assert not _valid_session_id(session_id)
+
+
+# --- order status after payment, as the customer sees it ---
+
+def paid_and_set_status(app, client, status):
+    """Checkout, pay at the (fake) provider, return to the shop, then move the order on."""
+    register_and_login(client)
+    checkout_gear(app, client)
+    session_id = last_session_id(app)
+    gateway(app).mark_paid(session_id)
+    client.get(f"/checkout/success?session_id={session_id}")
+    with app.app_context():
+        from app.extensions import db
+
+        Order.query.one().status = status
+        db.session.commit()
+    return session_id
+
+
+@pytest.mark.parametrize(
+    "status, label",
+    [("processing", "Processing"), ("shipped", "Shipped"), ("delivered", "Delivered")],
+)
+def test_orders_page_shows_the_fulfilment_status(app, client, status, label):
+    paid_and_set_status(app, client, status)
+
+    html = client.get("/orders").get_data(as_text=True)
+
+    assert f">{label}</span" in html
+    assert "Cancel order" not in html
+
+
+def test_success_page_for_a_shipped_order_still_says_paid(app, client):
+    session_id = paid_and_set_status(app, client, "shipped")
+
+    response = client.get(f"/checkout/success?session_id={session_id}")
+
+    assert b"Thank you for your order" in response.data
+    with app.app_context():
+        assert Order.query.one().status == "shipped"  # not reset to "paid"
+        events = [e.event_type for e in AuditLog.query.all()]
+        assert events.count("order_paid") == 1
+
+
+def test_shipped_order_cannot_be_cancelled_and_keeps_stock(app, client):
+    paid_and_set_status(app, client, "shipped")
+
+    client.post("/orders/1/cancel")
+
+    assert stock(app, "enduro-helmet-pro") == 19
+    with app.app_context():
+        assert Order.query.one().status == "shipped"

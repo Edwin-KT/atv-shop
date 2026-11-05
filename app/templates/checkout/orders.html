@@ -9,13 +9,7 @@ endblock %} {% block content %}
       >Order #{{ order.id }} &middot; {{ order.created_at.strftime('%Y-%m-%d
       %H:%M') }}</span
     >
-    {% if order.status == 'paid' %}
-    <span class="badge text-bg-success">Paid</span>
-    {% elif order.status == 'pending' %}
-    <span class="badge text-bg-warning">Awaiting payment</span>
-    {% else %}
-    <span class="badge text-bg-secondary">Cancelled</span>
-    {% endif %}
+    {% include "_order_status.html" %}
   </div>
   <ul class="list-group list-group-flush">
     {% for item in order.items %}

@@ -15,7 +15,6 @@ from flask_login import current_user, login_required
 from app.exceptions import OutOfStockError, PaymentError
 from app.extensions import db, limiter
 from app.models import Order, SecureDocument
-from app.models.order import STATUS_PAID
 from app.money import format_price
 from app.services.audit import record_event
 from app.services.cart import cart_total_cents, clear_cart, get_cart_lines
@@ -112,7 +111,7 @@ def success():
     if order is None:
         abort(404)
 
-    was_paid = order.status == STATUS_PAID
+    was_paid = order.is_paid
     try:
         paid = confirm_payment(order, _gateway())
     except PaymentError as exc:

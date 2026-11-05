@@ -1,0 +1,12 @@
+{# Status badge for an order; used on "My orders" and on /admin/orders. #}
+{% set badge_classes = {
+  'pending': 'text-bg-warning',
+  'paid': 'text-bg-success',
+  'processing': 'text-bg-info',
+  'shipped': 'text-bg-primary',
+  'delivered': 'text-bg-dark',
+  'cancelled': 'text-bg-secondary',
+} %}
+<span class="badge {{ badge_classes.get(order.status, 'text-bg-secondary') }}"
+  >{{ order.status_label }}</span
+>

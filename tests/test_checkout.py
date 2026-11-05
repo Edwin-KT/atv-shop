@@ -1,3 +1,4 @@
+import re
 import uuid
 
 import pytest
@@ -442,3 +443,50 @@ def test_shipped_order_cannot_be_cancelled_and_keeps_stock(app, client):
     assert stock(app, "enduro-helmet-pro") == 19
     with app.app_context():
         assert Order.query.one().status == "shipped"
+
+
+# --- cancel page (Stripe's cancel_url) shows the order's real status ---
+
+def cancel_page(client, order_id=1):
+    return client.get(f"/checkout/cancel/{order_id}").get_data(as_text=True)
+
+
+def test_cancel_page_for_a_pending_order_offers_to_cancel(app, client):
+    register_and_login(client)
+    checkout_gear(app, client)
+    html = cancel_page(client)
+
+    assert "Payment cancelled" in html
+    assert "was not paid" in html
+    assert 'action="/orders/1/cancel"' in html
+    assert 'class="checkout-steps"' in html
+
+
+def test_cancel_page_for_a_paid_order_says_it_is_paid(app, client):
+    paid_and_set_status(app, client, "paid")
+    html = cancel_page(client)
+
+    assert "This order is already paid" in html
+    assert re.search(r'href="/orders"\s*>My orders</a>', html)
+    assert "was not paid" not in html
+    assert "Cancel order" not in html
+    assert 'class="checkout-steps"' not in html
+
+
+def test_cancel_page_for_a_shipped_order_also_says_it_is_paid(app, client):
+    paid_and_set_status(app, client, "shipped")
+
+    assert "This order is already paid" in cancel_page(client)
+
+
+def test_cancel_page_for_a_cancelled_order_says_it_was_cancelled(app, client):
+    register_and_login(client)
+    checkout_gear(app, client)
+    client.post("/orders/1/cancel")
+    html = cancel_page(client)
+
+    assert "Order cancelled" in html
+    assert "back in stock" in html
+    assert "was not paid" not in html
+    assert "Cancel order" not in html
+    assert 'class="checkout-steps"' not in html

@@ -1,16 +1,30 @@
 {% extends "base.html" %} {% from "_checkout_steps.html" import checkout_steps
-%} {% set own_panels = true %} {% block title %}Payment cancelled - ATV & Enduro
-Shop{% endblock %} {% block content %} {% if order.status == 'pending' %}{{
-checkout_steps("payment") }}{% endif %}
-
+%} {% set own_panels = true %} {% block title %}{{ "Payment cancelled" if
+order.status == "pending" else "Order " ~ order.id }} - ATV & Enduro Shop{%
+endblock %} {% block content %}
+{# Stripe sends the customer here when they leave its payment page; the link can
+   also be opened again later, so the page always shows the order's real status. #}
+{% if order.is_paid %}
+<section class="panel checkout-result">
+  <h1>This order is already paid</h1>
+  <p>Order #{{ order.id }} is paid. You can follow its status in My orders.</p>
+  <a class="btn btn-primary" href="{{ url_for('checkout.orders') }}">My orders</a>
+</section>
+{% elif order.status == "cancelled" %}
+<section class="panel checkout-result">
+  <h1>Order cancelled</h1>
+  <p>Order #{{ order.id }} was cancelled and its items are back in stock.</p>
+  <a class="btn btn-primary" href="{{ url_for('main.index') }}"
+    >Back to the shop</a
+  >
+</section>
+{% else %} {{ checkout_steps("payment") }}
 <section class="panel checkout-result">
   <h1>Payment cancelled</h1>
   <p>
     Order #{{ order.id }} was not paid. The items stay reserved until you cancel
     the order.
   </p>
-
-  {% if order.status == 'pending' %}
   <form
     method="post"
     action="{{ url_for('checkout.cancel', order_id=order.id) }}"
@@ -22,6 +36,5 @@ checkout_steps("payment") }}{% endif %}
       >Back to cart</a
     >
   </form>
-  {% endif %}
 </section>
-{% endblock %}
+{% endif %} {% endblock %}

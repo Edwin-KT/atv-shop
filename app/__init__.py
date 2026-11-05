@@ -7,6 +7,7 @@ from app.access_log import configure_access_log
 from app.config import Config
 from app.extensions import csrf, db, limiter, login_manager
 from app.logging_config import configure_logging
+from app.security import reject_nul_bytes
 from app.security_headers import register_security_headers
 
 
@@ -25,6 +26,7 @@ def create_app(test_config=None):
     csrf.init_app(app)
     login_manager.init_app(app)
     limiter.init_app(app)
+    app.before_request(reject_nul_bytes)
 
     from app.services.stripe_gateway import StripeGateway
 
@@ -87,6 +89,18 @@ def create_app(test_config=None):
 
     app.jinja_env.globals["product_image_url"] = product_image_path
     app.extensions["product_image_path"] = product_image_path
+
+    @app.errorhandler(400)
+    def bad_request(error):
+        # Also used for missing or invalid CSRF tokens, so the message stays general.
+        return (
+            render_template(
+                "error.html",
+                title="Bad request",
+                message="The request could not be processed. Please go back and try again.",
+            ),
+            400,
+        )
 
     @app.errorhandler(404)
     def not_found(error):

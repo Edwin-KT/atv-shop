@@ -1,3 +1,5 @@
+import re
+
 from flask import (
     Blueprint,
     abort,
@@ -20,6 +22,14 @@ from app.services.cart import cart_total_cents, clear_cart, get_cart_lines
 from app.services.orders import cancel_order, confirm_payment, create_order, start_payment
 
 bp = Blueprint("checkout", __name__)
+
+# Stripe Checkout session ids look like "cs_test_a1B2..." or "cs_live_...".
+_SESSION_ID = re.compile(r"cs_[A-Za-z0-9_]{1,250}")
+
+
+def _valid_session_id(session_id: str) -> bool:
+    """Extra defence: only well-formed ids ever reach the database query."""
+    return bool(_SESSION_ID.fullmatch(session_id))
 
 
 def _gateway():
@@ -95,7 +105,7 @@ def start():
 def success():
     session_id = request.args.get("session_id", "")
     order = None
-    if session_id:
+    if _valid_session_id(session_id):
         order = Order.query.filter_by(
             stripe_session_id=session_id, user_id=current_user.id
         ).first()

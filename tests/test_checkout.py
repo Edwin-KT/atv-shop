@@ -1,6 +1,10 @@
 import uuid
 
+import pytest
+
+from app.exceptions import PaymentError
 from app.models import AuditLog, Order, Product, SecureDocument, User
+from app.routes.checkout import _valid_session_id
 from app.seed import seed_products
 from app.services.users import create_admin
 
@@ -302,3 +306,87 @@ def test_vehicle_checkout_works_without_a_document(app, client):
     assert response.status_code == 303
     with app.app_context():
         assert Order.query.one().document_id is None 
+
+# --- success page: ownership, refresh, provider errors, session id format ---
+
+def count_payment_checks(monkeypatch, app):
+    """Wrap the fake gateway so the test can see how often Stripe would be asked."""
+    fake = gateway(app)
+    calls = []
+    original = fake.get_payment_result
+
+    def spy(session_id):
+        calls.append(session_id)
+        return original(session_id)
+
+    monkeypatch.setattr(fake, "get_payment_result", spy)
+    return calls
+
+
+def test_other_user_opening_my_success_link_changes_nothing(app, client, monkeypatch):
+    register_and_login(client)
+    checkout_gear(app, client)
+    session_id = last_session_id(app)
+    gateway(app).mark_paid(session_id)  # paid at Stripe, owner has not returned yet
+    calls = count_payment_checks(monkeypatch, app)
+    intruder = register_and_login(app.test_client(), "ion@gmail.com")
+
+    response = intruder.get(f"/checkout/success?session_id={session_id}")
+
+    assert response.status_code == 404
+    assert calls == []
+    with app.app_context():
+        assert Order.query.one().status == "pending"
+        assert "order_paid" not in [e.event_type for e in AuditLog.query.all()]
+
+
+def test_refreshing_the_success_page_keeps_stock_and_paid_at(app, client, monkeypatch):
+    register_and_login(client)
+    checkout_gear(app, client)
+    session_id = last_session_id(app)
+    gateway(app).mark_paid(session_id)
+    calls = count_payment_checks(monkeypatch, app)
+
+    assert client.get(f"/checkout/success?session_id={session_id}").status_code == 200
+    with app.app_context():
+        first_paid_at = Order.query.one().paid_at
+    assert client.get(f"/checkout/success?session_id={session_id}").status_code == 200
+
+    assert stock(app, "enduro-helmet-pro") == 19  # reserved once, at checkout
+    assert len(calls) == 1  # an already paid order is not checked again
+    with app.app_context():
+        order = Order.query.one()
+        assert order.status == "paid"
+        assert order.paid_at == first_paid_at
+
+
+def test_provider_error_on_success_redirects_to_orders(app, client, monkeypatch):
+    register_and_login(client)
+    checkout_gear(app, client)
+    session_id = last_session_id(app)
+
+    def provider_down(_session_id):
+        raise PaymentError("Stripe is down")
+
+    monkeypatch.setattr(gateway(app), "get_payment_result", provider_down)
+
+    response = client.get(f"/checkout/success?session_id={session_id}")
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/orders")
+    with app.app_context():
+        assert Order.query.one().status == "pending"
+        assert "payment_check_failed" in [e.event_type for e in AuditLog.query.all()]
+
+
+@pytest.mark.parametrize("session_id", ["cs_test_a1B2", "cs_live_x", "cs_fake_1"])
+def test_session_id_format_accepts_stripe_ids(session_id):
+    assert _valid_session_id(session_id)
+
+
+@pytest.mark.parametrize(
+    "session_id",
+    ["", "cs_", "\x00", "cs_fake_1\x00", "' OR 1=1 --", "{CHECKOUT_SESSION_ID}", "cs_" + "a" * 300],
+)
+def test_session_id_format_rejects_anything_else(session_id):
+    assert not _valid_session_id(session_id)

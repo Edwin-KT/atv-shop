@@ -1,48 +1,55 @@
-/* Layout: page structure (top bar, navbar, category row, main area, footer). */
+/* Layout: page structure (utility bar, header, segment tabs, main area, footer). */
 
 main {
   flex: 1;
-  padding-top: 2rem;
+  padding-top: var(--space-6);
 }
 
-/* ---------- top bar ---------- */
+/* ---------- utility bar (desktop): black strip with the account links ---------- */
 
-.topbar {
+.utility-bar {
   background-color: var(--color-ink);
-  color: #c9c9cf;
-  font-size: 0.75rem;
+  color: #d4d3cf;
+  font-size: var(--text-label);
 }
 
-.topbar-inner {
+.utility-inner {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
-  padding-top: 0.45rem;
-  padding-bottom: 0.45rem;
+  gap: var(--space-4);
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-2);
 }
 
-.topbar-links {
+.utility-bar .account-links a,
+.utility-bar .link-button {
+  color: #ffffff;
+}
+
+.account-links {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 1rem;
-  margin-left: auto;
+  gap: var(--space-5);
 }
 
-.topbar a,
+.account-links form {
+  margin: 0;
+}
+
+.account-links a,
 .link-button {
-  color: #ffffff;
   text-decoration: none;
 }
 
-.topbar a:hover,
+.account-links a:hover,
 .link-button:hover {
   text-decoration: underline;
 }
 
-.topbar-admin {
-  color: var(--color-accent-light) !important;
+.account-links .account-admin {
+  color: var(--color-accent-light);
   font-weight: 700;
 }
 
@@ -50,111 +57,240 @@ main {
   padding: 0;
   border: 0;
   background: none;
+  color: inherit;
   font: inherit;
   cursor: pointer;
 }
 
-/* ---------- main navbar ---------- */
+/* ---------- header: wordmark, tabs, search, icons ---------- */
 
-.site-nav {
-  padding: 0.85rem 0;
+.site-header {
   background-color: var(--color-surface);
-  border-bottom: 1px solid var(--color-line);
+  border-bottom: var(--border-thin);
 }
 
-.site-nav .navbar-brand {
+/* Phone and tablet: burger + wordmark + icons, then search, then scrolling tabs. */
+.header-main {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "burger brand icons"
+    "search search search"
+    "tabs tabs tabs"
+    "menu menu menu";
+  align-items: center;
+  column-gap: var(--space-4);
+  row-gap: var(--space-3);
+  padding-top: var(--space-3);
+}
+
+.header-burger {
+  grid-area: burger;
+  padding: var(--space-2);
+  border: 0;
   color: var(--color-ink);
-  font-size: 1.2rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
-.brand-accent {
-  color: var(--color-accent);
-}
-
-.search-form {
-  display: flex;
-  width: 100%;
-  max-width: 32rem;
-}
-
-.search-form .form-control {
-  border-right: 0;
-  border-radius: var(--radius) 0 0 var(--radius);
-}
-
-.search-form .btn {
-  border-radius: 0 var(--radius) var(--radius) 0;
-}
-
-/* The cart counter keeps Bootstrap's "text-bg-light" class (a test checks it),
-   but is restyled here. !important is needed to beat Bootstrap's own !important. */
-.site-nav .badge {
-  background-color: var(--color-accent-dark) !important;
-  color: #ffffff !important;
-}
-
-/* ---------- category row ---------- */
-
-.category-nav {
-  background-color: var(--color-surface);
-  border-bottom: 1px solid var(--color-line);
-}
-
-.category-nav .container {
-  display: flex;
-  gap: 1.75rem;
-  overflow-x: auto;
+.wordmark {
+  grid-area: brand;
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  text-decoration: none;
   white-space: nowrap;
 }
 
-.category-nav a {
-  padding: 0.7rem 0 0.55rem;
-  border-bottom: 0.2rem solid transparent;
+.wordmark:hover {
   color: var(--color-ink);
-  font-size: 0.8rem;
+}
+
+.wordmark-amp {
+  color: var(--color-accent);
+}
+
+.segment-tabs {
+  grid-area: tabs;
+  display: flex;
+  gap: var(--space-5);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.segment-tabs a {
+  position: relative;
+  padding: var(--space-2) 0 var(--space-3);
+  border-bottom: 2px solid transparent;
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  font-size: 1.125rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.02em;
   text-decoration: none;
   text-transform: uppercase;
+  white-space: nowrap;
+  transition: border-color var(--motion-fast);
 }
 
-.category-nav a:hover,
-.category-nav a.is-active {
-  border-bottom-color: var(--color-accent);
+.segment-tabs a:hover {
+  border-bottom-color: var(--color-ink);
 }
 
-/* ---------- footer ---------- */
+/* The active tab carries the livery stripe (use 1 of max 3 per page). */
+.segment-tabs a.is-active {
+  border-bottom-color: transparent;
+}
+
+.segment-tabs a.is-active::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -2px;
+  left: 0;
+  height: 4px;
+  background: var(--livery);
+}
+
+.header-search {
+  grid-area: search;
+  display: flex;
+  width: 100%;
+}
+
+.header-search .form-control {
+  height: 3rem;
+  border: 1px solid var(--color-line-strong);
+  border-right: 0;
+  border-radius: 0;
+}
+
+.header-search .form-control:focus {
+  border-color: var(--color-ink);
+  box-shadow: none;
+}
+
+.header-search .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0;
+}
+
+.header-icons {
+  grid-area: icons;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.header-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  color: var(--color-ink);
+}
+
+.header-icon:hover {
+  color: var(--color-accent-dark);
+}
+
+/* Cart count as a mini number plate. It keeps Bootstrap's "text-bg-light" class
+   (a test checks it); !important is needed to beat Bootstrap's own !important. */
+.cart-count {
+  position: absolute;
+  top: 0.1rem;
+  right: -0.1rem;
+  min-width: 1.35rem;
+  padding: 0.15rem 0.25rem 0.05rem;
+  border: 2px solid var(--color-ink);
+  border-radius: 0;
+  background-color: var(--color-surface) !important;
+  color: var(--color-ink) !important;
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  line-height: 1;
+}
+
+/* Phone/tablet account menu, opened by the burger. */
+.header-menu {
+  grid-area: menu;
+}
+
+.header-menu .account-links {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4) 0;
+  border-top: var(--border-thin);
+}
+
+.header-menu .account-links a,
+.header-menu .link-button {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+.account-email {
+  color: var(--color-muted);
+}
+
+.utility-bar .account-email {
+  color: #d4d3cf;
+}
+
+/* ---------- footer: black, trail-map contours, livery top edge ---------- */
 
 .site-footer {
-  margin-top: 4rem;
-  padding: 2.5rem 0 1.5rem;
+  margin-top: var(--space-8);
+  padding-bottom: var(--space-5);
   background-color: var(--color-ink);
-  color: #c9c9cf;
-  font-size: 0.9rem;
+  background-image: url("../img/patterns/contour.svg");
+  color: #c9c8c4;
+  font-size: var(--text-small);
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+  padding-top: var(--space-8);
+}
+
+.site-footer .wordmark {
+  color: #ffffff;
+}
+
+.footer-brand p {
+  max-width: 22rem;
+  margin: var(--space-4) 0 0;
 }
 
 .site-footer h2 {
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--space-3);
   color: #ffffff;
-  font-size: 0.85rem;
-  letter-spacing: 0.1em;
+  font-size: 1.125rem;
+  letter-spacing: 0.04em;
 }
 
-.footer-links {
+.footer-list {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.footer-links li {
-  margin-bottom: 0.35rem;
+.footer-list li {
+  margin-bottom: var(--space-2);
 }
 
 .site-footer a {
-  color: #c9c9cf;
+  color: #c9c8c4;
   text-decoration: none;
 }
 
@@ -163,36 +299,76 @@ main {
   text-decoration: underline;
 }
 
+.footer-facts li {
+  max-width: 18rem;
+}
+
 .footer-note {
-  margin: 2rem 0 0;
-  padding-top: 1rem;
+  margin: var(--space-7) 0 0;
+  padding-top: var(--space-4);
   border-top: 1px solid #3a3836;
-  font-size: 0.8rem;
+  font-size: var(--text-label);
 }
 
 /* ---------- responsive ---------- */
 
-/* Tablet and smaller: the search sits in the collapsed menu. */
-@media (max-width: 991.98px) {
-  .search-form {
-    max-width: none;
-  }
-}
-
-/* Tablet range. */
-@media (min-width: 768px) and (max-width: 991.98px) {
-  .category-nav .container {
-    gap: 2.25rem;
-  }
-}
-
-/* Phone. */
+/* Phone: footer columns stack; the brand line is easier to read full width. */
 @media (max-width: 575.98px) {
-  .topbar-links {
-    gap: 0.85rem;
+  .wordmark {
+    font-size: 1.5rem;
+  }
+}
+
+/* Tablet: two footer columns. */
+@media (min-width: 576px) and (max-width: 991.98px) {
+  .footer-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Desktop: wordmark, search and icons in one row, tabs below. */
+@media (min-width: 992px) {
+  .header-main {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "brand search icons"
+      "tabs tabs tabs";
+    column-gap: var(--space-6);
+    padding-top: var(--space-4);
   }
 
-  .site-footer {
-    text-align: center;
+  .header-search {
+    max-width: 36rem;
+    justify-self: center;
+  }
+
+  .footer-grid {
+    grid-template-columns: 2fr 1fr 1fr 1.5fr;
+  }
+}
+
+/* Wide desktop: everything in one row, like a race-team header. */
+@media (min-width: 1200px) {
+  .header-main {
+    grid-template-columns: auto auto minmax(14rem, 1fr) auto;
+    grid-template-areas: "brand tabs search icons";
+    padding-top: var(--space-4);
+  }
+
+  .segment-tabs {
+    align-self: end;
+  }
+
+  .header-search {
+    justify-self: end;
+    padding-bottom: var(--space-3);
+  }
+
+  .header-icons {
+    padding-bottom: var(--space-3);
+  }
+
+  .wordmark {
+    padding-bottom: var(--space-3);
   }
 }

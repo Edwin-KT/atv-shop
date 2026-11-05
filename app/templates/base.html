@@ -50,102 +50,121 @@
     />
   </head>
   <body{% if not bare %} class="page-grey"{% endif %}>
-    <div class="topbar">
-      <div class="container topbar-inner">
-        <span class="d-none d-sm-inline">Ride hard. Ride safe.</span>
-        <div class="topbar-links">
-          {% if current_user.is_authenticated %}
-          <a href="{{ url_for('documents.list_documents') }}">Documents</a>
-          <a href="{{ url_for('checkout.orders') }}">Orders</a>
-          {% if current_user.is_admin %}
-          <a class="topbar-admin" href="{{ url_for('admin.dashboard') }}"
-            >Admin</a
-          >
-          {% endif %}
-          <span class="d-none d-md-inline">{{ current_user.email }}</span>
-          <form
-            method="post"
-            action="{{ url_for('auth.logout') }}"
-            class="d-inline"
-          >
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            <button class="link-button" type="submit">Logout</button>
-          </form>
-          {% else %}
-          <a href="{{ url_for('auth.login') }}">Login</a>
-          <a href="{{ url_for('auth.register') }}">Register</a>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-
-    <nav class="navbar navbar-expand-lg site-nav">
-      <div class="container">
-        <a class="navbar-brand" href="{{ url_for('main.index') }}"
-          >ATV <span class="brand-accent">&amp;</span> Enduro Shop</a
-        >
-
-        <div class="d-flex align-items-center gap-2 order-lg-3">
-          <a
-            class="btn btn-outline-dark btn-sm"
-            href="{{ url_for('cart.view_cart') }}"
-            >Cart
-            <span class="badge text-bg-light">{{ cart_item_count }}</span></a
-          >
-          <button
-            class="navbar-toggler"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#mainMenu"
-            aria-controls="mainMenu"
-            aria-expanded="false"
-            aria-label="Toggle search"
-          >
-            <span class="navbar-toggler-icon"></span>
-          </button>
-        </div>
-
-        <div class="collapse navbar-collapse order-lg-2" id="mainMenu">
-          <form
-            class="search-form ms-lg-5 mt-3 mt-lg-0"
-            action="{{ url_for('main.search') }}"
-            method="get"
-            role="search"
-          >
-            <input
-              class="form-control"
-              type="search"
-              name="q"
-              maxlength="60"
-              required
-              placeholder="Search products"
-              aria-label="Search products"
-              value="{{ request.args.get('q', '') if request.endpoint == 'main.search' else '' }}"
-            />
-            <button class="btn btn-dark" type="submit">Search</button>
-          </form>
-        </div>
-      </div>
-    </nav>
-
+    {% from "_icons.html" import icon %}
     {% set current_category = (request.view_args or {}).get('key') if
     request.endpoint == 'main.category' else None %}
-    <div class="category-nav">
-      <div class="container">
-        <a
-          href="{{ url_for('main.index') }}"
-          class="{{ 'is-active' if request.endpoint == 'main.index' }}"
-          >All</a
-        >
-        {% for key, label in nav_categories %}
-        <a
-          href="{{ url_for('main.category', key=key) }}"
-          class="{{ 'is-active' if current_category == key }}"
-          >{{ label }}</a
-        >
-        {% endfor %}
+    {% macro account_links() %}
+    {% if current_user.is_authenticated %}
+    <a href="{{ url_for('checkout.orders') }}">Order status</a>
+    <a href="{{ url_for('documents.list_documents') }}">Documents</a>
+    {% if current_user.is_admin %}
+    <a class="account-admin" href="{{ url_for('admin.dashboard') }}">Admin</a>
+    {% endif %}
+    <span class="account-email">{{ current_user.email }}</span>
+    <form method="post" action="{{ url_for('auth.logout') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <button class="link-button" type="submit">Logout</button>
+    </form>
+    {% else %}
+    <a href="{{ url_for('auth.login') }}">Login</a>
+    <a href="{{ url_for('auth.register') }}">Register</a>
+    {% endif %}
+    {% endmacro %}
+
+    <header class="site-header">
+      <div class="utility-bar d-none d-lg-block">
+        <div class="container utility-inner">
+          <span>Enduro bikes, ATVs and riding gear</span>
+          <nav class="account-links" aria-label="Account">
+            {{ account_links() }}
+          </nav>
+        </div>
       </div>
-    </div>
+
+      <div class="container header-main">
+        <button
+          class="navbar-toggler header-burger d-lg-none"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#siteMenu"
+          aria-controls="siteMenu"
+          aria-expanded="false"
+          aria-label="Open account menu"
+        >
+          {{ icon("list", 24) }}
+        </button>
+
+        <a
+          class="wordmark"
+          href="{{ url_for('main.index') }}"
+          aria-label="ATV &amp; Enduro Shop, home"
+          >ATV<span class="wordmark-amp">&amp;</span>ENDURO</a
+        >
+
+        <nav class="segment-tabs" aria-label="Categories">
+          <a
+            href="{{ url_for('main.index') }}"
+            class="{{ 'is-active' if request.endpoint == 'main.index' }}"
+            {% if request.endpoint == 'main.index' %}aria-current="page"{% endif %}
+            >All</a
+          >
+          {% for key, label in nav_categories %}
+          <a
+            href="{{ url_for('main.category', key=key) }}"
+            class="{{ 'is-active' if current_category == key }}"
+            {% if current_category == key %}aria-current="page"{% endif %}
+            >{{ label }}</a
+          >
+          {% endfor %}
+        </nav>
+
+        <form
+          class="header-search"
+          action="{{ url_for('main.search') }}"
+          method="get"
+          role="search"
+        >
+          <label class="visually-hidden" for="site-search">Search products</label>
+          <input
+            id="site-search"
+            class="form-control"
+            type="search"
+            name="q"
+            maxlength="60"
+            required
+            placeholder="Search bikes, ATVs and gear"
+            value="{{ request.args.get('q', '') if request.endpoint == 'main.search' else '' }}"
+          />
+          <button class="btn btn-dark" type="submit" aria-label="Search">
+            {{ icon("search", 18) }}
+          </button>
+        </form>
+
+        <div class="header-icons">
+          {% if current_user.is_authenticated %}
+          <a class="header-icon" href="{{ url_for('checkout.orders') }}" aria-label="My orders"
+            >{{ icon("person", 22) }}</a
+          >
+          {% else %}
+          <a class="header-icon" href="{{ url_for('auth.login') }}" aria-label="Login"
+            >{{ icon("person", 22) }}</a
+          >
+          {% endif %}
+          <a
+            class="header-icon"
+            href="{{ url_for('cart.view_cart') }}"
+            aria-label="Cart, {{ cart_item_count }} item{{ '' if cart_item_count == 1 else 's' }}"
+            >{{ icon("bag", 22) }}{% if cart_item_count %}<span class="badge cart-count text-bg-light">{{ cart_item_count }}</span>{% endif %}</a
+          >
+        </div>
+
+        <div class="collapse header-menu d-lg-none" id="siteMenu">
+          <nav class="account-links" aria-label="Account menu">
+            {{ account_links() }}
+          </nav>
+        </div>
+      </div>
+    </header>
 
     {% block hero %}{% endblock %}
 
@@ -158,46 +177,46 @@
     </main>
 
     <footer class="site-footer">
-      <div class="container">
-        <div class="row g-4">
-          <div class="col-sm-12 col-lg-5">
-            <h2>ATV &amp; Enduro Shop</h2>
-            <p class="mb-0">
-              Off-road vehicles and riding gear for trail, forest and farm.
-            </p>
-          </div>
-          <div class="col-6 col-lg-3">
-            <h2>Shop</h2>
-            <ul class="footer-links">
-              {% for key, label in nav_categories %}
-              <li>
-                <a href="{{ url_for('main.category', key=key) }}"
-                  >{{ label }}</a
-                >
-              </li>
-              {% endfor %}
-            </ul>
-          </div>
-          <div class="col-6 col-lg-4">
-            <h2>Account</h2>
-            <ul class="footer-links">
-              <li><a href="{{ url_for('cart.view_cart') }}">Cart</a></li>
-              {% if current_user.is_authenticated %}
-              <li><a href="{{ url_for('checkout.orders') }}">My orders</a></li>
-              <li>
-                <a href="{{ url_for('documents.list_documents') }}"
-                  >My documents</a
-                >
-              </li>
-              {% else %}
-              <li><a href="{{ url_for('auth.login') }}">Login</a></li>
-              <li>
-                <a href="{{ url_for('auth.register') }}">Create account</a>
-              </li>
-              {% endif %}
-            </ul>
-          </div>
+      <span class="livery" aria-hidden="true"></span>
+      <div class="container footer-grid">
+        <div class="footer-brand">
+          <a class="wordmark" href="{{ url_for('main.index') }}" aria-label="ATV &amp; Enduro Shop, home"
+            >ATV<span class="wordmark-amp">&amp;</span>ENDURO</a
+          >
+          <p>Enduro bikes, ATVs and riding gear for trail, forest and farm.</p>
         </div>
+        <div>
+          <h2>Shop</h2>
+          <ul class="footer-list">
+            <li><a href="{{ url_for('main.index') }}">All products</a></li>
+            {% for key, label in nav_categories %}
+            <li><a href="{{ url_for('main.category', key=key) }}">{{ label }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+        <div>
+          <h2>Account</h2>
+          <ul class="footer-list">
+            <li><a href="{{ url_for('cart.view_cart') }}">Cart</a></li>
+            {% if current_user.is_authenticated %}
+            <li><a href="{{ url_for('checkout.orders') }}">My orders</a></li>
+            <li><a href="{{ url_for('documents.list_documents') }}">My documents</a></li>
+            {% else %}
+            <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+            <li><a href="{{ url_for('auth.register') }}">Create account</a></li>
+            {% endif %}
+          </ul>
+        </div>
+        <div>
+          <h2>Paying &amp; delivery</h2>
+          <ul class="footer-list footer-facts">
+            <li>Card payment on Stripe's secure page.</li>
+            <li>Unpaid orders can be cancelled from My orders.</li>
+            <li>Each order shows its status: paid, processing, shipped, delivered.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="container">
         <p class="footer-note">&copy; ATV &amp; Enduro Shop</p>
       </div>
     </footer>

@@ -103,17 +103,6 @@ main h1::after {
   left: 125%;
 }
 
-.site-nav .btn {
-  transition:
-    background-color 0.15s ease,
-    color 0.15s ease,
-    transform 0.15s ease;
-}
-
-.site-nav .btn:hover {
-  transform: translateY(-1px);
-}
-
 /* ---------- respect the user's system setting ---------- */
 
 @media (prefers-reduced-motion: reduce) {

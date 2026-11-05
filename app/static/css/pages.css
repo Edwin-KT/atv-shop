@@ -176,114 +176,245 @@
   }
 }
 
-/* ---------- home page: category tiles ---------- */
+/* ---------- home: campaign banner (full bleed, bottom edge cut at ~3 degrees) ---------- */
+
+.hero-banner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  height: clamp(28rem, 62vw, 42rem);
+  overflow: hidden;
+  background-color: var(--color-ink);
+  color: #ffffff;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 5vw), 0 100%);
+}
+
+.hero-banner-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 62% 58%;
+}
+
+/* Ink from the left (and the bottom) keeps the white title readable on the photo. */
+.hero-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(26, 25, 24, 0.9) 0%,
+      rgba(26, 25, 24, 0.62) 40%,
+      rgba(26, 25, 24, 0) 70%
+    ),
+    linear-gradient(0deg, rgba(26, 25, 24, 0.6) 0%, rgba(26, 25, 24, 0) 50%);
+}
+
+.hero-banner-content {
+  position: relative;
+  z-index: 2;
+  padding-bottom: calc(var(--space-7) + 5vw);
+}
+
+.hero-banner-title {
+  max-width: 9ch;
+  margin: 0 0 var(--space-4);
+  color: #ffffff;
+  font-size: var(--text-hero);
+  line-height: 0.9;
+}
+
+.hero-banner-text {
+  max-width: 32rem;
+  margin: 0 0 var(--space-5);
+  color: #ecebe7;
+  font-size: 1.125rem;
+}
+
+.hero-banner-cta {
+  border-radius: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* ---------- home: featured vehicles (the image carousel) as a dark band ---------- */
+
+.featured-band {
+  position: relative;
+  /* Slides up under the banner's slanted edge, so the cut shows this band. */
+  margin-top: -5vw;
+  padding: calc(5vw + var(--space-7)) 0 var(--space-8);
+  background-color: var(--color-ink);
+  background-image: url("../img/patterns/contour.svg");
+  color: #ffffff;
+}
+
+.featured-title {
+  margin-bottom: var(--space-6);
+  color: #ffffff;
+}
+
+.featured-photo {
+  max-width: 26rem;
+  background-color: var(--color-tile);
+}
+
+.featured-photo img {
+  mix-blend-mode: multiply;
+}
+
+.featured-name {
+  margin-bottom: var(--space-3);
+  color: #ffffff;
+  font-size: clamp(2rem, 4.5vw, 3.25rem);
+}
+
+.featured-price {
+  margin-bottom: var(--space-4);
+  color: var(--color-accent);
+  font-size: clamp(2rem, 4vw, 2.75rem);
+}
+
+.featured-band .spec-line {
+  margin-bottom: var(--space-5);
+}
+
+.featured-band .spec {
+  border-color: #55524d;
+  color: #ecebe7;
+}
+
+.featured-band .btn-light {
+  border-radius: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.featured-band .carousel-indicators {
+  position: static;
+  justify-content: flex-start;
+  margin: var(--space-6) 0 0;
+}
+
+.featured-band .carousel-indicators [data-bs-target] {
+  width: 2rem;
+  height: 4px;
+  margin: 0 var(--space-2) 0 0;
+  border: 0;
+  background-color: #ffffff;
+}
+
+.featured-band .carousel-indicators .active {
+  background-color: var(--color-accent);
+}
+
+.featured-band .carousel-control-prev,
+.featured-band .carousel-control-next {
+  width: 4rem;
+}
+
+/* ---------- home: sections and category tiles ---------- */
+
+.home-section {
+  margin-bottom: var(--space-8);
+}
 
 .category-tile {
+  position: relative;
   display: block;
+  background-color: var(--color-tile);
   color: var(--color-ink);
   text-decoration: none;
 }
 
-.tile-image {
-  background-color: var(--color-tile);
-  overflow: hidden;
+/* Wide on phones, tall on larger screens. */
+.tile-ratio {
+  --bs-aspect-ratio: 56.25%;
 }
 
+/* Studio photos on white: multiply makes the white take the tile's dust colour. */
+.category-tile img {
+  padding: var(--space-5);
+  mix-blend-mode: multiply;
+}
+
+/* The label sits below the photo (not over it), so they can never overlap. */
 .category-tile-label {
-  display: inline-block;
-  margin-top: 0.6rem;
-  border-bottom: 0.15rem solid var(--color-ink);
-  font-size: 0.8rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  display: block;
+  padding: 0 var(--space-5) var(--space-5);
+}
+
+.category-tile-name {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
   text-transform: uppercase;
 }
 
-.category-tile:hover .category-tile-label {
-  border-bottom-color: var(--color-accent);
-}
-
-/* ---------- home page: hero carousel (dark, full width) ---------- */
-
-.hero {
-  background-color: var(--color-ink);
-  color: #ffffff;
-}
-
-.hero-slide {
-  margin: 0;
-  padding: 3rem 3.5rem 4rem;
-}
-
-.hero-kicker {
-  margin-bottom: 0.5rem;
-  color: var(--color-accent-light);
-  font-size: 0.8rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.hero-title {
-  color: #ffffff;
-  font-size: clamp(1.8rem, 5vw, 3.2rem);
-  line-height: 1.1;
-}
-
-.hero-summary {
-  color: #b9b9c0;
-}
-
-.hero-price {
-  margin-bottom: 1.5rem;
-  font-size: 1.6rem;
-  font-weight: 800;
-}
-
-.hero-photo {
-  max-width: 380px;
-  margin: 0 auto;
-  overflow: hidden;
-}
-
-.hero .carousel-control-prev,
-.hero .carousel-control-next {
-  width: 3.5rem;
-}
-
-.hero .carousel-indicators [data-bs-target] {
-  background-color: #ffffff;
-}
-
-.hero .carousel-indicators .active {
+/* An orange bar grows under the name on hover (motion answers the pointer). */
+.category-tile-name::after {
+  content: "";
+  display: block;
+  width: 3rem;
+  height: 4px;
+  margin-top: var(--space-2);
   background-color: var(--color-accent);
+  transform: scaleX(0);
+  transform-origin: left;
 }
 
-/* Tablet: slightly tighter hero so the photo does not dominate. */
+.category-tile:hover .category-tile-name::after,
+.category-tile:focus-visible .category-tile-name::after {
+  transform: scaleX(1);
+}
+
+.category-tile-count {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--color-muted);
+  font-size: var(--text-small);
+}
+
+/* Tablet: shorter banner, smaller featured photo. */
 @media (min-width: 768px) and (max-width: 991.98px) {
-  .hero-slide {
-    padding: 2.5rem 3rem 3.5rem;
-  }
-
-  .hero-photo {
-    max-width: 300px;
+  .featured-photo {
+    max-width: 20rem;
   }
 }
 
-/* Phone: photo above the text, centred. */
-@media (max-width: 767.98px) {
-  .hero-slide {
-    padding: 1.5rem 0.5rem 3.5rem;
-    text-align: center;
-  }
-
-  .hero-photo {
-    max-width: 260px;
+@media (min-width: 576px) {
+  .tile-ratio {
+    --bs-aspect-ratio: 100%;
   }
 }
 
+/* Phone: text sits at the bottom, so the ink gradient comes from below. */
 @media (max-width: 575.98px) {
-  .hero-price {
-    font-size: 1.3rem;
+  .hero-banner::before {
+    background: linear-gradient(
+      0deg,
+      rgba(26, 25, 24, 0.92) 0%,
+      rgba(26, 25, 24, 0.55) 55%,
+      rgba(26, 25, 24, 0.15) 100%
+    );
+  }
+
+  .hero-banner-text {
+    font-size: 1rem;
+  }
+
+  .featured-photo {
+    max-width: 16rem;
   }
 }

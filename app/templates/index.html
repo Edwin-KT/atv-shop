@@ -1,30 +1,51 @@
 {% extends "base.html" %} {% set bare = true %} {% block title %}ATV & Enduro
 Shop - ATVs, enduro bikes and riding gear{% endblock %} {% block
 meta_description %}Browse ATVs, enduro motorcycles, helmets, boots and gloves.
-Secure online checkout.{% endblock %} {% block hero %} {% include
+Secure online checkout.{% endblock %} {% block head_extra %}
+<link
+  rel="preload"
+  as="image"
+  href="{{ url_for('static', filename='img/hero/trail-1920.webp') }}"
+  imagesrcset="{{ url_for('static', filename='img/hero/trail-960.webp') }} 960w, {{ url_for('static', filename='img/hero/trail-1920.webp') }} 1920w"
+  imagesizes="100vw"
+  fetchpriority="high"
+/>
+{% endblock %} {% block hero %} {% include "_hero_banner.html" %} {% include
 "_hero_carousel.html" %} {% endblock %} {% block content %} {% if tiles %}
-<h2 class="section-title">Shop by category</h2>
-<div class="row row-cols-3 g-2 g-md-3 mb-5">
-  {% for tile in tiles %}
-  <div class="col">
-    <a
-      class="category-tile"
-      href="{{ url_for('main.category', key=tile.key) }}"
-    >
-      <div class="ratio ratio-1x1 tile-image">
-        <img
-          src="{{ product_image_url(tile.product) }}"
-          alt=""
-          class="object-fit-cover"
-          loading="lazy"
-        />
-      </div>
-      <span class="category-tile-label">{{ tile.label }}</span>
-    </a>
+<section class="home-section" aria-labelledby="categories-title">
+  <h2 id="categories-title" class="section-title">Shop by category</h2>
+  <div class="row row-cols-1 row-cols-sm-3 g-3">
+    {% for tile in tiles %}
+    <div class="col">
+      <a
+        class="category-tile"
+        href="{{ url_for('main.category', key=tile.key) }}"
+      >
+        <div class="ratio tile-ratio">
+          <img
+            src="{{ product_image_url(tile.product) }}"
+            alt=""
+            class="object-fit-contain"
+            width="600"
+            height="600"
+            loading="lazy"
+          />
+        </div>
+        <span class="category-tile-label">
+          <span class="category-tile-name">{{ tile.label }}</span>
+          <span class="category-tile-count"
+            >{{ tile.count }} product{{ '' if tile.count == 1 else 's' }}</span
+          >
+        </span>
+      </a>
+    </div>
+    {% endfor %}
   </div>
-  {% endfor %}
-</div>
+</section>
 {% endif %}
 
-<h1 class="mb-4">Catalog</h1>
-{% include "_product_grid.html" %} {% endblock %}
+<section class="home-section" aria-labelledby="catalog-title">
+  <h2 id="catalog-title" class="section-title">Catalog</h2>
+  {% include "_product_grid.html" %}
+</section>
+{% endblock %}

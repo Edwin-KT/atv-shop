@@ -38,9 +38,12 @@ def index():
 
     tiles = []
     for key, info in CATEGORIES.items():
-        sample = products_in_category(key).first()
+        query = products_in_category(key)
+        sample = query.first()
         if sample is not None:
-            tiles.append({"key": key, "label": info["label"], "product": sample})
+            tiles.append(
+                {"key": key, "label": info["label"], "product": sample, "count": query.count()}
+            )
 
     return render_template("index.html", products=products, featured=featured, tiles=tiles)
 

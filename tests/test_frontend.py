@@ -93,21 +93,25 @@ def test_scroll_reveal_is_gone(app, client):
     assert "reveal" not in html
 
 
-def test_hero_light_sweep_is_hidden_unless_animated():
+def test_home_banner_text_arrives_once_and_ends_visible():
     css = (STATIC / "css" / "animations.css").read_text(encoding="utf-8")
 
-    assert "@keyframes sweep" in css
-    assert ".carousel-item.active .hero-photo::after" in css
-    # the light must be invisible by default, so it can never stay stuck on the photo
-    base_rule = css.split(".hero-photo::after {")[1].split("}")[0]
-    assert "opacity: 0" in base_rule
+    assert "@keyframes hero-in" in css
+    assert re.search(r"\.hero-banner-content > \*\s*\{[^}]*animation: hero-in [^;]*both", css)
+    # the animation ends fully visible, so the text can never stay stuck hidden
+    keyframes = css.split("@keyframes hero-in")[1].split("\n}")[0]
+    assert "opacity: 1" in keyframes.split("to {")[1]
 
 
-def test_title_bar_and_hover_effects_exist():
-    css = (STATIC / "css" / "animations.css").read_text(encoding="utf-8")
+def test_category_tile_bar_grows_on_hover():
+    pages = (STATIC / "css" / "pages.css").read_text(encoding="utf-8")
+    animations = (STATIC / "css" / "animations.css").read_text(encoding="utf-8")
 
-    assert "@keyframes grow-bar" in css
-    assert "scaleX(1)" in css
+    assert "transform: scaleX(0)" in pages
+    assert re.search(
+        r"\.category-tile:hover \.category-tile-name::after[^{]*\{\s*transform: scaleX\(1\)", pages
+    )
+    assert re.search(r"\.category-tile-name::after\s*\{\s*transition: transform", animations)
 
 def test_every_page_has_the_viewport_meta(client):
     for url in ("/", "/login", "/register", "/cart"):

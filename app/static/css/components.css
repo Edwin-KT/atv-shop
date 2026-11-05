@@ -20,7 +20,7 @@
   font-size: clamp(1.25rem, 3vw, 1.6rem);
 }
 
-/* ---------- product card ---------- */
+/* ---------- product card: photo on a dust tile, price, name, real specs ---------- */
 
 .product-card {
   position: relative;
@@ -37,40 +37,51 @@
   display: block;
 }
 
-/* Small rectangular labels in the top-left corner of the photo. */
+/* Studio photos on white: multiply makes the white take the tile's dust colour. */
+.product-media img {
+  padding: var(--space-4);
+  mix-blend-mode: multiply;
+}
+
+/* Solid rectangular labels in the top-left corner of the photo. */
 .tag {
   position: absolute;
-  top: 0.75rem;
+  top: var(--space-3);
   left: 0;
   z-index: 2;
   padding: 0.3rem 0.7rem;
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: var(--text-label);
+  font-weight: 700;
 }
 
+/* Low stock: ink label with a livery edge on the left (the stripe never sits under text). */
 .tag-hot {
-  background-color: var(--color-accent-dark);
+  padding-left: 1.2rem;
+  background:
+    var(--livery) left / 0.5rem 100% no-repeat,
+    var(--color-ink);
   color: #ffffff;
 }
 
 .tag-out {
-  background-color: #ffffff;
-  border: 1px solid var(--color-line);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-ink);
   color: var(--color-ink);
 }
 
-/* Round "+" button that adds one item to the cart. */
+/* Round ink "+" that adds one item to the cart. */
 .quick-add {
   position: absolute;
-  right: 0.75rem;
-  bottom: 0.75rem;
+  right: var(--space-3);
+  bottom: var(--space-3);
   z-index: 2;
   margin: 0;
 }
 
 .quick-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 2.75rem;
   height: 2.75rem;
   padding: 0;
@@ -78,35 +89,34 @@
   border-radius: 50%;
   background-color: var(--color-ink);
   color: #ffffff;
-  font-size: 1.6rem;
-  line-height: 1;
   cursor: pointer;
-  transition:
-    background-color 0.15s ease,
-    transform 0.15s ease;
+  transition: background-color var(--motion-fast);
 }
 
-.quick-add-btn:hover,
-.quick-add-btn:focus-visible {
+.quick-add-btn:hover {
   background-color: var(--color-accent-dark);
-  transform: scale(1.08);
+}
+
+.quick-add-btn:focus-visible {
+  outline-offset: 3px;
 }
 
 .product-info {
-  padding: 0.9rem 0 0.25rem;
+  padding: var(--space-3) 0 var(--space-2);
 }
 
 .product-price {
-  margin: 0;
+  margin: 0 0 var(--space-1);
   color: var(--color-accent-dark);
-  font-size: 1.15rem;
-  font-weight: 800;
+  font-size: 1.75rem;
 }
 
 .product-name {
-  margin: 0.2rem 0 0.25rem;
-  font-size: 0.95rem;
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-text);
+  font-size: var(--text-body);
   font-weight: 600;
+  line-height: 1.35;
   letter-spacing: 0;
   text-transform: none;
   overflow-wrap: anywhere;
@@ -117,30 +127,38 @@
   text-decoration: none;
 }
 
+/* Hover: only the name is underlined; nothing moves. */
 .product-card:hover .product-name a {
   text-decoration: underline;
 }
 
-.product-summary {
-  margin: 0 0 0.5rem;
-  color: var(--color-muted);
-  font-size: 0.8rem;
-  overflow-wrap: anywhere;
+/* Spec line: engine plate + small outlined facts (all from the database). */
+.spec-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.product-view {
-  border-bottom: 0.15rem solid var(--color-ink);
-  color: var(--color-ink);
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-decoration: none;
-  text-transform: uppercase;
+.spec-line .plate {
+  min-width: 0;
+  padding: 0.05rem 0.4rem 0;
 }
 
-.product-view:hover {
-  border-bottom-color: var(--color-accent);
-  color: var(--color-ink);
+.spec-line .plate-number {
+  font-size: 1.125rem;
+}
+
+.spec {
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--color-line-strong);
+  color: var(--color-ink-soft);
+  font-size: var(--text-label);
+  font-weight: 600;
+  line-height: 1.3;
 }
 
 /* ---------- other cards (orders, admin) ---------- */

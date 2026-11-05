@@ -21,8 +21,9 @@ def test_catalog_shows_polymorphic_summaries(app, client):
 
     html = client.get("/").get_data(as_text=True)
 
-    assert "963 cc" in html            # vehicle summary
-    assert "size 43" in html           # gear summary
+    # vehicle: engine size on a number plate; gear: its size (both from the subclass columns)
+    assert '<span class="plate-number">963</span><span class="plate-unit">cc</span>' in html
+    assert '<li class="spec">Size 43</li>' in html
 
 
 def test_product_page_loads_by_slug(app, client):

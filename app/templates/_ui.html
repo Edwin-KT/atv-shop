@@ -14,6 +14,22 @@
 {%- endmacro %}
 
 {#
+  Compact spec line built from the product's own columns (never typed by hand).
+  Vehicles: engine plate, power, road use. Gear: size.
+#}
+{% macro spec_line(product) -%}
+<ul class="spec-line">
+  {%- if product.product_type == "vehicle" %}
+  <li><span class="visually-hidden">Engine </span>{{ plate(product.engine_cc, "cc") }}</li>
+  <li class="spec">{{ product.horsepower }} hp</li>
+  <li class="spec">{{ "Street legal" if product.is_street_legal else "Off-road only" }}</li>
+  {%- else %}
+  <li class="spec">Size {{ product.gear_size }}</li>
+  {%- endif %}
+</ul>
+{%- endmacro %}
+
+{#
   Price from the database (cents) with small decimals: "12,999" + ".00 EUR".
   The two spans touch, so the text reads "12,999.00 EUR" for screen readers.
 #}

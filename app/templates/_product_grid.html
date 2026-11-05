@@ -1,3 +1,5 @@
+{% from "_icons.html" import icon %}
+{% from "_ui.html" import price, spec_line %}
 {% if not products %}
 <p class="text-muted">{{ empty_message|default('No products yet.') }}</p>
 {% endif %}
@@ -17,7 +19,9 @@
             <img
               src="{{ product_image_url(product) }}"
               alt="{{ product.name }}"
-              class="object-fit-cover"
+              class="object-fit-contain"
+              width="600"
+              height="600"
               loading="lazy"
             />
           </div>
@@ -40,26 +44,20 @@
             type="submit"
             aria-label="Add {{ product.name }} to cart"
           >
-            +
+            {{ icon("plus-lg", 20) }}
           </button>
         </form>
         {% endif %}
       </div>
 
       <div class="product-info">
-        <p class="product-price">{{ product.price_display }}</p>
+        <p class="product-price">{{ price(product.price_cents) }}</p>
         <h3 class="product-name">
           <a href="{{ url_for('main.product_detail', slug=product.slug) }}"
             >{{ product.name }}</a
           >
         </h3>
-        <p class="product-summary">{{ product.get_technical_summary() }}</p>
-        <a
-          class="product-view"
-          href="{{ url_for('main.product_detail', slug=product.slug) }}"
-          aria-label="View {{ product.name }}"
-          >View</a
-        >
+        {{ spec_line(product) }}
       </div>
     </article>
   </div>

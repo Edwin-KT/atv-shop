@@ -1,0 +1,24 @@
+{# Home campaign banner: full-bleed photo, bottom edge cut on a slant. The photo is the LCP image:
+   real width/height, high fetch priority, never lazy; the page preloads it (index.html). #}
+<section class="hero-banner" aria-labelledby="hero-title">
+  <img
+    class="hero-banner-photo"
+    src="{{ url_for('static', filename='img/hero/trail-1920.webp') }}"
+    srcset="{{ url_for('static', filename='img/hero/trail-960.webp') }} 960w, {{ url_for('static', filename='img/hero/trail-1920.webp') }} 1920w"
+    sizes="100vw"
+    width="1920"
+    height="1536"
+    fetchpriority="high"
+    alt="Rider on an orange enduro bike, race number 28, on a dirt track"
+  />
+  <div class="container hero-banner-content">
+    <h1 id="hero-title" class="hero-banner-title">Ready for the trail</h1>
+    <p class="hero-banner-text">
+      Enduro bikes, ATVs and the gear to ride them. Pay by card, follow your
+      order until it's delivered.
+    </p>
+    <a class="btn btn-light btn-lg hero-banner-cta" href="{{ url_for('main.category', key='enduro') }}"
+      >Shop enduro bikes</a
+    >
+  </div>
+</section>

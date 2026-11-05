@@ -138,18 +138,8 @@ table {
   font-variant-numeric: tabular-nums;
 }
 
-/* Short accent bar under every page title. */
-main h1::after {
-  content: "";
-  display: block;
-  width: 3rem;
-  height: 0.3rem;
-  margin-top: 0.5rem;
-  background-color: var(--color-accent);
-}
-
+/* Section headings on the shop pages (e.g. "Shop by category", "Catalog"). */
 .section-title {
-  margin-bottom: 1rem;
-  font-size: 1.1rem;
-  letter-spacing: 0.08em;
+  margin-bottom: var(--space-5);
+  font-size: var(--text-h2);
 }

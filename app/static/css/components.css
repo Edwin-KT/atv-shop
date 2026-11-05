@@ -1,4 +1,149 @@
-/* ---------- cards ---------- */
+/* Components: reusable pieces used on several pages. */
+
+/* ---------- panels: white boxes on the light-grey page ---------- */
+
+.panel {
+  padding: 1.75rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+}
+
+.panel-title {
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  letter-spacing: 0.06em;
+}
+
+/* Titles inside a panel are smaller, like in a shop checkout. */
+.panel h1 {
+  font-size: clamp(1.25rem, 3vw, 1.6rem);
+}
+
+/* ---------- product card ---------- */
+
+.product-card {
+  position: relative;
+  height: 100%;
+}
+
+.product-media {
+  position: relative;
+  background-color: var(--color-tile);
+  overflow: hidden;
+}
+
+.product-media-link {
+  display: block;
+}
+
+/* Small rectangular labels in the top-left corner of the photo. */
+.tag {
+  position: absolute;
+  top: 0.75rem;
+  left: 0;
+  z-index: 2;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tag-hot {
+  background-color: var(--color-accent-dark);
+  color: #ffffff;
+}
+
+.tag-out {
+  background-color: #ffffff;
+  border: 1px solid var(--color-line);
+  color: var(--color-ink);
+}
+
+/* Round "+" button that adds one item to the cart. */
+.quick-add {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 2;
+  margin: 0;
+}
+
+.quick-add-btn {
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background-color: var(--color-ink);
+  color: #ffffff;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.quick-add-btn:hover,
+.quick-add-btn:focus-visible {
+  background-color: var(--color-accent-dark);
+  transform: scale(1.08);
+}
+
+.product-info {
+  padding: 0.9rem 0 0.25rem;
+}
+
+.product-price {
+  margin: 0;
+  color: var(--color-accent-dark);
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.product-name {
+  margin: 0.2rem 0 0.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  overflow-wrap: anywhere;
+}
+
+.product-name a {
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.product-card:hover .product-name a {
+  text-decoration: underline;
+}
+
+.product-summary {
+  margin: 0 0 0.5rem;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.product-view {
+  border-bottom: 0.15rem solid var(--color-ink);
+  color: var(--color-ink);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.product-view:hover {
+  border-bottom-color: var(--color-accent);
+  color: var(--color-ink);
+}
+
+/* ---------- other cards (orders, admin) ---------- */
 
 .card {
   background-color: var(--color-surface);
@@ -7,26 +152,19 @@
   overflow: hidden;
 }
 
-.product-card {
-  transition: border-color 0.2s ease;
-}
-
-.product-card:hover {
-  border-color: var(--color-ink);
-}
-
-/* Product photos sit on a light grey tile, like in a shop window. */
-.product-card .ratio {
+.card-header {
   background-color: var(--color-tile);
-}
-
-.product-card .card-title a {
-  color: var(--color-ink);
+  border-bottom: 1px solid var(--color-line);
+  font-weight: 600;
 }
 
 .card-footer {
   background-color: transparent;
   border-top: 1px solid var(--color-line);
+}
+
+.list-group-item {
+  border-color: var(--color-line);
 }
 
 /* ---------- buttons ---------- */
@@ -47,15 +185,120 @@
   transform: translateY(1px);
 }
 
-/* The darker orange keeps white button text readable (contrast 5:1). */
-.btn-primary {
-  --bs-btn-bg: var(--color-accent-dark);
-  --bs-btn-border-color: var(--color-accent-dark);
-  --bs-btn-hover-bg: #9a3412;
-  --bs-btn-hover-border-color: #9a3412;
+/* Main actions are black and turn orange on hover. */
+.btn-primary,
+.btn-success {
+  --bs-btn-color: #ffffff;
+  --bs-btn-bg: var(--color-ink);
+  --bs-btn-border-color: var(--color-ink);
+  --bs-btn-hover-color: #ffffff;
+  --bs-btn-hover-bg: var(--color-accent-dark);
+  --bs-btn-hover-border-color: var(--color-accent-dark);
+  --bs-btn-active-color: #ffffff;
   --bs-btn-active-bg: #9a3412;
   --bs-btn-active-border-color: #9a3412;
-  --bs-btn-disabled-bg: var(--color-accent-dark);
-  --bs-btn-disabled-border-color: var(--color-accent-dark);
-  --bs-btn-focus-shadow-rgb: 194, 65, 12;
+  --bs-btn-disabled-bg: var(--color-ink);
+  --bs-btn-disabled-border-color: var(--color-ink);
+  --bs-btn-focus-shadow-rgb: 26, 25, 24;
+}
+
+/* ---------- forms ---------- */
+
+.form-control,
+.form-select {
+  border-color: var(--color-line);
+  border-radius: var(--radius);
+}
+
+/* Visible orange focus ring on every form field (also for keyboard users). */
+main .form-control:focus,
+main .form-select:focus {
+  border-color: var(--color-accent);
+  outline: 0;
+  box-shadow: 0 0 0 0.25rem rgba(232, 89, 12, 0.35);
+}
+
+main .form-check-input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 0.25rem rgba(232, 89, 12, 0.35);
+}
+
+main .form-check-input:checked {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.form-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* ---------- tables ---------- */
+
+.table > thead {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.table {
+  --bs-table-border-color: var(--color-line);
+}
+
+/* Prices and quantities stay on one line; the table scrolls sideways instead. */
+.table td,
+.table th {
+  overflow-wrap: normal;
+}
+
+.table td:not(:first-child),
+.table th:not(:first-child) {
+  white-space: nowrap;
+}
+
+.table-responsive .table {
+  min-width: 36rem;
+}
+
+/* ---------- badges and alerts ---------- */
+
+.badge {
+  border-radius: var(--radius);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.alert {
+  border-left-width: 0.3rem;
+  border-radius: var(--radius);
+}
+
+/* Break very long words (emails, file names) only where they appear as text. */
+.card-title,
+.card-text,
+.alert,
+.list-group-item {
+  overflow-wrap: anywhere;
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 575.98px) {
+  .panel {
+    padding: 1.25rem;
+  }
+
+  /* Buttons grouped in a row wrap instead of overflowing. */
+  .card-footer,
+  .d-flex.gap-2 {
+    flex-wrap: wrap;
+  }
+
+  /* Bigger tap targets on touch screens. */
+  .btn-sm {
+    padding: 0.4rem 0.75rem;
+  }
 }

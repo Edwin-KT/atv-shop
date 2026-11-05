@@ -88,6 +88,17 @@ def create_app(test_config=None):
     app.jinja_env.globals["product_image_url"] = product_image_path
     app.extensions["product_image_path"] = product_image_path
 
+    @app.errorhandler(404)
+    def not_found(error):
+        return (
+            render_template(
+                "error.html",
+                title="Page not found",
+                message="The page you are looking for does not exist.",
+            ),
+            404,
+        )
+
     @app.errorhandler(403)
     def forbidden(error):
         return (

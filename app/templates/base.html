@@ -49,7 +49,7 @@
       rel="stylesheet"
     />
   </head>
-  <body>
+  <body{% if not bare %} class="page-grey"{% endif %}>
     <div class="topbar">
       <div class="container topbar-inner">
         <span class="d-none d-sm-inline">Ride hard. Ride safe.</span>
@@ -152,7 +152,9 @@
     <main class="container">
       {% for category, message in get_flashed_messages(with_categories=true) %}
       <div class="alert alert-{{ category }}">{{ message }}</div>
-      {% endfor %} {% block content %}{% endblock %}
+      {% endfor %} <div{% if not bare and not own_panels %} class="panel"{% endif %}>
+      {% block content %}{% endblock %}
+    </div>
     </main>
 
     <footer class="site-footer">

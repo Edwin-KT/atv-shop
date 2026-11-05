@@ -1,36 +1,38 @@
-{% extends "base.html" %}{% block title %}{{ product.name }} - ATV & Enduro
-Shop{% endblock %} {% block meta_description %}{{ product.name }}: {{
-product.get_technical_summary() }}. {{ product.description[:110] }}{% endblock
-%} {% block og_type %}product{% endblock %} {% block og_title %}{{ product.name
-}}{% endblock %} {% block og_image %}<meta
+{% extends "base.html" %} {% set bare = true %} {% block title %}{{ product.name
+}} - ATV & Enduro Shop{% endblock %} {% block meta_description %}{{ product.name
+}}: {{ product.get_technical_summary() }}. {{ product.description[:110] }}{%
+endblock %} {% block og_type %}product{% endblock %} {% block og_title %}{{
+product.name }}{% endblock %} {% block og_image %}<meta
   property="og:image"
   content="{{ site_url }}{{ product_image_url(product) }}"
 />{% endblock %} {% block head_extra %}
 <script type="application/ld+json">
   {{ structured_data|tojson }}
 </script>
-{% endblock %}{% block content %}
-<a href="{{ url_for('main.index') }}">&larr; Back to catalog</a>
+{% endblock %} {% block content %}
+<a class="back-link" href="{{ url_for('main.index') }}"
+  >&larr; Back to catalog</a
+>
 
-<div class="row g-4 mt-1">
+<div class="row g-4 g-lg-5 mt-1">
   <div class="col-md-6">
-    <div class="ratio ratio-1x1">
+    <div class="product-photo ratio ratio-1x1">
       <img
         src="{{ product_image_url(product) }}"
         alt="{{ product.name }}"
-        class="rounded object-fit-cover"
+        class="object-fit-cover"
       />
     </div>
   </div>
 
   <div class="col-md-6">
     <h1>{{ product.name }}</h1>
-    <p class="text-muted">{{ product.get_technical_summary() }}</p>
+    <p class="product-lead">{{ product.get_technical_summary() }}</p>
+    <p class="product-detail-price">{{ product.price_display }}</p>
     <p>{{ product.description }}</p>
 
-    <p class="fs-4"><strong>{{ product.price_display }}</strong></p>
     {% if product.stock > 0 %}
-    <span class="badge text-bg-success">In stock ({{ product.stock }})</span>
+    <p class="stock-label">In stock ({{ product.stock }})</p>
 
     <form
       method="post"
@@ -45,11 +47,14 @@ product.get_technical_summary() }}. {{ product.description[:110] }}{% endblock
         value="1"
         min="1"
         max="{{ [product.stock, 10]|min }}"
+        aria-label="Quantity"
       />
-      <button class="btn btn-primary" type="submit">Add to cart</button>
+      <button class="btn btn-primary flex-grow-1" type="submit">
+        Add to cart
+      </button>
     </form>
     {% else %}
-    <span class="badge text-bg-secondary">Out of stock</span>
+    <p class="stock-label stock-label-out">Out of stock</p>
     {% endif %}
   </div>
 </div>

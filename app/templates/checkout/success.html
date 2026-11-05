@@ -1,13 +1,23 @@
-{% extends "base.html" %} {% block title %}Order {{ order.id }} - ATV & Enduro
-Shop{% endblock %} {% block content %} {% if paid %}
-<h1>Thank you for your order</h1>
-<p>Order #{{ order.id }} is paid ({{ order.total_display }}).</p>
-{% else %}
-<h1>Payment not completed</h1>
-<p>
-  We have not received the payment for order #{{ order.id }}. The items are
-  still reserved for you.
-</p>
-{% endif %}
-<a class="btn btn-primary" href="{{ url_for('checkout.orders') }}">My orders</a>
+{% extends "base.html" %} {% from "_ui.html" import plate %} {% from
+"_checkout_steps.html" import checkout_steps %} {% set own_panels = true %} {%
+block title %}Order {{ order.id }} - ATV & Enduro Shop{% endblock %} {% block
+content %} {{ checkout_steps("confirmed" if paid else "payment") }}
+
+<section class="panel checkout-result">
+  {% if paid %}
+  <div class="checkout-result-head">
+    <span aria-hidden="true">{{ plate("#" ~ order.id) }}</span>
+    <h1>Thank you for your order</h1>
+  </div>
+  <p>Order #{{ order.id }} is paid ({{ order.total_display }}).</p>
+  <p>You can follow its status in My orders.</p>
+  {% else %}
+  <h1>Payment not completed</h1>
+  <p>
+    We have not received the payment for order #{{ order.id }}. The items are
+    still reserved for you.
+  </p>
+  {% endif %}
+  <a class="btn btn-primary" href="{{ url_for('checkout.orders') }}">My orders</a>
+</section>
 {% endblock %}

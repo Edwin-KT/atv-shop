@@ -48,9 +48,11 @@ def _review_context(lines):
         .order_by(SecureDocument.created_at.desc())
         .all()
     )
+    total_cents = cart_total_cents(lines)
     return {
         "lines": lines,
-        "total_display": format_price(cart_total_cents(lines)),
+        "total_cents": total_cents,
+        "total_display": format_price(total_cents),
         "has_vehicle": any(line.product.product_type == "vehicle" for line in lines),
         "documents": documents,
     }

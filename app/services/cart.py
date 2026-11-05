@@ -22,6 +22,11 @@ class CartLine:
     def line_total_display(self) -> str:
         return format_price(self.line_total_cents)
 
+    @property
+    def max_quantity(self) -> int:
+        """Highest quantity allowed for this line (stock, capped per item)."""
+        return _max_allowed(self.product)
+
 
 def _read_cart() -> dict[str, int]:
     return session.get(CART_SESSION_KEY, {})

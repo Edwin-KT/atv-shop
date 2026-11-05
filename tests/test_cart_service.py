@@ -84,3 +84,14 @@ def test_total_uses_database_prices(app):
         lines = get_cart_lines()
 
         assert cart_total_cents(lines) == 28_700
+
+def test_line_max_quantity_is_stock_capped_per_item(app):
+    from app.services.cart import MAX_QUANTITY_PER_ITEM, CartLine
+
+    seed(app)
+    with app.app_context():
+        low = CartLine(get("segway-snarler-at6-l"), 1)  # stock 2
+        high = CartLine(get("enduro-helmet-pro"), 1)  # stock 20
+
+        assert low.max_quantity == 2
+        assert high.max_quantity == MAX_QUANTITY_PER_ITEM == 10

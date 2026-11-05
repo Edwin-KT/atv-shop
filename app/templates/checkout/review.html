@@ -1,71 +1,92 @@
-{% extends "base.html" %} {% block title %}Checkout - ATV & Enduro Shop{%
-endblock %} {% block content %}
-<h1 class="mb-4">Checkout</h1>
+{% extends "base.html" %} {% from "_ui.html" import price %} {% from
+"_checkout_steps.html" import checkout_steps %} {% set own_panels = true %} {%
+block title %}Checkout - ATV & Enduro Shop{% endblock %} {% block content %} {{
+checkout_steps("review") }}
 
-{% if errors %}
-<div class="alert alert-danger">
-  <ul class="mb-0">
-    {% for error in errors %}
-    <li>{{ error }}</li>
-    {% endfor %}
-  </ul>
-</div>
-{% endif %}
-
-<div class="table-responsive">
-  <table class="table align-middle">
-    <thead>
-      <tr>
-        <th>Product</th>
-        <th>Quantity</th>
-        <th class="text-end">Total</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for line in lines %}
-      <tr>
-        <td>{{ line.product.name }}</td>
-        <td>{{ line.quantity }}</td>
-        <td class="text-end">{{ line.line_total_display }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-    <tfoot>
-      <tr>
-        <th colspan="2" class="text-end">Total</th>
-        <th class="text-end">{{ total_display }}</th>
-      </tr>
-    </tfoot>
-  </table>
-</div>
-
-<form method="post" class="col-lg-6 px-0">
+<form method="post" class="checkout-form">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
-  {% if has_vehicle %}
-  <div class="mb-3">
-    <label class="form-label" for="document_id"
-      >Identity document (optional)</label
-    >
-    <select class="form-select" id="document_id" name="document_id">
-      <option value="">No document</option>
-      {% for document in documents %}
-      <option value="{{ document.id }}">
-        {{ document.original_filename }}
-      </option>
-      {% endfor %}
-    </select>
-    <div class="form-text">
-      Useful for registering a street-legal vehicle. You can
-      <a href="{{ url_for('documents.list_documents') }}">upload a PDF</a>
-      first.
-    </div>
-  </div>
-  {% endif %}
+  <div class="row g-4 align-items-start">
+    <div class="col-lg-8">
+      <section class="panel">
+        <h1>Review your order</h1>
 
-  <button class="btn btn-success" type="submit">Pay with card</button>
-  <a class="btn btn-link" href="{{ url_for('cart.view_cart') }}"
-    >Back to cart</a
-  >
+        {% if errors %}
+        <div class="alert alert-danger">
+          <ul class="mb-0">
+            {% for error in errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th class="text-end">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for line in lines %}
+              <tr>
+                <td>{{ line.product.name }}</td>
+                <td>{{ line.quantity }}</td>
+                <td class="text-end">{{ line.line_total_display }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        {% if has_vehicle %}
+        <div class="checkout-document">
+          <label class="form-label" for="document_id"
+            >Identity document (optional)</label
+          >
+          <select class="form-select" id="document_id" name="document_id">
+            <option value="">No document</option>
+            {% for document in documents %}
+            <option value="{{ document.id }}">
+              {{ document.original_filename }}
+            </option>
+            {% endfor %}
+          </select>
+          <div class="form-text">
+            Useful for registering a street-legal vehicle. You can
+            <a href="{{ url_for('documents.list_documents') }}">upload a PDF</a>
+            first.
+          </div>
+        </div>
+        {% endif %}
+      </section>
+    </div>
+
+    <aside class="col-lg-4 cart-aside">
+      <section class="panel cart-summary">
+        <h2 class="panel-title">Total amount</h2>
+        <dl class="summary">
+          <div class="summary-total">
+            <dt>Total</dt>
+            <dd>{{ price(total_cents) }}</dd>
+          </div>
+        </dl>
+        <button class="btn btn-primary btn-checkout" type="submit">
+          Pay with card
+        </button>
+        <p class="checkout-hint">
+          Pay with card reserves your items, then you pay on Stripe's secure
+          page.
+        </p>
+        {% include "_trust.html" %}
+        <a class="checkout-back" href="{{ url_for('cart.view_cart') }}"
+          >Back to cart</a
+        >
+      </section>
+    </aside>
+  </div>
 </form>
 {% endblock %}

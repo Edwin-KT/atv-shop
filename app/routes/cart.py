@@ -17,10 +17,12 @@ bp = Blueprint("cart", __name__)
 @bp.get("/cart")
 def view_cart():
     lines = get_cart_lines()
+    total_cents = cart_total_cents(lines)
     return render_template(
         "cart.html",
         lines=lines,
-        total_display=format_price(cart_total_cents(lines)),
+        total_cents=total_cents,
+        total_display=format_price(total_cents),
     )
 
 

@@ -2,22 +2,28 @@
 
 /* ---------- panels: white boxes on the light-grey page ---------- */
 
+/* Borderless white panels: the grey page around them is the frame. */
 .panel {
-  padding: 1.75rem;
+  padding: var(--space-5);
   background-color: var(--color-surface);
-  border: 1px solid var(--color-line);
   border-radius: var(--radius);
 }
 
 .panel-title {
-  margin-bottom: 1rem;
-  font-size: 1.1rem;
-  letter-spacing: 0.06em;
+  margin-bottom: var(--space-4);
+  font-size: var(--text-h3);
 }
 
 /* Titles inside a panel are smaller, like in a shop checkout. */
 .panel h1 {
-  font-size: clamp(1.25rem, 3vw, 1.6rem);
+  margin-bottom: var(--space-5);
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+}
+
+@media (min-width: 992px) {
+  .panel {
+    padding: var(--space-7);
+  }
 }
 
 /* ---------- product card: photo on a dust tile, price, name, real specs ---------- */

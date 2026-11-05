@@ -1,0 +1,31 @@
+{#
+  Checkout progress, matching the real flow:
+  cart page -> our review page (/checkout) -> Stripe's payment page -> success page.
+  Usage: {% from "_checkout_steps.html" import checkout_steps %} {{ checkout_steps("review") }}
+#}
+{% from "_icons.html" import icon %}
+{% set steps = [("cart", "Cart"), ("review", "Review"), ("payment", "Payment"), ("confirmed", "Confirmed")] %}
+
+{% macro checkout_steps(current) -%}
+{% set current_index = (steps|map("first")|list).index(current) %}
+<ol class="checkout-steps" aria-label="Checkout progress">
+  {%- for key, label in steps %}
+  {%- if loop.index0 < current_index %}
+  <li class="step step-done">
+    <span class="step-mark">{{ icon("check-lg", 14) }}</span>
+    <span class="step-label">{{ label }}<span class="visually-hidden"> (completed)</span></span>
+  </li>
+  {%- elif loop.index0 == current_index %}
+  <li class="step step-current" aria-current="step">
+    <span class="step-mark">{{ loop.index }}</span>
+    <span class="step-label">{{ label }}</span>
+  </li>
+  {%- else %}
+  <li class="step">
+    <span class="step-mark">{{ loop.index }}</span>
+    <span class="step-label">{{ label }}</span>
+  </li>
+  {%- endif %}
+  {%- endfor %}
+</ol>
+{%- endmacro %}

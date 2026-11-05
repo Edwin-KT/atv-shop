@@ -237,14 +237,79 @@
   }
 }
 
-/* ---------- cart ---------- */
+/* ---------- checkout steps: Cart -> Review -> Payment -> Confirmed ---------- */
+
+.checkout-steps {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-muted);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+/* A thin line joins each step to the next one. */
+.step:not(:last-child)::after {
+  content: "";
+  flex: 1;
+  min-width: var(--space-4);
+  height: 2px;
+  background-color: var(--color-line-strong);
+}
+
+.step-mark {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 2px solid var(--color-line-strong);
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.step-done,
+.step-current {
+  color: var(--color-ink);
+}
+
+.step-done .step-mark {
+  border-color: var(--color-ink);
+  background-color: var(--color-ink);
+  color: #ffffff;
+}
+
+.step-done::after {
+  background-color: var(--color-ink);
+}
+
+/* The current step carries the signal orange (ink digit: 4.9:1). */
+.step-current .step-mark {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+  color: var(--color-ink);
+}
+
+/* ---------- cart: lines ---------- */
 
 .cart-line {
   display: grid;
-  grid-template-columns: 6rem 1fr auto;
-  gap: 1rem;
-  padding: 1.25rem 0;
-  border-top: 1px solid var(--color-line);
+  grid-template-columns: 10rem minmax(0, 1fr);
+  gap: var(--space-5);
+  padding: var(--space-5) 0;
+  border-top: var(--border-thin);
 }
 
 .cart-thumb {
@@ -252,12 +317,18 @@
   background-color: var(--color-tile);
 }
 
+.cart-thumb img {
+  padding: var(--space-3);
+  mix-blend-mode: multiply;
+}
+
 .cart-line-name {
-  margin: 0 0 0.25rem;
-  font-size: 1rem;
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-text);
+  font-size: 1.0625rem;
+  font-weight: 600;
   letter-spacing: 0;
   text-transform: none;
-  overflow-wrap: anywhere;
 }
 
 .cart-line-name a {
@@ -269,92 +340,196 @@
   text-decoration: underline;
 }
 
-.cart-line-price {
-  margin: 0 0 0.75rem;
-  color: var(--color-muted);
-  font-size: 0.9rem;
-  white-space: nowrap;
-}
-
-.cart-line-total {
+.cart-line-price,
+.cart-line-stock {
   margin: 0;
-  color: var(--color-accent-dark);
-  font-weight: 800;
-  white-space: nowrap;
+  color: var(--color-ink-soft);
+  font-size: var(--text-small);
 }
 
 .cart-line-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 1rem;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
 }
 
 .cart-line-actions form {
-  display: flex;
-  gap: 0.5rem;
   margin: 0;
 }
 
-.cart-qty-input {
-  width: 4.5rem;
+/* "- n +" stepper: two submit buttons, no JavaScript. */
+.qty-stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--color-line-strong);
 }
 
-.cart-summary {
-  position: sticky;
-  top: 1rem;
+.stepper-btn,
+.remove-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-ink);
+  cursor: pointer;
 }
+
+.stepper-btn:hover:not(:disabled) {
+  background-color: var(--color-tile);
+}
+
+.stepper-btn:disabled {
+  color: var(--color-line-strong);
+  cursor: not-allowed;
+}
+
+.stepper-value {
+  min-width: 2.25rem;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.remove-btn {
+  border: 1px solid var(--color-line-strong);
+}
+
+.remove-btn:hover {
+  border-color: var(--color-ink);
+}
+
+.cart-line-total {
+  margin: 0 0 0 auto;
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.cart-note {
+  margin: 0;
+  padding-top: var(--space-4);
+  border-top: var(--border-thin);
+  color: var(--color-muted);
+  font-size: var(--text-small);
+}
+
+/* ---------- cart and review: summary panel ---------- */
 
 .summary {
-  margin: 0 0 1.25rem;
+  margin: 0 0 var(--space-5);
 }
 
 .summary > div {
   display: flex;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 0.35rem 0;
+  align-items: baseline;
+  gap: var(--space-4);
+  padding: var(--space-2) 0;
 }
 
 .summary dt {
-  font-weight: 400;
+  font-weight: 600;
 }
 
 .summary dd {
   margin: 0;
-  white-space: nowrap;
 }
 
 .summary-total {
-  margin-top: 0.5rem;
-  padding-top: 0.75rem !important;
-  border-top: 1px solid var(--color-line);
-  font-size: 1.2rem;
-  font-weight: 800;
+  margin-top: var(--space-2);
+  padding-top: var(--space-4) !important;
+  border-top: var(--border-thin);
 }
 
-.summary-total dt {
-  font-weight: 800;
+.summary-total dd {
+  font-size: 2.25rem;
 }
 
-.cart-notes {
-  margin: 1.25rem 0 0;
-  padding: 0;
+.btn-checkout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 3.25rem;
+  margin-bottom: var(--space-5);
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.cart-summary .trust-list {
+  margin-bottom: 0;
+}
+
+.checkout-hint {
+  margin: calc(var(--space-3) * -1) 0 var(--space-4);
   color: var(--color-muted);
-  font-size: 0.8rem;
-  list-style: none;
+  font-size: var(--text-small);
 }
 
-.cart-notes li + li {
-  margin-top: 0.4rem;
+.checkout-back {
+  display: inline-block;
+  margin-top: var(--space-4);
+  color: var(--color-ink);
+  font-size: var(--text-small);
 }
 
+.checkout-document {
+  margin-top: var(--space-5);
+}
+
+.cart-empty-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.checkout-result-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.checkout-result-head h1 {
+  margin: 0;
+}
+
+.checkout-result-head .plate-number {
+  font-size: 2rem;
+}
+
+/* Desktop: the summary stays in view while the list scrolls. */
+@media (min-width: 992px) {
+  .cart-aside {
+    position: sticky;
+    top: var(--space-5);
+  }
+}
+
+/* Phone: smaller photo; only the current step keeps its label on screen. */
 @media (max-width: 575.98px) {
   .cart-line {
-    grid-template-columns: 5rem 1fr;
+    grid-template-columns: 6rem minmax(0, 1fr);
+    gap: var(--space-4);
   }
 
-  .cart-line-total {
-    grid-column: 2;
+  .step:not(.step-current) .step-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 }
 

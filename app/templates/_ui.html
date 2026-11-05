@@ -1,0 +1,22 @@
+{#
+  Small UI macros shared by the shop pages.
+  Usage: {% from "_ui.html" import plate, price %}
+#}
+
+{#
+  Race number plate: a white plate with an ink border and big condensed digits.
+  Only for real identifying numbers (engine class, order number, cart count).
+  `unit` is optional ("cc"). The text stays readable as one string, e.g. "250cc".
+#}
+{% macro plate(number, unit=None) -%}
+<span class="plate"><span class="plate-number">{{ number }}</span>
+  {%- if unit %}<span class="plate-unit">{{ unit }}</span>{% endif %}</span>
+{%- endmacro %}
+
+{#
+  Price from the database (cents) with small decimals: "12,999" + ".00 EUR".
+  The two spans touch, so the text reads "12,999.00 EUR" for screen readers.
+#}
+{% macro price(cents) -%}
+<span class="price"><span class="price-whole">{{ "{:,}".format(cents // 100) }}</span><span class="price-rest">.{{ "%02d"|format(cents % 100) }} EUR</span></span>
+{%- endmacro %}

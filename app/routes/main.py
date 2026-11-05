@@ -62,9 +62,32 @@ def search():
     return render_template("search.html", products=search_products(text), q=text)
 
 
+def breadcrumb_structured_data(product, category: dict) -> dict:
+    """schema.org BreadcrumbList: Shop > Category > Product, with absolute URLs."""
+    site = current_app.config["SITE_URL"]
+    trail = [
+        ("Shop", f"{site}/"),
+        (category["label"], f"{site}/category/{product.category_key}"),
+        (product.name, f"{site}/product/{product.slug}"),
+    ]
+    return {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {"@type": "ListItem", "position": position, "name": name, "item": url}
+            for position, (name, url) in enumerate(trail, start=1)
+        ],
+    }
+
+
 @bp.get("/product/<slug>")
 def product_detail(slug):
     product = Product.query.filter_by(slug=slug).first_or_404()
+    category = CATEGORIES[product.category_key]
     return render_template(
-        "product.html", product=product, structured_data=product_structured_data(product)
+        "product.html",
+        product=product,
+        category=category,
+        structured_data=product_structured_data(product),
+        breadcrumb_data=breadcrumb_structured_data(product, category),
     )

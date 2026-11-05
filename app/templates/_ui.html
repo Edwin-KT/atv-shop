@@ -30,6 +30,37 @@
 {%- endmacro %}
 
 {#
+  Spec board on the product page: big numbers with small labels.
+  Vehicles get three cells; gear gets one wide cell for its single size.
+#}
+{% macro spec_board(product) -%}
+{% if product.product_type == "vehicle" %}
+<dl class="spec-board">
+  <div class="spec-cell">
+    <dt>Engine</dt>
+    <dd><span class="spec-number">{{ product.engine_cc }}</span> <span class="spec-unit">cc</span></dd>
+  </div>
+  <div class="spec-cell">
+    <dt>Power</dt>
+    <dd><span class="spec-number">{{ product.horsepower }}</span> <span class="spec-unit">hp</span></dd>
+  </div>
+  <div class="spec-cell">
+    <dt>Road use</dt>
+    <dd class="spec-text">{{ "Street legal" if product.is_street_legal else "Off-road only" }}</dd>
+  </div>
+</dl>
+{% else %}
+<dl class="spec-board spec-board-gear">
+  <div class="spec-cell">
+    <dt>Size</dt>
+    <dd class="spec-size">{{ product.gear_size }}</dd>
+    <dd class="spec-note">This item is sold in size {{ product.gear_size }} only.</dd>
+  </div>
+</dl>
+{% endif %}
+{%- endmacro %}
+
+{#
   Price from the database (cents) with small decimals: "12,999" + ".00 EUR".
   The two spans touch, so the text reads "12,999.00 EUR" for screen readers.
 #}

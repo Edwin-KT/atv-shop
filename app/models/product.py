@@ -39,6 +39,11 @@ class Product(db.Model):
         """Each subclass describes itself differently (polymorphism)."""
         raise NotImplementedError("Subclasses must implement get_technical_summary()")
 
+    @property
+    def category_key(self) -> str:
+        """Key of the shop category this product is listed in (see app.catalog.CATEGORIES)."""
+        raise NotImplementedError("Subclasses must implement category_key")
+
 
 class VehicleProduct(Product):
     """ATVs and enduro motorcycles."""
@@ -67,6 +72,10 @@ class VehicleProduct(Product):
             f"{self.horsepower} hp | {legal}"
         )
 
+    @property
+    def category_key(self) -> str:
+        return self.vehicle_type  # "atv" or "enduro"
+
 
 class GearProduct(Product):
     """Helmets, boots, gloves and other riding gear."""
@@ -80,3 +89,7 @@ class GearProduct(Product):
 
     def get_technical_summary(self) -> str:
         return f"Riding gear | size {self.gear_size}"
+
+    @property
+    def category_key(self) -> str:
+        return "gear"

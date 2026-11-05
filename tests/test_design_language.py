@@ -149,7 +149,7 @@ def test_product_page_uses_the_new_layout(app, client):
     assert re.search(r'class="product-photo ratio ratio-1x1"', html)
     assert 'class="product-detail-price"' in html
     assert 'class="stock-label"' in html
-    assert 'class="back-link"' in html
+    assert '<nav class="breadcrumb-nav" aria-label="Breadcrumb">' in html
     form = re.search(r'<form[^>]*qty-form.*?</form>', html, re.S).group(0)
     assert f'action="/cart/add/{ids["ktm-250-exc-f"]}"' in form
     assert 'name="csrf_token"' in form

@@ -105,3 +105,15 @@ def test_database_rejects_unknown_vehicle_type(app):
         with pytest.raises(IntegrityError):
             db.session.commit()
         db.session.rollback()
+
+def test_category_key_points_to_the_shop_category():
+    from app.catalog import CATEGORIES
+
+    atv = VehicleProduct(vehicle_type="atv")
+    enduro = VehicleProduct(vehicle_type="enduro")
+    gear = GearProduct(gear_size="L")
+
+    assert (atv.category_key, enduro.category_key, gear.category_key) == ("atv", "enduro", "gear")
+    assert all(p.category_key in CATEGORIES for p in (atv, enduro, gear))
+    with pytest.raises(NotImplementedError):
+        Product().category_key

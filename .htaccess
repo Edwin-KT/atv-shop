@@ -1,5 +1,6 @@
 # Block direct access to sensitive files and folders.
-<FilesMatch "^(\.env.*|.*\.(py|sql|log|md|ini|yml|yaml|txt|pyc))$">
+# .txt is not denied as a whole so robots.txt stays public; requirements.txt is denied by name.
+<FilesMatch "^(\.env.*|requirements\.txt|.*\.(py|sql|log|md|ini|yml|yaml|pyc))$">
     Require all denied
 </FilesMatch>
 

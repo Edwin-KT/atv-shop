@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
+from app.catalog import CATEGORIES
 from app.seed import seed_products
 
 def compact(html: str) -> str:
@@ -83,8 +84,26 @@ def test_sitemap_lists_the_catalog(seeded, client):
     urls = [e.text for e in ET.fromstring(response.data).findall("s:url/s:loc", namespace)]
     assert "http://127.0.0.1:5000/" in urls
     assert "http://127.0.0.1:5000/product/ktm-250-exc-f" in urls
-    assert len(urls) == 7  # home + 6 products
+    assert len(urls) == 10  # home + 3 categories + 6 products
     assert not any("/admin" in u or "/cart" in u for u in urls)
+
+
+def test_sitemap_lists_every_category_page(seeded, client):
+    namespace = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+    xml = client.get("/sitemap.xml").data
+    urls = [e.text for e in ET.fromstring(xml).findall("s:url/s:loc", namespace)]
+
+    for key in CATEGORIES:
+        assert f"http://127.0.0.1:5000/category/{key}" in urls
+    assert not any("/search" in u for u in urls)  # search pages are noindex
+
+
+def test_robots_txt_has_one_rule_per_line(client):
+    lines = client.get("/robots.txt").get_data(as_text=True).splitlines()
+
+    assert "Disallow: /search" in lines
+    assert "Disallow: /register" in lines
+    assert not any(line.count("Disallow:") > 1 for line in lines)
 
 
 def test_robots_txt_blocks_private_areas_and_points_to_the_sitemap(client):

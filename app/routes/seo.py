@@ -1,5 +1,6 @@
 from flask import Blueprint, Response, current_app, render_template, url_for
 
+from app.catalog import CATEGORIES
 from app.models import Product
 
 bp = Blueprint("seo", __name__)
@@ -8,9 +9,11 @@ bp = Blueprint("seo", __name__)
 @bp.get("/sitemap.xml")
 def sitemap():
     site = current_app.config["SITE_URL"]
-    urls = [f"{site}/"] + [
-        f"{site}/product/{p.slug}" for p in Product.query.order_by(Product.id).all()
-    ]
+    urls = (
+        [f"{site}/"]
+        + [f"{site}/category/{key}" for key in CATEGORIES]
+        + [f"{site}/product/{p.slug}" for p in Product.query.order_by(Product.id).all()]
+    )
     xml = render_template("sitemap.xml", urls=urls)
     return Response(xml, mimetype="application/xml")
 
@@ -26,7 +29,7 @@ def robots():
         "Disallow: /orders",
         "Disallow: /documents",
         "Disallow: /login",
-        "Disallow: /register"
+        "Disallow: /register",
         "Disallow: /search",
         "",
         f"Sitemap: {site}/sitemap.xml",

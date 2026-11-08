@@ -54,7 +54,10 @@ def log_event(event: str, user_id: int | None = None, details: str = ""):
     """Write one important action, e.g. log_event("order_paid", details="order_id=3")."""
     if user_id is None:
         user_id = _user_id()
-    logger.info("ip=%s user=%s event=%s %s", request.remote_addr, user_id, event, details[:300])
+    message = f"ip={request.remote_addr} user={user_id} event={event}"
+    if details:  # no trailing space when there is nothing to add
+        message += " " + details[:300]
+    logger.info(message)
 
 
 def read_last_lines(count: int = 100) -> list[str]:

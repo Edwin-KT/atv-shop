@@ -59,6 +59,17 @@ def test_register_login_and_logout_are_logged(client, log_text):
     assert "user=1 event=login_success" in log_text()
 
 
+def test_event_lines_never_end_with_a_space(client, log_text):
+    """An event without details (logout) ends right after its name; one with details keeps them."""
+    client.post("/register", data=CREDENTIALS)
+    client.post("/login", data=LOGIN)
+    client.post("/logout")
+
+    event_lines = [line for line in lines(log_text) if "event=" in line]
+    assert any(line.endswith("event=logout") for line in event_lines)
+    assert not any(line.endswith(" ") for line in event_lines)
+
+
 def test_failed_login_is_logged_with_ip_and_email(client, log_text):
     client.post("/login", data={"email": "nobody@gmail.com", "password": "x" * 10})
 

@@ -11,3 +11,7 @@ class OutOfStockError(Exception):
 
 class PaymentError(Exception):
     """The payment provider failed or returned something unexpected."""
+
+
+class UploadRejected(Exception):
+    """An uploaded file failed a check. The message is safe to show to the user."""

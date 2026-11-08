@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from flask import (
     Blueprint,
     abort,
@@ -10,13 +12,13 @@ from flask import (
     url_for,
 )
 from flask_login import current_user, login_required
+from werkzeug.utils import secure_filename
 
+from app.activity_log import log_event
+from app.exceptions import UploadRejected
 from app.extensions import db
 from app.models import SecureDocument
-from app.activity_log import log_event
-from app.services.file_security import UploadRejected, store_uploaded_pdf
-
-from pathlib import Path
+from app.services.pdf_security import check_and_clean_pdf, save_pdf
 
 bp = Blueprint("documents", __name__)
 
@@ -44,20 +46,18 @@ def upload():
         return _render_page(["Please choose a PDF file."], 400)
 
     try:
-        stored = store_uploaded_pdf(
-            file,
-            current_app.config["UPLOAD_FOLDER"],
-            current_app.config["MAX_CONTENT_LENGTH"],
-        )
+        # file.read() is safe: MAX_CONTENT_LENGTH already limits the request to 5 MB.
+        clean = check_and_clean_pdf(file.filename, file.read())
     except UploadRejected as exc:
         log_event("document_upload_rejected", details=str(exc))
         return _render_page([str(exc)], 400)
 
     document = SecureDocument(
         user_id=current_user.id,
-        original_filename=stored.original_name,
-        stored_filename=stored.stored_name,
-        size_bytes=stored.size_bytes,
+        # Only for showing in the list: "../../x.pdf" becomes "x.pdf".
+        original_filename=(secure_filename(file.filename) or "document.pdf")[:255],
+        stored_filename=save_pdf(clean, current_app.config["UPLOAD_FOLDER"]),
+        size_bytes=len(clean),
     )
     db.session.add(document)
     db.session.commit()

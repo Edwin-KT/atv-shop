@@ -2,7 +2,7 @@ from io import BytesIO
 from pathlib import Path
 
 from app.models import SecureDocument
-from pdf_samples import PNG_BYTES, make_pdf, make_pdf_with_javascript
+from pdf_samples import PNG_BYTES, make_pdf, make_pdf_with_hidden_payload, make_pdf_with_javascript
 
 PASSWORD = "parola-sigura-123"
 
@@ -45,6 +45,27 @@ def test_valid_upload_is_saved_and_linked_to_user(app, client):
         assert document.original_filename == "talon.pdf"
         assert document.stored_filename != "talon.pdf"
         assert document.user_id == 1
+
+
+def test_file_name_with_folders_cannot_escape_the_upload_folder(app, client, tmp_path):
+    login(client)
+
+    post_file(client, make_pdf(), "../../evil.pdf")
+
+    assert len(stored_files(app)) == 1  # saved inside UPLOAD_FOLDER, under a random name
+    assert not (tmp_path / "evil.pdf").exists()
+    with app.app_context():
+        assert SecureDocument.query.one().original_filename == "evil.pdf"
+
+
+def test_the_stored_file_is_the_cleaned_copy(app, client):
+    login(client)
+
+    post_file(client, make_pdf_with_hidden_payload(b"SECRET-PAYLOAD-12345"), "talon.pdf")
+
+    (stored,) = stored_files(app)
+    assert stored.read_bytes().startswith(b"%PDF-")
+    assert b"SECRET-PAYLOAD-12345" not in stored.read_bytes()
 
 
 def test_uploaded_document_appears_in_list(client):

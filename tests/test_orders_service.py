@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from app.exceptions import OutOfStockError, PaymentError
 from app.extensions import db
 from app.models import Order, OrderItem, Product, User
-from app.seed import seed_products
+from app.cli import seed_products
 from app.services.cart import CartLine
 from app.services.orders import (
     cancel_order,

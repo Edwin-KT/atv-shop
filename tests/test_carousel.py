@@ -1,7 +1,7 @@
 import re
 
 from app.models import VehicleProduct
-from app.seed import seed_products
+from app.cli import seed_products
 
 
 def seed(app):

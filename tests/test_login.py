@@ -4,7 +4,7 @@ import pytest
 
 from app.extensions import db
 from app.models import User
-from app.seed import seed_products
+from app.cli import seed_products
 
 CREDENTIALS = {"email": "ana@gmail.com", "password": "parola-sigura-123"}
 

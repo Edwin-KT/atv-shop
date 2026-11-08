@@ -3,7 +3,7 @@ from sqlalchemy import text
 
 from app.extensions import db
 from app.models import GearProduct, Product, VehicleProduct
-from app.services.users import create_admin
+from app.cli import create_admin
 
 PASSWORD = "parola-sigura-123"
 ADMIN = {"email": "boss@gmail.com", "password": "parola-admin-123"}

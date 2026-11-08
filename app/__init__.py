@@ -1,12 +1,9 @@
-from pathlib import Path
-
-from flask import Flask, render_template, url_for
+from flask import Flask, render_template
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.activity_log import setup_activity_log
 from app.config import Config
 from app.extensions import csrf, db, limiter, login_manager
-from app.money import format_price
 from app.security import add_security_headers
 
 
@@ -64,24 +61,15 @@ def create_app(test_config=None):
 
     @app.context_processor
     def inject_navigation():
-        from app.catalog import CATEGORIES
+        from app.routes.main import CATEGORIES
 
         return {"nav_categories": [(key, info["label"]) for key, info in CATEGORIES.items()]}
 
-    def product_image_path(product):
-        """Path of the product photo, or of the placeholder if the file does not exist."""
-        if product.image_filename:
-            photo = Path(app.static_folder) / "img" / "products" / product.image_filename
-            if photo.is_file():
-                return url_for("static", filename=f"img/products/{product.image_filename}")
-        return url_for("static", filename="img/placeholder.svg")
-
     @app.template_filter("eur")
     def eur(cents):
-        """Prices are stored in cents: {{ 1299900|eur }} -> '12,999.00 EUR'."""
-        return format_price(cents)
+        """Prices are stored in whole cents: {{ 1299900|eur }} -> '12,999.00 EUR'."""
+        return f"{cents / 100:,.2f} EUR"
 
-    app.jinja_env.globals["product_image_url"] = product_image_path
 
     # One error page for every error we expect: (title, message) per status code.
     limit_mb = app.config["MAX_CONTENT_LENGTH"] // (1024 * 1024)

@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from flask import session
 
 from app.models import Product
-from app.money import format_price
 
 CART_SESSION_KEY = "cart"
 MAX_QUANTITY_PER_ITEM = 10
@@ -17,10 +16,6 @@ class CartLine:
     @property
     def line_total_cents(self) -> int:
         return self.product.price_cents * self.quantity
-
-    @property
-    def line_total_display(self) -> str:
-        return format_price(self.line_total_cents)
 
     @property
     def max_quantity(self) -> int:

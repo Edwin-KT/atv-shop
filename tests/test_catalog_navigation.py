@@ -2,7 +2,7 @@ import re
 
 import pytest
 
-from app.seed import seed_products
+from app.cli import seed_products
 
 
 @pytest.fixture()

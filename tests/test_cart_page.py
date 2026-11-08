@@ -5,7 +5,7 @@ import re
 import pytest
 
 from app.models import Product
-from app.seed import seed_products
+from app.cli import seed_products
 
 
 @pytest.fixture()

@@ -1,6 +1,6 @@
 from app.extensions import db
 from app.models import Product
-from app.seed import seed_products
+from app.cli import seed_products
 from app.services.cart import (
     add_item,
     cart_item_count,

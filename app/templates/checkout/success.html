@@ -4,7 +4,7 @@ order.id }} - ATV & Enduro Shop{% endblock %} {% block content %}
 <section class="panel checkout-result">
   {% if paid %}
   <h1>Thank you for your order</h1>
-  <p>Order #{{ order.id }} is paid ({{ order.total_display }}).</p>
+  <p>Order #{{ order.id }} is paid ({{ order.total_cents|eur }}).</p>
   <p>You can follow its status in My orders.</p>
   {% else %}
   <h1>Payment not completed</h1>

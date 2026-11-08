@@ -50,7 +50,7 @@
             >{{ product.product_type }}</span
           >
         </td>
-        <td>{{ product.price_display }}</td>
+        <td>{{ product.price_cents|eur }}</td>
         <td>{{ product.stock }}</td>
         <td class="text-end">
           <div class="d-flex justify-content-end gap-2">

@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from app.seed import seed_products
-from app.services.users import create_admin
+from app.cli import seed_products
+from app.cli import create_admin
 
 ROOT = Path(__file__).resolve().parent.parent
 STATIC = ROOT / "app" / "static"

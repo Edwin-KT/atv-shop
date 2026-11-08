@@ -20,7 +20,7 @@
           <div class="col-md-5">
             <div class="hero-photo ratio ratio-1x1">
               <img
-                src="{{ product_image_url(product) }}"
+                src="{{ url_for('static', filename=product.image_path) }}"
                 alt="{{ product.name }}"
                 class="object-fit-contain"
                 width="600"

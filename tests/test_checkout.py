@@ -4,8 +4,8 @@ import pytest
 
 from app.exceptions import PaymentError
 from app.models import Order, Product
-from app.seed import seed_products
-from app.services.users import create_admin
+from app.cli import seed_products
+from app.cli import create_admin
 
 PASSWORD = "parola-sigura-123"
 

@@ -2,7 +2,7 @@ import pytest
 
 from app.extensions import db
 from app.models import User
-from app.services.users import create_admin
+from app.cli import create_admin
 
 PASSWORD = "parola-sigura-123"
 

@@ -1,6 +1,6 @@
 """N7.01: user actions are written to a log file (logs/activity.log) that admins can read."""
 
-from app.services.users import create_admin
+from app.cli import create_admin
 
 CREDENTIALS = {"email": "ana@gmail.com", "phone": "0712345678", "password": "parola-sigura-123"}
 LOGIN = {"email": CREDENTIALS["email"], "password": CREDENTIALS["password"]}

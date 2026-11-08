@@ -4,10 +4,10 @@ import re
 
 from app.extensions import db
 from app.models import Order, Product, User
-from app.seed import seed_products
+from app.cli import seed_products
 from app.services.cart import CartLine
 from app.services.orders import create_order
-from app.services.users import create_admin
+from app.cli import create_admin
 
 ADMIN = {"email": "boss@gmail.com", "password": "parola-admin-123"}
 CUSTOMER = {"email": "ana@gmail.com", "password": "parola-sigura-123"}

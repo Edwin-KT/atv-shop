@@ -4,8 +4,7 @@ from sqlalchemy import update
 
 from app.exceptions import OutOfStockError, PaymentError
 from app.extensions import db
-from app.models import Order, OrderItem, Product
-from app.models.order import STATUS_CANCELLED, STATUS_PAID, STATUS_PENDING
+from app.models import STATUS_CANCELLED, STATUS_PAID, STATUS_PENDING, Order, OrderItem, Product
 from app.services.cart import CartLine
 from app.services.payment import PaymentGateway
 

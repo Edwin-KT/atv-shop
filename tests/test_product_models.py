@@ -40,8 +40,22 @@ def test_base_product_has_no_summary():
         Product(name="x", slug="x", price_cents=1).get_technical_summary()
 
 
-def test_price_display():
-    assert make_atv().price_display == "10,000.00 EUR"
+@pytest.mark.parametrize(
+    "image_filename, path",
+    [("ktm-250-exc-f.jpg", "img/products/ktm-250-exc-f.jpg"), (None, "img/placeholder.svg")],
+)
+def test_image_path_falls_back_to_the_placeholder(image_filename, path):
+    product = make_atv()
+    product.image_filename = image_filename
+
+    assert product.image_path == path
+
+
+def test_prices_are_shown_in_euro_from_cents(app):
+    render = app.jinja_env.from_string("{{ cents|eur }}").render
+
+    assert render(cents=1_000_000) == "10,000.00 EUR"
+    assert render(cents=5) == "0.05 EUR"
 
 
 # --- integration test (database) ---
@@ -57,7 +71,6 @@ def test_querying_base_class_returns_correct_subclasses(app):
         assert isinstance(products["test-atv"], VehicleProduct)
         assert isinstance(products["test-helmet"], GearProduct)
         assert products["test-atv"].product_type == "vehicle"
-
 
 
 # --- schema tests (3NF) ---
@@ -107,7 +120,7 @@ def test_database_rejects_unknown_vehicle_type(app):
         db.session.rollback()
 
 def test_category_key_points_to_the_shop_category():
-    from app.catalog import CATEGORIES
+    from app.routes.main import CATEGORIES
 
     atv = VehicleProduct(vehicle_type="atv")
     enduro = VehicleProduct(vehicle_type="enduro")

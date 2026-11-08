@@ -24,7 +24,7 @@ product.description[:110] }}{% endblock %} {% block content %}
   <div class="col-md-6">
     <div class="product-photo ratio ratio-1x1">
       <img
-        src="{{ product_image_url(product) }}"
+        src="{{ url_for('static', filename=product.image_path) }}"
         alt="{{ product.name }}"
         class="object-fit-contain"
         width="600"

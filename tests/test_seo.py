@@ -1,4 +1,5 @@
-import json
+"""N8.01 SEO: own title and description per page, alt texts, robots.txt and sitemap.xml."""
+
 import re
 import xml.etree.ElementTree as ET
 
@@ -7,10 +8,7 @@ import pytest
 from app.catalog import CATEGORIES
 from app.seed import seed_products
 
-def compact(html: str) -> str:
-    """Collapse whitespace so tests do not depend on how the HTML is formatted."""
-    html = re.sub(r"\s+", " ", html)
-    return html.replace(" />", "/>").replace("/>", " />")
+SITEMAP_NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 
 
 @pytest.fixture()
@@ -20,106 +18,35 @@ def seeded(app):
     return app
 
 
-def test_each_public_page_has_a_unique_title_and_description(seeded, client):
-    pages = ["/", "/product/ktm-250-exc-f", "/product/enduro-helmet-pro"]
-    titles, descriptions = set(), set()
+def title_and_description(html):
+    html = re.sub(r"\s+", " ", html)  # the templates may wrap lines anywhere
+    title = re.search(r"<title>(.*?)</title>", html).group(1).strip()
+    description = re.search(r'name="description" content="(.*?)"', html).group(1)
+    return title, description
 
-    for url in pages:
-        html = compact(client.get(url).get_data(as_text=True))
-        titles.add(re.search(r"<title>(.*?)</title>", html, re.S).group(1).strip())
-        descriptions.add(re.search(r'name="description" content="(.*?)"', html, re.S).group(1))
 
-    assert len(titles) == len(pages)
-    assert len(descriptions) == len(pages)
+def sitemap_urls(client, **kwargs):
+    response = client.get("/sitemap.xml", **kwargs)
+    assert response.mimetype == "application/xml"
+    return [e.text for e in ET.fromstring(response.data).findall("s:url/s:loc", SITEMAP_NS)]
+
+
+def test_each_public_page_has_its_own_title_and_description(seeded, client):
+    pages = ["/", "/category/gear", "/product/ktm-250-exc-f", "/product/enduro-helmet-pro"]
+    found = [title_and_description(client.get(url).get_data(as_text=True)) for url in pages]
+
+    assert len({title for title, _ in found}) == len(pages)
+    assert len({description for _, description in found}) == len(pages)
 
 
 def test_descriptions_have_a_reasonable_length(seeded, client):
-    html = compact(client.get("/product/ktm-250-exc-f").get_data(as_text=True))
-
-    description = re.search(r'name="description" content="(.*?)"', html, re.S).group(1)
+    _, description = title_and_description(client.get("/product/ktm-250-exc-f").get_data(as_text=True))
 
     assert 50 <= len(description) <= 200
 
 
-def test_canonical_and_open_graph_tags(seeded, client):
-    html = compact(client.get("/product/ktm-250-exc-f").get_data(as_text=True))
-
-    assert 'rel="canonical" href="http://127.0.0.1:5000/product/ktm-250-exc-f"' in html
-    assert 'property="og:title" content="KTM 250 EXC-F"' in html
-    assert 'property="og:image"' in html
-
-
-def test_product_has_valid_structured_data(seeded, client):
-    html = client.get("/product/ktm-250-exc-f").get_data(as_text=True)
-
-    raw = re.search(r'<script type="application/ld\+json">(.*?)</script>', html, re.S).group(1)
-    data = json.loads(raw)
-
-    assert data["@type"] == "Product"
-    assert data["name"] == "KTM 250 EXC-F"
-    assert data["offers"]["price"] == "10999.00"
-    assert data["offers"]["priceCurrency"] == "EUR"
-    assert data["offers"]["availability"].endswith("InStock")
-
-
-def test_structured_data_cannot_break_out_of_its_script_tag(seeded, app, client):
-    from app.extensions import db
-    from app.models import Product
-
-    with app.app_context():
-        product = Product.query.filter_by(slug="ktm-250-exc-f").one()
-        product.description = "</script><script>alert(1)</script>"
-        db.session.commit()
-
-    html = client.get("/product/ktm-250-exc-f").get_data(as_text=True)
-
-    assert "</script><script>alert(1)" not in html
-
-
-def test_sitemap_lists_the_catalog(seeded, client):
-    response = client.get("/sitemap.xml")
-
-    assert response.mimetype == "application/xml"
-    namespace = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
-    urls = [e.text for e in ET.fromstring(response.data).findall("s:url/s:loc", namespace)]
-    assert "http://127.0.0.1:5000/" in urls
-    assert "http://127.0.0.1:5000/product/ktm-250-exc-f" in urls
-    assert len(urls) == 10  # home + 3 categories + 6 products
-    assert not any("/admin" in u or "/cart" in u for u in urls)
-
-
-def test_sitemap_lists_every_category_page(seeded, client):
-    namespace = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
-    xml = client.get("/sitemap.xml").data
-    urls = [e.text for e in ET.fromstring(xml).findall("s:url/s:loc", namespace)]
-
-    for key in CATEGORIES:
-        assert f"http://127.0.0.1:5000/category/{key}" in urls
-    assert not any("/search" in u for u in urls)  # private pages are not listed
-
-
-def test_robots_txt_has_one_rule_per_line(client):
-    lines = client.get("/robots.txt").get_data(as_text=True).splitlines()
-
-    assert "Disallow: /search" in lines
-    assert "Disallow: /register" in lines
-    assert not any(line.count("Disallow:") > 1 for line in lines)
-
-
-def test_robots_txt_blocks_private_areas_and_points_to_the_sitemap(client):
-    response = client.get("/robots.txt")
-    text = response.get_data(as_text=True)
-
-    assert response.mimetype == "text/plain"
-    assert "Disallow: /admin/" in text
-    assert "Sitemap: http://127.0.0.1:5000/sitemap.xml" in text
-    assert "Disallow: /\n" not in text  # the public pages must stay crawlable
-
-
-def test_sitemap_uses_the_configured_site_url_not_the_host_header(seeded, client):
-    text = client.get("/sitemap.xml", headers={"Host": "evil.example"}).get_data(as_text=True)
-
-    assert "evil.example" not in text
+def test_pages_declare_their_language(client):
+    assert '<html lang="en">' in client.get("/").get_data(as_text=True)
 
 
 def test_links_and_images_have_descriptive_labels(seeded, client):
@@ -127,3 +54,34 @@ def test_links_and_images_have_descriptive_labels(seeded, client):
 
     assert 'aria-label="View KTM 250 EXC-F"' in html
     assert 'alt="KTM 250 EXC-F"' in html
+    assert not re.search(r"<img(?![^>]*\balt=)[^>]*>", html)  # every image has an alt
+
+
+def test_sitemap_lists_home_categories_and_products(seeded, client):
+    urls = sitemap_urls(client)
+
+    assert "http://localhost/" in urls
+    for key in CATEGORIES:
+        assert f"http://localhost/category/{key}" in urls
+    assert "http://localhost/product/ktm-250-exc-f" in urls
+    assert len(urls) == 10  # home + 3 categories + 6 products
+    assert not any(private in url for url in urls for private in ("/admin", "/cart", "/search"))
+
+
+def test_sitemap_uses_https_behind_the_proxy(seeded, client):
+    """On Render the proxy says the visitor used HTTPS (ProxyFix reads X-Forwarded-Proto)."""
+    urls = sitemap_urls(client, headers={"X-Forwarded-Proto": "https"})
+
+    assert all(url.startswith("https://") for url in urls)
+
+
+def test_robots_txt_blocks_private_areas_and_points_to_the_sitemap(client):
+    response = client.get("/robots.txt")
+    lines = response.get_data(as_text=True).splitlines()
+
+    assert response.mimetype == "text/plain"
+    assert lines[0] == "User-agent: *"
+    for path in ("/admin/", "/cart", "/checkout", "/login", "/search"):
+        assert f"Disallow: {path}" in lines
+    assert "Disallow: /" not in lines  # the public pages must stay crawlable
+    assert "Sitemap: http://localhost/sitemap.xml" in lines

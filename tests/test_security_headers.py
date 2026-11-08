@@ -80,9 +80,10 @@ def test_templates_never_disable_escaping():
 
 
 def test_no_inline_scripts_or_handlers():
+    """Every <script> loads a file (src=...), so the strict CSP needs no exception."""
     for template in TEMPLATES.rglob("*.html"):
         text = template.read_text(encoding="utf-8")
-        for match in re.finditer(r'<script(?![^>]*\bsrc=)(?![^>]*application/ld\+json)[^>]*>', text):
+        for match in re.finditer(r"<script(?![^>]*\bsrc=)[^>]*>", text):
             raise AssertionError(f"inline <script> in {template.name}: {match.group(0)}")
         assert not re.search(r"\son[a-z]+=", text), template.name
 

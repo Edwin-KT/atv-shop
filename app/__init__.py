@@ -39,7 +39,7 @@ def create_app(test_config=None):
 
     from app import models  # noqa: F401  (models must be imported before create_all)
     from app.cli import register_commands
-    from app.routes import admin, auth, cart, checkout, documents, main, seo
+    from app.routes import admin, auth, cart, checkout, documents, main
     from app.services.cart import cart_item_count
 
     register_commands(app)
@@ -49,7 +49,6 @@ def create_app(test_config=None):
     app.register_blueprint(documents.bp)
     app.register_blueprint(admin.bp)
     app.register_blueprint(checkout.bp)
-    app.register_blueprint(seo.bp)
 
     @app.context_processor
     def inject_cart_count():
@@ -61,13 +60,6 @@ def create_app(test_config=None):
         return {
             "captcha_enabled": app.config["CAPTCHA_ENABLED"],
             "captcha_site_key": app.config["RECAPTCHA_SITE_KEY"],
-        }
-
-    @app.context_processor
-    def inject_seo():
-        return {
-            "site_url": app.config["SITE_URL"],
-            "site_name": app.config["SITE_NAME"],
         }
 
     @app.context_processor
@@ -90,7 +82,6 @@ def create_app(test_config=None):
         return format_price(cents)
 
     app.jinja_env.globals["product_image_url"] = product_image_path
-    app.extensions["product_image_path"] = product_image_path
 
     # One error page for every error we expect: (title, message) per status code.
     limit_mb = app.config["MAX_CONTENT_LENGTH"] // (1024 * 1024)

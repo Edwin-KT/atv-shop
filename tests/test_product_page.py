@@ -1,6 +1,5 @@
-"""Product page: breadcrumb (visible + JSON-LD), technical summary and buy box."""
+"""Product page: breadcrumb, technical summary and buy box."""
 
-import json
 import re
 
 import pytest
@@ -8,8 +7,6 @@ import pytest
 from app.extensions import db
 from app.models import Product
 from app.seed import seed_products
-
-SITE = "http://127.0.0.1:5000"
 
 
 @pytest.fixture()
@@ -21,13 +18,6 @@ def seeded(app):
 
 def page(client, slug):
     return client.get(f"/product/{slug}").get_data(as_text=True)
-
-
-def json_ld_blocks(html):
-    return [
-        json.loads(raw)
-        for raw in re.findall(r'<script type="application/ld\+json">(.*?)</script>', html, re.S)
-    ]
 
 
 # --- breadcrumb ---
@@ -47,29 +37,6 @@ def test_breadcrumb_links_shop_category_and_marks_the_product(seeded, client, sl
     assert re.search(r'<span aria-current="page"\s*>[^<]+</span', nav)
     for href, _ in links:
         assert client.get(href).status_code == 200
-
-
-def test_breadcrumb_json_ld_has_three_absolute_items(seeded, client):
-    blocks = json_ld_blocks(page(client, "ktm-250-exc-f"))
-
-    assert [b["@type"] for b in blocks] == ["Product", "BreadcrumbList"]
-    items = blocks[1]["itemListElement"]
-    assert [(i["position"], i["name"], i["item"]) for i in items] == [
-        (1, "Shop", f"{SITE}/"),
-        (2, "Enduro bikes", f"{SITE}/category/enduro"),
-        (3, "KTM 250 EXC-F", f"{SITE}/product/ktm-250-exc-f"),
-    ]
-    assert all(i["@type"] == "ListItem" for i in items)
-
-
-def test_breadcrumb_json_ld_escapes_the_product_name(seeded, client):
-    with seeded.app_context():
-        Product.query.filter_by(slug="ktm-250-exc-f").one().name = "</script><script>alert(1)"
-        db.session.commit()
-    html = page(client, "ktm-250-exc-f")
-
-    assert "</script><script>alert(1)" not in html
-    assert json_ld_blocks(html)[1]["itemListElement"][2]["name"] == "</script><script>alert(1)"
 
 
 # --- technical summary ---

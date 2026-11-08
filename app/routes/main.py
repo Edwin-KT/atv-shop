@@ -1,4 +1,4 @@
-from flask import Blueprint, abort, current_app, render_template, request
+from flask import Blueprint, Response, abort, render_template, request, url_for
 
 from app.catalog import CATEGORIES, MAX_QUERY_LENGTH, products_in_category, search_products
 from app.models import Product, VehicleProduct
@@ -6,29 +6,6 @@ from app.models import Product, VehicleProduct
 bp = Blueprint("main", __name__)
 
 FEATURED_COUNT = 4
-
-
-def product_structured_data(product) -> dict:
-    """schema.org Product, used for Google rich results."""
-    site = current_app.config["SITE_URL"]
-    image_path = current_app.extensions["product_image_path"](product)
-    return {
-        "@context": "https://schema.org",
-        "@type": "Product",
-        "name": product.name,
-        "description": product.description or product.get_technical_summary(),
-        "image": f"{site}{image_path}",
-        "sku": str(product.id),
-        "offers": {
-            "@type": "Offer",
-            "url": f"{site}/product/{product.slug}",
-            "priceCurrency": "EUR",
-            "price": f"{product.price_cents / 100:.2f}",
-            "availability": "https://schema.org/InStock"
-            if product.stock > 0
-            else "https://schema.org/OutOfStock",
-        },
-    }
 
 
 @bp.get("/")
@@ -52,32 +29,33 @@ def search():
     return render_template("search.html", products=search_products(text), q=text)
 
 
-def breadcrumb_structured_data(product, category: dict) -> dict:
-    """schema.org BreadcrumbList: Shop > Category > Product, with absolute URLs."""
-    site = current_app.config["SITE_URL"]
-    trail = [
-        ("Shop", f"{site}/"),
-        (category["label"], f"{site}/category/{product.category_key}"),
-        (product.name, f"{site}/product/{product.slug}"),
-    ]
-    return {
-        "@context": "https://schema.org",
-        "@type": "BreadcrumbList",
-        "itemListElement": [
-            {"@type": "ListItem", "position": position, "name": name, "item": url}
-            for position, (name, url) in enumerate(trail, start=1)
-        ],
-    }
-
-
 @bp.get("/product/<slug>")
 def product_detail(slug):
     product = Product.query.filter_by(slug=slug).first_or_404()
     category = CATEGORIES[product.category_key]
-    return render_template(
-        "product.html",
-        product=product,
-        category=category,
-        structured_data=product_structured_data(product),
-        breadcrumb_data=breadcrumb_structured_data(product, category),
-    )
+    return render_template("product.html", product=product, category=category)
+
+
+# --- SEO: files for search engines ---
+
+
+@bp.get("/sitemap.xml")
+def sitemap():
+    """Every public page, so search engines find all products."""
+    # _external=True gives full URLs (https://... behind Render's proxy, thanks to ProxyFix).
+    urls = [url_for("main.index", _external=True)]
+    urls += [url_for("main.category", key=key, _external=True) for key in CATEGORIES]
+    urls += [
+        url_for("main.product_detail", slug=product.slug, _external=True)
+        for product in Product.query.order_by(Product.id)
+    ]
+    return Response(render_template("sitemap.xml", urls=urls), mimetype="application/xml")
+
+
+@bp.get("/robots.txt")
+def robots():
+    """Search engines may read the shop, but not the private pages."""
+    private = ["/admin/", "/cart", "/checkout", "/orders", "/documents", "/login", "/register", "/search"]
+    lines = ["User-agent: *"] + [f"Disallow: {path}" for path in private]
+    lines += ["", f"Sitemap: {url_for('main.sitemap', _external=True)}", ""]
+    return Response("\n".join(lines), mimetype="text/plain")

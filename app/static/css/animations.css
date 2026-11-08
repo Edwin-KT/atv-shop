@@ -1,7 +1,7 @@
-/* Animations: one orchestrated moment (the home banner text arriving), the
-   category-tile bar, and the reduced-motion switch. Nothing else moves by itself. */
+/* Animations: the hero text rises in, cards and buttons react to the pointer,
+   and everything stops for visitors who asked their system for less motion. */
 
-/* The banner title, text and button rise into place once, one after another. */
+/* Text of each carousel slide rises into place, one line after another. */
 @keyframes hero-in {
   from {
     opacity: 0;
@@ -13,21 +13,38 @@
   }
 }
 
-.hero-banner-content > * {
-  animation: hero-in 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+/* Not tied to Bootstrap's "active" class: a slide's text animates as soon as the
+   slide becomes visible (also while it slides in), so it never shows, vanishes
+   and fades in again (flicker). "both" keeps the start state during the delay and
+   the end state (fully visible) afterwards; the normal state is visible too. */
+.hero-caption > * {
+  animation: hero-in 0.6s ease-out both;
 }
 
-.hero-banner-content > :nth-child(2) {
+.hero-caption > :nth-child(2) {
   animation-delay: 0.1s;
 }
 
-.hero-banner-content > :nth-child(3) {
+.hero-caption > :nth-child(3) {
   animation-delay: 0.2s;
 }
 
-/* Category tiles: the orange bar under the name grows when the pointer arrives. */
-.category-tile-name::after {
-  transition: transform 0.25s ease;
+.hero-caption > :nth-child(n + 4) {
+  animation-delay: 0.3s;
+}
+
+/* Cards and buttons change colour smoothly under the pointer. */
+.product-card,
+.btn,
+.category-nav .nav-link {
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.product-card:hover {
+  border-color: var(--color-ink);
 }
 
 /* ---------- respect the user's system setting ---------- */

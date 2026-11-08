@@ -2,60 +2,37 @@
 <p class="text-muted">{{ empty_message|default('No products yet.') }}</p>
 {% endif %}
 
+{# 1 column on phones, 2 on tablets, 3 on desktops. #}
 <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3 g-md-4">
   {% for product in products %}
   <div class="col">
     <article class="product-card">
-      <div class="product-media">
-        <a
-          class="product-media-link"
-          href="{{ url_for('main.product_detail', slug=product.slug) }}"
-          tabindex="-1"
-          aria-hidden="true"
-        >
-          <div class="ratio ratio-1x1">
-            <img
-              src="{{ product_image_url(product) }}"
-              alt="{{ product.name }}"
-              class="object-fit-contain"
-              width="600"
-              height="600"
-              loading="lazy"
-            />
-          </div>
-        </a>
-
-        {% if product.stock == 0 %}
-        <span class="tag tag-out">Sold out</span>
-        {% elif product.stock <= 3 %}
-        <span class="tag tag-hot">Low stock</span>
-        {% endif %} {% if product.stock > 0 %}
-        <form
-          class="quick-add"
-          method="post"
-          action="{{ url_for('cart.add', product_id=product.id) }}"
-        >
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-          <input type="hidden" name="quantity" value="1" />
-          <button
-            class="quick-add-btn"
-            type="submit"
-            aria-label="Add {{ product.name }} to cart"
-          >
-            +
-          </button>
-        </form>
-        {% endif %}
-      </div>
-
+      <a
+        class="product-media"
+        href="{{ url_for('main.product_detail', slug=product.slug) }}"
+        tabindex="-1"
+        aria-hidden="true"
+      >
+        <div class="ratio ratio-1x1">
+          <img
+            src="{{ product_image_url(product) }}"
+            alt="{{ product.name }}"
+            class="object-fit-contain"
+            width="600"
+            height="600"
+            loading="lazy"
+          />
+        </div>
+      </a>
       <div class="product-info">
         <p class="product-price">{{ product.price_cents|eur }}</p>
-        <h3 class="product-name">
-          <a href="{{ url_for('main.product_detail', slug=product.slug) }}"
-            >{{ product.name }}</a
-          >
-        </h3>
+        <h2 class="product-name">
+          <a href="{{ url_for('main.product_detail', slug=product.slug) }}">{{ product.name }}</a>
+        </h2>
         <p class="product-specs">{{ product.get_technical_summary() }}</p>
+        {% if product.stock == 0 %}
+        <p class="out-of-stock">Out of stock</p>
+        {% endif %}
       </div>
     </article>
   </div>

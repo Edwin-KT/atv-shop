@@ -1,374 +1,391 @@
-/* Layout: page structure (utility bar, header, segment tabs, main area, footer). */
+/* Layout: header, panels, product cards, page parts, hero carousel, footer, responsive rules. */
 
-main {
-  flex: 1;
-  padding-top: var(--space-6);
-}
+/* ---------- header: white bar with wordmark, categories, search, account ---------- */
 
-/* ---------- utility bar (desktop): black strip with the account links ---------- */
-
-.utility-bar {
-  background-color: var(--color-ink);
-  color: #d4d3cf;
-  font-size: var(--text-label);
-}
-
-.utility-inner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-4);
-  padding-top: var(--space-2);
-  padding-bottom: var(--space-2);
-}
-
-.utility-bar .account-links a,
-.utility-bar .link-button {
-  color: #ffffff;
-}
-
-.account-links {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-5);
-}
-
-.account-links form {
-  margin: 0;
-}
-
-.account-links a,
-.link-button {
-  text-decoration: none;
-}
-
-.account-links a:hover,
-.link-button:hover {
-  text-decoration: underline;
-}
-
-.account-links .account-admin {
-  color: var(--color-accent-light);
-  font-weight: 700;
-}
-
-.link-button {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-
-/* ---------- header: wordmark, tabs, search, icons ---------- */
-
+/* Opaque white, so the page (and the dark carousel) scroll under it, never through it. */
 .site-header {
   background-color: var(--color-surface);
-  border-bottom: var(--border-thin);
-}
-
-/* Phone and tablet: burger + wordmark + icons, then search, then scrolling tabs. */
-.header-main {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-areas:
-    "burger brand icons"
-    "search search search"
-    "tabs tabs tabs"
-    "menu menu menu";
-  align-items: center;
-  column-gap: var(--space-4);
-  row-gap: var(--space-3);
-  padding-top: var(--space-3);
-}
-
-.header-burger {
-  grid-area: burger;
-  padding: var(--space-2);
-  border: 0;
-  color: var(--color-ink);
+  border-bottom: 1px solid var(--color-line);
 }
 
 .wordmark {
-  grid-area: brand;
   color: var(--color-ink);
   font-family: var(--font-display);
   font-size: 1.75rem;
   font-weight: 700;
   line-height: 1;
-  letter-spacing: 0.01em;
   text-decoration: none;
-  white-space: nowrap;
-}
-
-.wordmark:hover {
-  color: var(--color-ink);
 }
 
 .wordmark-amp {
   color: var(--color-accent);
 }
 
-.segment-tabs {
-  grid-area: tabs;
-  display: flex;
-  gap: var(--space-5);
-  overflow-x: auto;
-  scrollbar-width: none;
+.navbar-toggler {
+  border: 0;
 }
 
-.segment-tabs a {
-  position: relative;
-  padding: var(--space-2) 0 var(--space-3);
-  border-bottom: 2px solid transparent;
+/* Category links: bold uppercase, the active one underlined in orange. */
+.category-nav .nav-link {
+  border-bottom: 3px solid transparent;
   color: var(--color-ink);
   font-family: var(--font-display);
   font-size: 1.125rem;
   font-weight: 700;
-  letter-spacing: 0.02em;
-  text-decoration: none;
   text-transform: uppercase;
-  white-space: nowrap;
-  transition: border-color var(--motion-fast);
 }
 
-.segment-tabs a:hover {
-  border-bottom-color: var(--color-ink);
-}
-
-/* The active tab carries the livery stripe (use 1 of max 3 per page). */
-.segment-tabs a.is-active {
-  border-bottom-color: transparent;
-}
-
-.segment-tabs a.is-active::after {
-  content: "";
-  position: absolute;
-  right: 0;
-  bottom: -2px;
-  left: 0;
-  height: 4px;
-  background: var(--livery);
+.category-nav .nav-link:hover,
+.category-nav .nav-link.active {
+  border-bottom-color: var(--color-accent);
+  color: var(--color-ink);
 }
 
 .header-search {
-  grid-area: search;
   display: flex;
-  width: 100%;
-}
-
-.header-search .form-control {
-  height: 3rem;
-  border: 1px solid var(--color-line-strong);
-  border-right: 0;
-  border-radius: 0;
-}
-
-.header-search .form-control:focus {
-  border-color: var(--color-ink);
-  box-shadow: none;
+  margin: var(--space) 0;
 }
 
 .header-search .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 3rem;
-  height: 3rem;
-  border-radius: 0;
+  flex-shrink: 0;
 }
 
-.header-icons {
-  grid-area: icons;
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-.header-icon {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
+.account-nav .nav-link {
   color: var(--color-ink);
-}
-
-.header-icon:hover {
-  color: var(--color-accent-dark);
-}
-
-/* Cart count as a mini number plate. It keeps Bootstrap's "text-bg-light" class
-   (a test checks it); !important is needed to beat Bootstrap's own !important. */
-.cart-count {
-  position: absolute;
-  top: 0.1rem;
-  right: -0.1rem;
-  min-width: 1.35rem;
-  padding: 0.15rem 0.25rem 0.05rem;
-  border: 2px solid var(--color-ink);
-  border-radius: 0;
-  background-color: var(--color-surface) !important;
-  color: var(--color-ink) !important;
-  font-family: var(--font-display);
-  font-size: 0.8125rem;
-  line-height: 1;
-}
-
-/* Phone/tablet account menu, opened by the burger. */
-.header-menu {
-  grid-area: menu;
-}
-
-.header-menu .account-links {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-3);
-  padding: var(--space-4) 0;
-  border-top: var(--border-thin);
-}
-
-.header-menu .account-links a,
-.header-menu .link-button {
-  color: var(--color-ink);
+  font-size: 0.9rem;
   font-weight: 600;
 }
 
-.account-email {
+/* The logout form's button looks like the other links. */
+.account-nav button.nav-link {
+  border: 0;
+  background: none;
+}
+
+.account-nav .nav-admin {
+  color: var(--color-accent-dark);
+}
+
+.cart-count {
+  border: 2px solid var(--color-ink);
+}
+
+/* ---------- main area and panels ---------- */
+
+main {
+  flex: 1;
+  padding-top: calc(var(--space) * 2);
+}
+
+.page-title {
+  margin-bottom: 1.5rem;
+}
+
+/* White box on the grey page, for forms, tables and the cart. */
+.panel {
+  padding: 1.5rem;
+  background-color: var(--color-surface);
+}
+
+.panel h1 {
+  margin-bottom: 1.5rem;
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+}
+
+.panel-narrow {
+  max-width: 32rem;
+  margin: 0 auto;
+}
+
+/* ---------- product cards: flat white cards on the grey page ---------- */
+
+.product-card {
+  height: 100%;
+  border: 1px solid var(--color-line);
+  background-color: var(--color-surface);
+}
+
+.product-media {
+  display: block;
+  background-color: var(--color-tile);
+}
+
+/* Studio photos on white: "multiply" turns their white into the tile colour. */
+.product-media img,
+.product-photo img,
+.hero-photo img {
+  padding: var(--space);
+  mix-blend-mode: multiply;
+}
+
+.product-info {
+  padding: var(--space);
+}
+
+.product-price,
+.product-detail-price,
+.hero-price,
+.cart-total {
+  font-family: var(--font-display);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.product-price {
+  margin-bottom: 0.25rem;
+  color: var(--color-accent-dark);
+  font-size: 1.75rem;
+}
+
+.product-name {
+  margin-bottom: 0.5rem;
+  font-family: var(--font-text);
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.product-name a {
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.product-card:hover .product-name a {
+  text-decoration: underline;
+}
+
+.product-specs {
+  color: var(--color-ink-soft);
+  font-size: 0.875rem;
+}
+
+.out-of-stock {
+  margin: 0;
+  color: var(--color-muted);
+  font-weight: 700;
+}
+
+/* ---------- product page ---------- */
+
+.breadcrumb-nav ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+}
+
+.breadcrumb-nav li + li::before {
+  content: "/";
+  margin-right: 0.5rem;
   color: var(--color-muted);
 }
 
-.utility-bar .account-email {
-  color: #d4d3cf;
+.product-photo {
+  background-color: var(--color-tile);
 }
 
-/* ---------- footer: black, trail-map contours, livery top edge ---------- */
+.product-detail-price {
+  color: var(--color-accent-dark);
+  font-size: 2.5rem;
+}
+
+/* A green dot before "3 in stock", a grey one before "Out of stock". */
+.stock-label::before {
+  content: "";
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  margin-right: 0.5rem;
+  border-radius: 50%;
+  background-color: var(--color-success);
+}
+
+.stock-label-out::before {
+  background-color: var(--color-muted);
+}
+
+.qty-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.qty-form .form-control {
+  width: 5rem;
+  text-align: center;
+}
+
+.btn-buy,
+.btn-checkout {
+  flex: 1;
+  padding: 0.85rem;
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+}
+
+/* ---------- cart: lines panel + total panel ---------- */
+
+.qty-update {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.qty-update .form-control {
+  width: 4.5rem;
+}
+
+.cart-note {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
+.cart-total {
+  font-size: 2.25rem;
+}
+
+.btn-checkout {
+  display: block;
+  width: 100%;
+  margin-bottom: var(--space);
+}
+
+/* ---------- hero: the image carousel on a dark band ---------- */
+
+.hero {
+  padding: 3rem 0;
+  background-color: var(--color-ink);
+  color: #ffffff;
+}
+
+.hero-photo {
+  max-width: 24rem;
+  background-color: var(--color-tile);
+}
+
+.hero-kicker {
+  margin-bottom: 0.5rem;
+  color: var(--color-accent);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero-name {
+  margin-bottom: 0.75rem;
+  font-size: clamp(2rem, 4.5vw, 3.25rem);
+}
+
+.hero-price {
+  color: var(--color-accent);
+  font-size: clamp(2rem, 4vw, 2.75rem);
+}
+
+.hero .product-specs {
+  color: #ecebe7;
+}
+
+/* Thin bars under the slides; the active one is orange. */
+.hero .carousel-indicators {
+  position: static;
+  justify-content: flex-start;
+  margin: 2rem 0 0;
+}
+
+.hero .carousel-indicators [data-bs-target] {
+  width: 2rem;
+  height: 4px;
+  margin: 0 0.5rem 0 0;
+  background-color: #ffffff;
+}
+
+.hero .carousel-indicators .active {
+  background-color: var(--color-accent);
+}
+
+/* ---------- footer: dark band ---------- */
 
 .site-footer {
-  margin-top: var(--space-8);
-  padding-bottom: var(--space-5);
+  margin-top: 4rem;
+  padding: 3rem 0 1.5rem;
   background-color: var(--color-ink);
-  background-image: url("../img/patterns/contour.svg");
   color: #c9c8c4;
-  font-size: var(--text-small);
-}
-
-.footer-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-6);
-  padding-top: var(--space-8);
+  font-size: 0.875rem;
 }
 
 .site-footer .wordmark {
   color: #ffffff;
 }
 
-.footer-brand p {
-  max-width: 22rem;
-  margin: var(--space-4) 0 0;
-}
-
-.site-footer h2 {
-  margin-bottom: var(--space-3);
-  color: #ffffff;
-  font-size: 1.125rem;
-  letter-spacing: 0.04em;
-}
-
-.footer-list {
-  margin: 0;
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin: 1.5rem 0;
   padding: 0;
   list-style: none;
 }
 
-.footer-list li {
-  margin-bottom: var(--space-2);
-}
-
-.site-footer a {
+.site-footer a:not(.wordmark) {
   color: #c9c8c4;
-  text-decoration: none;
-}
-
-.site-footer a:hover {
-  color: #ffffff;
-  text-decoration: underline;
-}
-
-.footer-facts li {
-  max-width: 18rem;
 }
 
 .footer-note {
-  margin: var(--space-7) 0 0;
-  padding-top: var(--space-4);
+  margin: 0;
+  padding-top: var(--space);
   border-top: 1px solid #3a3836;
-  font-size: var(--text-label);
 }
 
 /* ---------- responsive ---------- */
 
-/* Phone: footer columns stack; the brand line is easier to read full width. */
+/* Phone: smaller wordmark and photos, tighter panels. */
 @media (max-width: 575.98px) {
   .wordmark {
     font-size: 1.5rem;
   }
-}
 
-/* Tablet: two footer columns. */
-@media (min-width: 576px) and (max-width: 991.98px) {
-  .footer-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .panel {
+    padding: 1.25rem;
+  }
+
+  .hero-photo,
+  .product-photo {
+    max-width: 16rem;
+    margin: 0 auto;
   }
 }
 
-/* Desktop: wordmark, search and icons in one row, tabs below. */
+/* Phone and tablet: the menu opened by the toggler scrolls on its own when it is
+   taller than the screen (the navbar is sticky, so it would otherwise be cut off). */
+@media (max-width: 991.98px) {
+  .navbar-collapse {
+    max-height: calc(100vh - 4.5rem);
+    overflow-y: auto;
+  }
+}
+
+/* Desktop: the menu is one row; search fills the space between the two link groups. */
 @media (min-width: 992px) {
-  .header-main {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    grid-template-areas:
-      "brand search icons"
-      "tabs tabs tabs";
-    column-gap: var(--space-6);
-    padding-top: var(--space-4);
+  .navbar-collapse {
+    gap: 1.5rem;
   }
 
   .header-search {
-    max-width: 36rem;
-    justify-self: center;
+    flex: 1;
+    max-width: 30rem;
+    margin: 0 auto;
   }
 
-  .footer-grid {
-    grid-template-columns: 2fr 1fr 1fr 1.5fr;
-  }
-}
-
-/* Wide desktop: everything in one row, like a race-team header. */
-@media (min-width: 1200px) {
-  .header-main {
-    grid-template-columns: auto auto minmax(14rem, 1fr) auto;
-    grid-template-areas: "brand tabs search icons";
-    padding-top: var(--space-4);
+  .panel {
+    padding: 3rem;
   }
 
-  .segment-tabs {
-    align-self: end;
-  }
-
-  .header-search {
-    justify-self: end;
-    padding-bottom: var(--space-3);
-  }
-
-  .header-icons {
-    padding-bottom: var(--space-3);
-  }
-
-  .wordmark {
-    padding-bottom: var(--space-3);
+  /* The cart total stays in view while the list scrolls. */
+  .cart-summary {
+    position: sticky;
+    top: 1.5rem;
   }
 }

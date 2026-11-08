@@ -69,12 +69,6 @@ def set_quantity(product: Product, quantity: int) -> int:
     return max(new_quantity, 0)
 
 
-def remove_item(product_id: int) -> None:
-    cart = dict(_read_cart())
-    cart.pop(str(product_id), None)
-    _save_cart(cart)
-
-
 def clear_cart() -> None:
     session.pop(CART_SESSION_KEY, None)
 

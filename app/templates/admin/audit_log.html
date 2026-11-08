@@ -1,5 +1,6 @@
 {% extends "base.html" %} {% block title %}Audit log - ATV & Enduro Shop{%
 endblock %} {% block content %}
+<section class="panel">
 <a href="{{ url_for('admin.dashboard') }}">&larr; Back to products</a>
 <h1 class="mt-3 mb-4">
   Audit log <small class="text-muted fs-6">(last 100 events)</small>
@@ -33,4 +34,5 @@ endblock %} {% block content %}
     </tbody>
   </table>
 </div>
+</section>
 {% endblock %}

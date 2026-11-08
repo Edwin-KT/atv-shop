@@ -35,17 +35,7 @@ def product_structured_data(product) -> dict:
 def index():
     products = Product.query.order_by(Product.name).all()
     featured = VehicleProduct.query.order_by(VehicleProduct.name).limit(FEATURED_COUNT).all()
-
-    tiles = []
-    for key, info in CATEGORIES.items():
-        query = products_in_category(key)
-        sample = query.first()
-        if sample is not None:
-            tiles.append(
-                {"key": key, "label": info["label"], "product": sample, "count": query.count()}
-            )
-
-    return render_template("index.html", products=products, featured=featured, tiles=tiles)
+    return render_template("index.html", products=products, featured=featured)
 
 
 @bp.get("/category/<key>")

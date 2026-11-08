@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ 'Edit product' if product else 'New product' }} - ATV & Enduro Shop{% endblock %}
 {% block content %}
+<section class="panel">
   <h1 class="mb-4">{{ 'Edit' if product else 'New' }} {{ product_type }} product</h1>
 
   {% if errors %}
@@ -73,4 +74,5 @@
     <button class="btn btn-primary" type="submit">Save</button>
     <a class="btn btn-link" href="{{ url_for('admin.dashboard') }}">Cancel</a>
   </form>
+</section>
 {% endblock %}

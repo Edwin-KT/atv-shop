@@ -2,14 +2,7 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 
 from app.extensions import db
 from app.models import Product
-from app.money import format_price
-from app.services.cart import (
-    add_item,
-    cart_total_cents,
-    get_cart_lines,
-    remove_item,
-    set_quantity,
-)
+from app.services.cart import add_item, cart_total_cents, get_cart_lines, set_quantity
 
 bp = Blueprint("cart", __name__)
 
@@ -17,13 +10,7 @@ bp = Blueprint("cart", __name__)
 @bp.get("/cart")
 def view_cart():
     lines = get_cart_lines()
-    total_cents = cart_total_cents(lines)
-    return render_template(
-        "cart.html",
-        lines=lines,
-        total_cents=total_cents,
-        total_display=format_price(total_cents),
-    )
+    return render_template("cart.html", lines=lines, total_cents=cart_total_cents(lines))
 
 
 @bp.post("/cart/add/<int:product_id>")
@@ -46,13 +33,6 @@ def update(product_id):
 
     if quantity is None:
         flash("Invalid quantity.", "danger")
-    else:
-        set_quantity(product, quantity)
-    return redirect(url_for("cart.view_cart"))
-
-
-@bp.post("/cart/remove/<int:product_id>")
-def remove(product_id):
-    remove_item(product_id)
-    flash("Item removed.", "info")
+    elif set_quantity(product, quantity) == 0:
+        flash("Item removed.", "info")
     return redirect(url_for("cart.view_cart"))

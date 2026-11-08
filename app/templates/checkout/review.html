@@ -1,4 +1,4 @@
-{% extends "base.html" %} {% set own_panels = true %} {% block title %}Checkout
+{% extends "base.html" %} {% block title %}Checkout
 - ATV & Enduro Shop{% endblock %} {% block content %}
 
 <form method="post" class="checkout-form">
@@ -63,27 +63,20 @@
       </section>
     </div>
 
-    <aside class="col-lg-4 cart-aside">
+    <div class="col-lg-4">
       <section class="panel cart-summary">
-        <h2 class="panel-title">Total amount</h2>
-        <dl class="summary">
-          <div class="summary-total">
-            <dt>Total</dt>
-            <dd>{{ total_cents|eur }}</dd>
-          </div>
-        </dl>
+        <h2>Total amount</h2>
+        <p class="cart-total">{{ total_cents|eur }}</p>
         <button class="btn btn-primary btn-checkout" type="submit">
           Pay with card
         </button>
-        <p class="checkout-hint">
+        <p class="cart-note">
           Pay with card reserves your items, then you pay on Stripe's secure
           page.
         </p>
-        <a class="checkout-back" href="{{ url_for('cart.view_cart') }}"
-          >Back to cart</a
-        >
+        <a href="{{ url_for('cart.view_cart') }}">Back to cart</a>
       </section>
-    </aside>
+    </div>
   </div>
 </form>
 {% endblock %}

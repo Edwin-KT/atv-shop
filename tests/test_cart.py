@@ -90,16 +90,6 @@ def test_update_to_zero_removes_item(app, client):
     assert cart_in_session(client) == {}
 
 
-def test_remove_item(app, client):
-    ids = seed(app)
-    pid = ids["riding-gloves-trail"]
-    client.post(f"/cart/add/{pid}", data={"quantity": 1})
-
-    client.post(f"/cart/remove/{pid}")
-
-    assert cart_in_session(client) == {}
-
-
 def test_unknown_product_returns_404(client):
     assert client.post("/cart/add/9999", data={"quantity": 1}).status_code == 404
 

@@ -1,5 +1,6 @@
 {% extends "base.html" %} {% block title %}Admin - ATV & Enduro Shop{% endblock
 %} {% block content %}
+<section class="panel">
 <div
   class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4"
 >
@@ -81,4 +82,6 @@
 </div>
 {% else %}
 <p class="text-muted">No products yet.</p>
-{% endif %} {% endblock %}
+{% endif %}
+</section>
+{% endblock %}

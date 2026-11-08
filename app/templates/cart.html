@@ -1,129 +1,75 @@
-{% extends "base.html" %} {% set own_panels = true %} {% block title %}Cart - ATV & Enduro Shop{% endblock %} {%
-block content %} {% if not lines %}
-<section class="panel cart-empty">
+{% extends "base.html" %}
+{% block title %}Cart - ATV & Enduro Shop{% endblock %}
+{% block content %}
+{% if not lines %}
+<section class="panel">
   <h1>Your cart</h1>
   <p>Your cart is empty.</p>
-  <div class="cart-empty-links">
-    <a class="btn btn-primary" href="{{ url_for('main.category', key='enduro') }}"
-      >Shop enduro bikes</a
-    >
-    <a class="btn btn-outline-dark" href="{{ url_for('main.category', key='atv') }}"
-      >Shop ATVs</a
-    >
-  </div>
+  <a class="btn btn-primary" href="{{ url_for('main.category', key='enduro') }}">Shop enduro bikes</a>
+  <a class="btn btn-outline-dark" href="{{ url_for('main.category', key='atv') }}">Shop ATVs</a>
 </section>
 {% else %}
-
+{# Two panels: the cart lines on the left, the total on the right (stacked on phones). #}
 <div class="row g-4 align-items-start">
   <div class="col-lg-8">
     <section class="panel">
       <h1>Your cart ({{ cart_item_count }})</h1>
-
-      {% for line in lines %}
-      <div class="cart-line">
-        <a
-          class="cart-thumb"
-          href="{{ url_for('main.product_detail', slug=line.product.slug) }}"
-          tabindex="-1"
-          aria-hidden="true"
-        >
-          <div class="ratio ratio-1x1">
-            <img
-              src="{{ product_image_url(line.product) }}"
-              alt=""
-              class="object-fit-contain"
-              width="160"
-              height="160"
-              loading="lazy"
-            />
-          </div>
-        </a>
-
-        <div class="cart-line-body">
-          <h2 class="cart-line-name">
-            <a
-              href="{{ url_for('main.product_detail', slug=line.product.slug) }}"
-              >{{ line.product.name }}</a
-            >
-          </h2>
-          <p class="cart-line-price">{{ line.product.price_display }} each</p>
-          <p class="cart-line-stock">
-            {{ "Only %d left"|format(line.product.stock) if line.product.stock <= 3 else "In stock" }}
-          </p>
-
-          <div class="cart-line-actions">
-            <form
-              class="qty-stepper"
-              method="post"
-              action="{{ url_for('cart.update', product_id=line.product.id) }}"
-            >
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-              <button
-                class="stepper-btn"
-                type="submit"
-                name="quantity"
-                value="{{ line.quantity - 1 }}"
-                aria-label="Decrease quantity of {{ line.product.name }}"
-                {% if line.quantity <= 1 %}disabled{% endif %}
-              >
-                &minus;
-              </button>
-              <span class="stepper-value"
-                ><span class="visually-hidden">Quantity: </span>{{ line.quantity }}</span
-              >
-              <button
-                class="stepper-btn"
-                type="submit"
-                name="quantity"
-                value="{{ line.quantity + 1 }}"
-                aria-label="Increase quantity of {{ line.product.name }}"
-                {% if line.quantity >= line.max_quantity %}disabled{% endif %}
-              >
-                +
-              </button>
-            </form>
-
-            <form
-              method="post"
-              action="{{ url_for('cart.remove', product_id=line.product.id) }}"
-            >
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-              <button
-                class="remove-btn"
-                type="submit"
-                aria-label="Remove {{ line.product.name }}"
-              >
-                Remove
-              </button>
-            </form>
-
-            <p class="cart-line-total">{{ line.line_total_display }}</p>
-          </div>
-        </div>
+      <div class="table-responsive">
+        <table class="table align-middle cart-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Price</th>
+              <th>Quantity</th>
+              <th class="text-end">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for line in lines %}
+            <tr>
+              <td>
+                <a href="{{ url_for('main.product_detail', slug=line.product.slug) }}">{{ line.product.name }}</a>
+              </td>
+              <td>{{ line.product.price_cents|eur }}</td>
+              <td>
+                {# No JavaScript: the form sends the new quantity; 0 removes the line. #}
+                <form class="qty-update" method="post" action="{{ url_for('cart.update', product_id=line.product.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                  <label class="visually-hidden" for="qty-{{ line.product.id }}">Quantity of {{ line.product.name }}</label>
+                  <input
+                    id="qty-{{ line.product.id }}"
+                    class="form-control form-control-sm"
+                    type="number"
+                    name="quantity"
+                    value="{{ line.quantity }}"
+                    min="0"
+                    max="{{ line.max_quantity }}"
+                  />
+                  <button class="btn btn-sm btn-outline-dark" type="submit">Update</button>
+                </form>
+                <form method="post" action="{{ url_for('cart.update', product_id=line.product.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                  <input type="hidden" name="quantity" value="0" />
+                  <button class="btn btn-link btn-sm p-0" type="submit" aria-label="Remove {{ line.product.name }}">Remove</button>
+                </form>
+              </td>
+              <td class="text-end">{{ line.line_total_cents|eur }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
-      {% endfor %}
-
       <p class="cart-note">Items are reserved when you continue to payment.</p>
     </section>
   </div>
 
-  <aside class="col-lg-4 cart-aside">
+  <div class="col-lg-4">
     <section class="panel cart-summary">
-      <h2 class="panel-title">Total amount</h2>
-      <dl class="summary">
-        <div>
-          <dt>Items</dt>
-          <dd>{{ cart_item_count }}</dd>
-        </div>
-        <div class="summary-total">
-          <dt>Total</dt>
-          <dd>{{ total_cents|eur }}</dd>
-        </div>
-      </dl>
-      <a class="btn btn-primary btn-checkout" href="{{ url_for('checkout.start') }}"
-        >Proceed to checkout</a
-      >
+      <h2>Total amount</h2>
+      <p class="cart-total">{{ total_cents|eur }}</p>
+      <a class="btn btn-primary btn-checkout" href="{{ url_for('checkout.start') }}">Proceed to checkout</a>
     </section>
-  </aside>
+  </div>
 </div>
-{% endif %} {% endblock %}
+{% endif %}
+{% endblock %}

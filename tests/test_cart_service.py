@@ -6,7 +6,6 @@ from app.services.cart import (
     cart_item_count,
     cart_total_cents,
     get_cart_lines,
-    remove_item,
     set_quantity,
 )
 
@@ -62,17 +61,6 @@ def test_set_quantity_to_zero_removes_item(app):
         set_quantity(helmet, 0)
 
         assert get_cart_lines() == []
-
-
-def test_remove_item(app):
-    seed(app)
-    with app.test_request_context():
-        helmet = get("enduro-helmet-pro")
-        add_item(helmet)
-
-        remove_item(helmet.id)
-
-        assert cart_item_count() == 0
 
 
 def test_total_uses_database_prices(app):

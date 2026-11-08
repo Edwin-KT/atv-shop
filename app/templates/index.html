@@ -1,51 +1,78 @@
-{% extends "base.html" %} {% set bare = true %} {% block title %}ATV & Enduro
-Shop - ATVs, enduro bikes and riding gear{% endblock %} {% block
-meta_description %}Browse ATVs, enduro motorcycles, helmets, boots and gloves.
-Secure online checkout.{% endblock %} {% block head_extra %}
-<link
-  rel="preload"
-  as="image"
-  href="{{ url_for('static', filename='img/hero/trail-1920.webp') }}"
-  imagesrcset="{{ url_for('static', filename='img/hero/trail-960.webp') }} 960w, {{ url_for('static', filename='img/hero/trail-1920.webp') }} 1920w"
-  imagesizes="100vw"
-  fetchpriority="high"
-/>
-{% endblock %} {% block hero %} {% include "_hero_banner.html" %} {% include
-"_hero_carousel.html" %} {% endblock %} {% block content %} {% if tiles %}
-<section class="home-section" aria-labelledby="categories-title">
-  <h2 id="categories-title" class="section-title">Shop by category</h2>
-  <div class="row row-cols-1 row-cols-sm-3 g-3">
-    {% for tile in tiles %}
-    <div class="col">
-      <a
-        class="category-tile"
-        href="{{ url_for('main.category', key=tile.key) }}"
-      >
-        <div class="ratio tile-ratio">
-          <img
-            src="{{ product_image_url(tile.product) }}"
-            alt=""
-            class="object-fit-contain"
-            width="600"
-            height="600"
-            loading="lazy"
-          />
+{% extends "base.html" %}
+{% block title %}ATV & Enduro Shop - ATVs, enduro bikes and riding gear{% endblock %}
+{% block meta_description %}Browse ATVs, enduro motorcycles, helmets, boots and gloves. Secure online checkout.{% endblock %}
+
+{% block hero %}
+{# The image carousel (Bootstrap) is the dark hero of the home page. #}
+{% if featured %}
+<section
+  id="heroCarousel"
+  class="carousel slide hero"
+  data-bs-ride="carousel"
+  data-bs-interval="6000"
+  aria-label="Featured vehicles"
+>
+  <div class="carousel-inner">
+    {% for product in featured %}
+    <div class="carousel-item {{ 'active' if loop.first }}">
+      <div class="container">
+        <div class="row align-items-center g-4 g-lg-5">
+          <div class="col-md-5">
+            <div class="hero-photo ratio ratio-1x1">
+              <img
+                src="{{ product_image_url(product) }}"
+                alt="{{ product.name }}"
+                class="object-fit-contain"
+                width="600"
+                height="600"
+              />
+            </div>
+          </div>
+          <div class="col-md-7 hero-caption">
+            <p class="hero-kicker">Featured vehicle</p>
+            <h2 class="hero-name">{{ product.name }}</h2>
+            <p class="hero-price">{{ product.price_cents|eur }}</p>
+            <p class="product-specs">{{ product.get_technical_summary() }}</p>
+            <a
+              class="btn btn-light"
+              href="{{ url_for('main.product_detail', slug=product.slug) }}"
+              aria-label="View {{ product.name }}"
+              >View vehicle</a
+            >
+          </div>
         </div>
-        <span class="category-tile-label">
-          <span class="category-tile-name">{{ tile.label }}</span>
-          <span class="category-tile-count"
-            >{{ tile.count }} product{{ '' if tile.count == 1 else 's' }}</span
-          >
-        </span>
-      </a>
+      </div>
     </div>
     {% endfor %}
   </div>
+
+  <div class="container">
+    <div class="carousel-indicators">
+      {% for product in featured %}
+      <button
+        type="button"
+        data-bs-target="#heroCarousel"
+        data-bs-slide-to="{{ loop.index0 }}"
+        {% if loop.first %}class="active" aria-current="true"{% endif %}
+        aria-label="Slide {{ loop.index }}: {{ product.name }}"
+      ></button>
+      {% endfor %}
+    </div>
+  </div>
+
+  <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+    <span class="visually-hidden">Previous</span>
+  </button>
+  <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+    <span class="visually-hidden">Next</span>
+  </button>
 </section>
 {% endif %}
+{% endblock %}
 
-<section class="home-section" aria-labelledby="catalog-title">
-  <h2 id="catalog-title" class="section-title">Catalog</h2>
-  {% include "_product_grid.html" %}
-</section>
+{% block content %}
+<h1 class="page-title">ATVs, enduro bikes and riding gear</h1>
+{% include "_product_grid.html" %}
 {% endblock %}

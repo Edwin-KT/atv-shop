@@ -1,4 +1,4 @@
-{% extends "base.html" %} {% set bare = true %} {% block title %}{{
+{% extends "base.html" %} {% block title %}{{
 product.name }} - ATV & Enduro Shop{% endblock %} {% block meta_description %}{{
 product.name }}: {{ product.get_technical_summary() }}. {{
 product.description[:110] }}{% endblock %} {% block og_type %}product{% endblock
@@ -13,6 +13,7 @@ product.description[:110] }}{% endblock %} {% block og_type %}product{% endblock
   {{ breadcrumb_data|tojson }}
 </script>
 {% endblock %} {% block content %}
+<section class="panel">
 <nav class="breadcrumb-nav" aria-label="Breadcrumb">
   <ol>
     <li><a href="{{ url_for('main.index') }}">Shop</a></li>
@@ -84,4 +85,5 @@ product.description[:110] }}{% endblock %} {% block og_type %}product{% endblock
     {% endif %}
   </div>
 </div>
+</section>
 {% endblock %}

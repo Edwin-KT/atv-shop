@@ -34,8 +34,7 @@ def is_designed_400(response):
         response.status_code == 400
         and "Bad request" in html
         and "The request could not be processed. Please go back and try again." in html
-        and 'class="page-grey"' in html
-        and 'class="panel"' in html
+        and '<section class="panel">' in html
     )
 
 

@@ -1,5 +1,6 @@
 {% extends "base.html" %} {% block title %}My documents - ATV & Enduro Shop{%
 endblock %} {% block content %}
+<section class="panel">
 <h1 class="mb-4">My documents</h1>
 
 {% if errors %}
@@ -82,4 +83,6 @@ endblock %} {% block content %}
 </div>
 {% else %}
 <p class="text-muted">You have not uploaded any documents yet.</p>
-{% endif %} {% endblock %}
+{% endif %}
+</section>
+{% endblock %}

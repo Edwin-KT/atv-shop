@@ -1,5 +1,6 @@
 import re
 
+from app.models import VehicleProduct
 from app.seed import seed_products
 
 
@@ -62,3 +63,14 @@ def test_carousel_is_hidden_when_there_are_no_vehicles(client):
     html = client.get("/").get_data(as_text=True)
 
     assert "heroCarousel" not in html
+
+def test_slides_show_price_and_specs_from_the_database(app, client):
+    seed(app)
+    with app.app_context():
+        ktm = VehicleProduct.query.filter_by(slug="ktm-250-exc-f").one()
+        price, summary = f"{ktm.price_cents // 100:,}.00 EUR", ktm.get_technical_summary()
+
+    hero = client.get("/").get_data(as_text=True).split('id="heroCarousel"')[1].split("</section>")[0]
+
+    assert f'<p class="hero-price">{price}</p>' in hero
+    assert f'<p class="product-specs">{summary}</p>' in hero

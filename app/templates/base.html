@@ -28,206 +28,132 @@
       href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}"
       rel="stylesheet"
     />
-    <link
-      href="{{ url_for('static', filename='css/base.css') }}"
-      rel="stylesheet"
-    />
-    <link
-      href="{{ url_for('static', filename='css/layout.css') }}"
-      rel="stylesheet"
-    />
-    <link
-      href="{{ url_for('static', filename='css/components.css') }}"
-      rel="stylesheet"
-    />
-    <link
-      href="{{ url_for('static', filename='css/pages.css') }}"
-      rel="stylesheet"
-    />
-    <link
-      href="{{ url_for('static', filename='css/animations.css') }}"
-      rel="stylesheet"
-    />
+    {# Our own CSS, from general to specific: tokens and typography, page
+       layout and components, then the animations. #}
+    <link href="{{ url_for('static', filename='css/base.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/layout.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/animations.css') }}" rel="stylesheet" />
   </head>
-  <body{% if not bare %} class="page-grey"{% endif %}>
-    {% set current_category = (request.view_args or {}).get('key') if
-    request.endpoint == 'main.category' else None %}
-    {% macro account_links() %}
-    {% if current_user.is_authenticated %}
-    <a href="{{ url_for('checkout.orders') }}">Order status</a>
-    <a href="{{ url_for('documents.list_documents') }}">Documents</a>
-    {% if current_user.is_admin %}
-    <a class="account-admin" href="{{ url_for('admin.dashboard') }}">Admin</a>
-    {% endif %}
-    <span class="account-email">{{ current_user.email }}</span>
-    <form method="post" action="{{ url_for('auth.logout') }}">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-      <button class="link-button" type="submit">Logout</button>
-    </form>
-    {% else %}
-    <a href="{{ url_for('auth.login') }}">Login</a>
-    <a href="{{ url_for('auth.register') }}">Register</a>
-    {% endif %}
-    {% endmacro %}
-
-    <header class="site-header">
-      <div class="utility-bar d-none d-lg-block">
-        <div class="container utility-inner">
-          <span>Enduro bikes, ATVs and riding gear</span>
-          <nav class="account-links" aria-label="Account">
-            {{ account_links() }}
-          </nav>
-        </div>
-      </div>
-
-      <div class="container header-main">
-        <button
-          class="navbar-toggler header-burger d-lg-none"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#siteMenu"
-          aria-controls="siteMenu"
-          aria-expanded="false"
-          aria-label="Open account menu"
-        >
-          <span class="navbar-toggler-icon"></span>
-        </button>
-
+  <body>
+    {# Standard Bootstrap navbar: on screens narrower than "lg" the links fold
+       into a menu that the toggler button opens. "sticky-top" keeps it at the top
+       while the page scrolls (pure CSS); it is a direct child of <body> because
+       a sticky element only sticks inside its parent. #}
+    <nav class="navbar navbar-expand-lg sticky-top site-header" aria-label="Main">
+      <div class="container">
         <a
-          class="wordmark"
+          class="navbar-brand wordmark"
           href="{{ url_for('main.index') }}"
           aria-label="ATV &amp; Enduro Shop, home"
           >ATV<span class="wordmark-amp">&amp;</span>ENDURO</a
         >
-
-        <nav class="segment-tabs" aria-label="Categories">
-          <a
-            href="{{ url_for('main.index') }}"
-            class="{{ 'is-active' if request.endpoint == 'main.index' }}"
-            {% if request.endpoint == 'main.index' %}aria-current="page"{% endif %}
-            >All</a
-          >
-          {% for key, label in nav_categories %}
-          <a
-            href="{{ url_for('main.category', key=key) }}"
-            class="{{ 'is-active' if current_category == key }}"
-            {% if current_category == key %}aria-current="page"{% endif %}
-            >{{ label }}</a
-          >
-          {% endfor %}
-        </nav>
-
-        <form
-          class="header-search"
-          action="{{ url_for('main.search') }}"
-          method="get"
-          role="search"
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#mainMenu"
+          aria-controls="mainMenu"
+          aria-expanded="false"
+          aria-label="Open the menu"
         >
-          <label class="visually-hidden" for="site-search">Search products</label>
-          <input
-            id="site-search"
-            class="form-control"
-            type="search"
-            name="q"
-            maxlength="60"
-            required
-            placeholder="Search bikes, ATVs and gear"
-            value="{{ request.args.get('q', '') if request.endpoint == 'main.search' else '' }}"
-          />
-          <button class="btn btn-dark" type="submit" aria-label="Search">
-            Search
-          </button>
-        </form>
+          <span class="navbar-toggler-icon"></span>
+        </button>
 
-        <div class="header-icons">
-          {% if current_user.is_authenticated %}
-          <a class="header-icon" href="{{ url_for('checkout.orders') }}" aria-label="My orders"
-            >My orders</a
-          >
-          {% else %}
-          <a class="header-icon" href="{{ url_for('auth.login') }}" aria-label="Login"
-            >Login</a
-          >
-          {% endif %}
-          <a
-            class="header-icon"
-            href="{{ url_for('cart.view_cart') }}"
-            aria-label="Cart, {{ cart_item_count }} item{{ '' if cart_item_count == 1 else 's' }}"
-            >Cart{% if cart_item_count %}<span class="badge cart-count text-bg-light">{{ cart_item_count }}</span>{% endif %}</a
-          >
-        </div>
+        <div class="collapse navbar-collapse" id="mainMenu">
+          <ul class="navbar-nav category-nav">
+            <li class="nav-item">
+              <a
+                class="nav-link {{ 'active' if request.endpoint == 'main.index' }}"
+                href="{{ url_for('main.index') }}"
+                {% if request.endpoint == 'main.index' %}aria-current="page"{% endif %}
+                >All</a
+              >
+            </li>
+            {% for key, label in nav_categories %}
+            {% set url = url_for('main.category', key=key) %}
+            <li class="nav-item">
+              <a
+                class="nav-link {{ 'active' if request.path == url }}"
+                href="{{ url }}"
+                {% if request.path == url %}aria-current="page"{% endif %}
+                >{{ label }}</a
+              >
+            </li>
+            {% endfor %}
+          </ul>
 
-        <div class="collapse header-menu d-lg-none" id="siteMenu">
-          <nav class="account-links" aria-label="Account menu">
-            {{ account_links() }}
-          </nav>
+          <form
+            class="header-search"
+            action="{{ url_for('main.search') }}"
+            method="get"
+            role="search"
+          >
+            <label class="visually-hidden" for="site-search">Search products</label>
+            <input
+              id="site-search"
+              class="form-control"
+              type="search"
+              name="q"
+              maxlength="60"
+              required
+              placeholder="Search bikes, ATVs and gear"
+              value="{{ request.args.get('q', '') if request.endpoint == 'main.search' else '' }}"
+            />
+            <button class="btn btn-dark" type="submit">Search</button>
+          </form>
+
+          <ul class="navbar-nav account-nav">
+            {% if current_user.is_authenticated %}
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('checkout.orders') }}">My orders</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('documents.list_documents') }}">Documents</a></li>
+            {% if current_user.is_admin %}
+            <li class="nav-item"><a class="nav-link nav-admin" href="{{ url_for('admin.dashboard') }}">Admin</a></li>
+            {% endif %}
+            <li class="nav-item">
+              <form method="post" action="{{ url_for('auth.logout') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button class="nav-link" type="submit">Logout</button>
+              </form>
+            </li>
+            {% else %}
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.login') }}">Login</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.register') }}">Register</a></li>
+            {% endif %}
+            <li class="nav-item">
+              <a class="nav-link cart-link" href="{{ url_for('cart.view_cart') }}"
+                >Cart{% if cart_item_count %} <span class="badge cart-count text-bg-light">{{ cart_item_count }}</span>{% endif %}</a
+              >
+            </li>
+          </ul>
         </div>
       </div>
-    </header>
+    </nav>
 
     {% block hero %}{% endblock %}
 
     <main class="container">
       {% for category, message in get_flashed_messages(with_categories=true) %}
       <div class="alert alert-{{ category }}">{{ message }}</div>
-      {% endfor %} <div{% if not bare and not own_panels %} class="panel"{% endif %}>
+      {% endfor %}
       {% block content %}{% endblock %}
-    </div>
     </main>
 
     <footer class="site-footer">
-      <span class="livery" aria-hidden="true"></span>
-      <div class="container footer-grid">
-        <div class="footer-brand">
-          <a class="wordmark" href="{{ url_for('main.index') }}" aria-label="ATV &amp; Enduro Shop, home"
-            >ATV<span class="wordmark-amp">&amp;</span>ENDURO</a
-          >
-          <p>Enduro bikes, ATVs and riding gear for trail, forest and farm.</p>
-        </div>
-        <div>
-          <h2>Shop</h2>
-          <ul class="footer-list">
-            <li><a href="{{ url_for('main.index') }}">All products</a></li>
-            {% for key, label in nav_categories %}
-            <li><a href="{{ url_for('main.category', key=key) }}">{{ label }}</a></li>
-            {% endfor %}
-          </ul>
-        </div>
-        <div>
-          <h2>Account</h2>
-          <ul class="footer-list">
-            <li><a href="{{ url_for('cart.view_cart') }}">Cart</a></li>
-            {% if current_user.is_authenticated %}
-            <li><a href="{{ url_for('checkout.orders') }}">My orders</a></li>
-            <li><a href="{{ url_for('documents.list_documents') }}">My documents</a></li>
-            {% else %}
-            <li><a href="{{ url_for('auth.login') }}">Login</a></li>
-            <li><a href="{{ url_for('auth.register') }}">Create account</a></li>
-            {% endif %}
-          </ul>
-        </div>
-        <div>
-          <h2>Paying &amp; delivery</h2>
-          <ul class="footer-list footer-facts">
-            <li>Card payment on Stripe's secure page.</li>
-            <li>Unpaid orders can be cancelled from My orders.</li>
-            <li>Each order shows its status: paid, processing, shipped, delivered.</li>
-          </ul>
-        </div>
-      </div>
-      <div class="container">
-        <p class="footer-note">&copy; ATV &amp; Enduro Shop</p>
+      <div class="container footer-inner">
+        <a class="wordmark" href="{{ url_for('main.index') }}" aria-label="ATV &amp; Enduro Shop, home"
+          >ATV<span class="wordmark-amp">&amp;</span>ENDURO</a
+        >
+        <ul class="footer-links">
+          {% for key, label in nav_categories %}
+          <li><a href="{{ url_for('main.category', key=key) }}">{{ label }}</a></li>
+          {% endfor %}
+          <li><a href="{{ url_for('cart.view_cart') }}">Cart</a></li>
+        </ul>
+        <p class="footer-note">&copy; ATV &amp; Enduro Shop. Card payments on Stripe's secure page.</p>
       </div>
     </footer>
 
     <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
-    <script
-      src="{{ url_for('static', filename='js/confirm.js') }}"
-      defer
-    ></script>
-    <script
-      src="{{ url_for('static', filename='js/reduced-motion.js') }}"
-      defer
-    ></script>
+    <script src="{{ url_for('static', filename='js/confirm.js') }}" defer></script>
   </body>
 </html>

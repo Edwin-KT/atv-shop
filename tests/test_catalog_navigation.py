@@ -1,3 +1,5 @@
+import re
+
 import pytest
 
 from app.seed import seed_products
@@ -59,19 +61,16 @@ def test_search_text_is_escaped(client):
     assert "&lt;script&gt;" in html
 
 
+def test_sql_injection_text_in_search_finds_nothing(seeded, client):
+    """The ORM sends the text as a bound parameter, so it is only searched for, never run."""
+    response = client.get("/search?q=' OR 1=1 --")
+
+    assert response.status_code == 200
+    assert "No products match" in response.get_data(as_text=True)
+
+
 def test_search_pages_are_not_indexed(client):
     assert "noindex" in client.get("/search?q=ktm").headers["X-Robots-Tag"]
-
-
-def test_home_page_links_to_every_category_with_products(seeded, client):
-    html = client.get("/").get_data(as_text=True)
-
-    for key in ("atv", "enduro", "gear"):
-        assert f"/category/{key}" in html
-
-
-def test_home_page_has_no_category_tiles_without_products(client):
-    assert "Shop by category" not in client.get("/").get_data(as_text=True)
 
 
 def test_navigation_links_to_every_category(client):
@@ -85,7 +84,8 @@ def test_navigation_links_to_every_category(client):
 def test_active_category_is_highlighted(client):
     html = client.get("/category/gear").get_data(as_text=True)
 
-    assert html.count("is-active") == 1
+    assert html.count('aria-current="page"') == 1
+    assert re.search(r'class="nav-link active"\s+href="/category/gear"', html)
 
 
 def test_hero_is_outside_the_main_container(seeded, client):

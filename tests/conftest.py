@@ -1,3 +1,11 @@
+"""Fixtures shared by all tests.
+
+tests/unit/         functions and classes called directly (no HTTP requests)
+tests/integration/  requests sent through the whole app with Flask's test client
+
+Every test gets a fresh app with an in-memory SQLite database, CSRF and the rate
+limit switched off (special fixtures switch them on), and a fake payment gateway."""
+
 import os
 import tempfile
 from pathlib import Path

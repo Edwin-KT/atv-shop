@@ -11,4 +11,10 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
-      - run: python -m pytest -v
+      # Functions and classes tested directly (no HTTP requests).
+      - name: Unit tests
+        run: python -m pytest -v tests/unit
+      # Requests sent through the whole app (routes, templates, database).
+      - name: Integration tests
+        if: always()  # run them even when a unit test failed, to see every result
+        run: python -m pytest -v tests/integration

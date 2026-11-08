@@ -1,4 +1,9 @@
-"""The PaymentGateway interface and the Stripe implementation (Stripe calls are faked)."""
+"""UNIT tests for app/services/payment.py: the PaymentGateway interface and the Stripe
+implementation, called directly (Stripe's own functions are replaced, no network).
+
+Rubric: N3.02 an interface (an abstract class with abstract methods) that is
+defined and used; N8.02 online payments with Stripe; N4.02 the PaymentError
+exception; N6.01 unit tests."""
 
 from types import SimpleNamespace
 

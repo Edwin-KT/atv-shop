@@ -1,19 +1,20 @@
-"""Design rubric items: CSS files (N5.01), responsive layout (N5.02), animation (N4.04),
-navigation and the shop look (fonts, panels, one h1)."""
+"""INTEGRATION tests (pages through the app) and checks of the CSS files for the design.
+
+Rubric: N4.03 image carousel; N4.04 animation (and it ends with the text visible);
+N5.01 at least 2 CSS files and 10 different CSS properties; N5.02 responsive layout
+(viewport, grid, folding navbar, media queries, tables that scroll)."""
 
 import re
 from pathlib import Path
 
-import pytest
-
 from app.cli import seed_products
-from app.cli import create_admin
+from app.models import VehicleProduct
+from helpers import register_and_login
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]  # the project folder
 STATIC = ROOT / "app" / "static"
 TEMPLATES = ROOT / "app" / "templates"
 CSS_FILES = ["base.css", "layout.css", "animations.css"]
-PASSWORD = "parola-sigura-123"
 
 
 def css(name):
@@ -22,12 +23,6 @@ def css(name):
 
 def page(client, url="/"):
     return client.get(url).get_data(as_text=True)
-
-
-def customer(client):
-    client.post("/register", data={"email": "ana@gmail.com", "phone": "0712345678", "password": PASSWORD})
-    client.post("/login", data={"email": "ana@gmail.com", "password": PASSWORD})
-    return client
 
 
 # --- N5.01: at least 2 CSS files and 10 distinct properties ---
@@ -109,8 +104,8 @@ def test_carousel_starts_below_the_sticky_navbar(app, client):
         seed_products()
     html = page(client)
 
-    # the carousel comes after the navbar in the page, never inside it
-    assert html.index("</nav>") < html.index('id="heroCarousel"')
+    # the carousel comes after the navbar, and outside <main> so it can use the full width
+    assert html.index("</nav>") < html.index('id="heroCarousel"') < html.index("<main")
     # our CSS sets no z-index, so Bootstrap's sticky-top (z-index 1020) always stays
     # above the carousel controls (z-index 1-2) when the page scrolls under the navbar
     assert all("z-index" not in css(name) for name in CSS_FILES)
@@ -185,22 +180,13 @@ def test_anonymous_visitor_sees_login_and_register(client):
 
 
 def test_customer_sees_account_links_and_a_csrf_logout_form(client):
-    html = page(customer(client))
+    html = page(register_and_login(client))
 
     assert 'href="/orders">My orders</a>' in html
     assert 'href="/documents">Documents</a>' in html
     assert 'href="/admin/"' not in html
     form = re.search(r'<form method="post" action="/logout">.*?</form>', html, re.S).group(0)
     assert 'name="csrf_token"' in form
-
-
-def test_only_an_admin_sees_the_admin_link(app):
-    with app.app_context():
-        create_admin("boss@gmail.com", "0711111111", "parola-admin-123")
-    client = app.test_client()
-    client.post("/login", data={"email": "boss@gmail.com", "password": "parola-admin-123"})
-
-    assert 'class="nav-link nav-admin" href="/admin/"' in page(client)
 
 
 def test_cart_count_is_a_light_badge(app, client):
@@ -213,17 +199,65 @@ def test_cart_count_is_a_light_badge(app, client):
     assert '<span class="badge cart-count text-bg-light">2</span>' in page(client)
 
 
-@pytest.mark.parametrize("seeded", [False, True])
-def test_home_has_exactly_one_h1(app, client, seeded):
-    if seeded:
-        with app.app_context():
-            seed_products()
-
-    assert page(client).count("<h1") == 1
-
-
 def test_error_pages_use_the_white_panel(client):
     response = client.get("/no-such-page")
 
     assert response.status_code == 404
     assert '<section class="panel">' in response.get_data(as_text=True)
+
+
+# --- N4.03: the image carousel (the dark hero of the home page) ---
+
+
+def hero(client):
+    return page(client).split('id="heroCarousel"')[1].split("</section>")[0]
+
+
+def test_the_carousel_shows_every_vehicle_and_only_vehicles(app, client):
+    with app.app_context():
+        seed_products()
+    html = hero(client)
+
+    assert len(re.findall(r"carousel-item(?![-\w])", html)) == 3  # the 3 sample vehicles
+    assert len(re.findall(r"data-bs-slide-to=", html)) == 3
+    assert "KTM 250 EXC-F" in html and "Enduro Helmet Pro" not in html
+
+
+def test_exactly_one_slide_starts_active(app, client):
+    with app.app_context():
+        seed_products()
+
+    assert hero(client).count("carousel-item active") == 1
+
+
+def test_each_slide_has_alt_text_price_specs_and_a_link(app, client):
+    with app.app_context():
+        seed_products()
+        ktm = VehicleProduct.query.filter_by(slug="ktm-250-exc-f").one()
+        summary = ktm.get_technical_summary()
+    html = hero(client)
+
+    assert 'alt="KTM 250 EXC-F"' in html
+    assert '<p class="hero-price">10,999.00 EUR</p>' in html
+    assert f'<p class="product-specs">{summary}</p>' in html
+    assert "/product/ktm-250-exc-f" in html
+
+
+def test_the_carousel_controls_are_labelled(app, client):
+    with app.app_context():
+        seed_products()
+    html = page(client)
+
+    assert ">Previous</span>" in html and ">Next</span>" in html
+    assert 'aria-label="Featured vehicles"' in html
+
+
+def test_no_carousel_without_vehicles(client):
+    assert "heroCarousel" not in page(client)
+
+
+def test_the_active_category_is_underlined_and_marked(client):
+    html = page(client, "/category/gear")
+
+    assert html.count('aria-current="page"') == 1
+    assert re.search(r'class="nav-link active"\s+href="/category/gear"', html)

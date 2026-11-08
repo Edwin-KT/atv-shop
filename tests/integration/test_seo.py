@@ -1,4 +1,8 @@
-"""N8.01 SEO: own title and description per page, alt texts, robots.txt and sitemap.xml."""
+"""INTEGRATION tests: what search engines see.
+
+Rubric: N8.01 SEO (own title and description on every page, one h1, lang, alt
+texts, robots.txt and sitemap.xml); the Lighthouse score itself is measured on
+the published site."""
 
 import re
 import xml.etree.ElementTree as ET
@@ -43,6 +47,15 @@ def test_descriptions_have_a_reasonable_length(seeded, client):
     _, description = title_and_description(client.get("/product/ktm-250-exc-f").get_data(as_text=True))
 
     assert 50 <= len(description) <= 200
+
+
+@pytest.mark.parametrize("with_products", [False, True])
+def test_the_home_page_has_exactly_one_h1(app, client, with_products):
+    if with_products:
+        with app.app_context():
+            seed_products()
+
+    assert client.get("/").get_data(as_text=True).count("<h1") == 1
 
 
 def test_pages_declare_their_language(client):

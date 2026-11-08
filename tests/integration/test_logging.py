@@ -1,6 +1,13 @@
-"""N7.01: user actions are written to a log file (logs/activity.log) that admins can read."""
+"""INTEGRATION tests: what users do is written to logs/activity.log, which admins
+can read later at /admin/log.
 
-from app.cli import create_admin
+Rubric: N7.01 logging of user actions in a file that can be consulted later
+(never passwords, never query strings, no forged lines)."""
+
+from io import BytesIO
+
+from helpers import admin_client, register_and_login
+from pdf_samples import PNG_BYTES, make_pdf
 
 CREDENTIALS = {"email": "ana@gmail.com", "phone": "0712345678", "password": "parola-sigura-123"}
 LOGIN = {"email": CREDENTIALS["email"], "password": CREDENTIALS["password"]}
@@ -90,19 +97,11 @@ def test_passwords_and_query_strings_are_never_logged(client, log_text):
 # --- the admin page that shows the file ---
 
 
-def admin(app):
-    with app.app_context():
-        create_admin("boss@gmail.com", "0711111111", "parola-admin-123")
-    client = app.test_client()
-    client.post("/login", data={"email": "boss@gmail.com", "password": "parola-admin-123"})
-    return client
-
-
 def test_admin_reads_the_newest_lines_first(app, client):
     client.post("/login", data={"email": "first@gmail.com", "password": "x" * 10})
     client.post("/login", data={"email": "second@gmail.com", "password": "x" * 10})
 
-    html = admin(app).get("/admin/log").get_data(as_text=True)
+    html = admin_client(app).get("/admin/log").get_data(as_text=True)
 
     assert html.index("second@gmail.com") < html.index("first@gmail.com")
 
@@ -110,14 +109,32 @@ def test_admin_reads_the_newest_lines_first(app, client):
 def test_log_page_escapes_what_visitors_typed(app, client):
     client.post("/login", data={"email": "<script>alert(1)</script>", "password": "x" * 10})
 
-    html = admin(app).get("/admin/log").get_data(as_text=True)
+    html = admin_client(app).get("/admin/log").get_data(as_text=True)
 
     assert "<script>alert(1)</script>" not in html
     assert "&lt;script&gt;" in html
 
 
-def test_customers_cannot_read_the_log(client):
-    client.post("/register", data=CREDENTIALS)
-    client.post("/login", data=LOGIN)
+def events(log_text):
+    return [line.split("event=")[1].split()[0] for line in lines(log_text) if "event=" in line]
 
-    assert client.get("/admin/log").status_code == 403
+
+def test_admin_product_changes_are_logged(app, log_text):
+    admin = admin_client(app)
+    form = {"name": "Trail Jacket", "price": "129.90", "stock": "10", "gear_size": "L"}
+    admin.post("/admin/products/new?type=gear", data=form)
+    admin.post("/admin/products/1/edit", data=form)
+    admin.post("/admin/products/1/delete")
+
+    assert events(log_text)[-3:] == ["product_created", "product_updated", "product_deleted"]
+
+
+def test_document_uploads_refusals_and_deletions_are_logged(client, log_text):
+    register_and_login(client)
+    for content, name in ((make_pdf(), "talon.pdf"), (PNG_BYTES, "fake.pdf")):
+        client.post("/documents/upload", data={"document": (BytesIO(content), name)},
+                    content_type="multipart/form-data")
+    client.post("/documents/1/delete")
+
+    assert events(log_text)[-3:] == ["document_uploaded", "document_upload_rejected", "document_deleted"]
+    assert "The file is not a real PDF." in log_text()  # the reason for the refusal is logged

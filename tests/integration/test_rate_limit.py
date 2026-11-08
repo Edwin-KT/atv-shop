@@ -1,3 +1,9 @@
+"""INTEGRATION tests: the rate limit (Flask-Limiter), through the app.
+
+Rubric: N10.01 after 100 requests in less than a minute, the next ones are blocked
+for a while (429 Too Many Requests)."""
+
+
 def test_request_101_in_a_minute_is_blocked(limited_app):
     client = limited_app.test_client()
 

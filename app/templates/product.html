@@ -1,5 +1,4 @@
-{% extends "base.html" %} {% from "_icons.html" import icon %} {% from
-"_ui.html" import price, spec_board %} {% set bare = true %} {% block title %}{{
+{% extends "base.html" %} {% set bare = true %} {% block title %}{{
 product.name }} - ATV & Enduro Shop{% endblock %} {% block meta_description %}{{
 product.name }}: {{ product.get_technical_summary() }}. {{
 product.description[:110] }}{% endblock %} {% block og_type %}product{% endblock
@@ -18,13 +17,13 @@ product.description[:110] }}{% endblock %} {% block og_type %}product{% endblock
   <ol>
     <li><a href="{{ url_for('main.index') }}">Shop</a></li>
     <li>
-      {{ icon("chevron-right", 12) }}<a
+      <a
         href="{{ url_for('main.category', key=product.category_key) }}"
         >{{ category.label }}</a
       >
     </li>
     <li>
-      {{ icon("chevron-right", 12) }}<span aria-current="page"
+      <span aria-current="page"
         >{{ product.name }}</span
       >
     </li>
@@ -48,7 +47,7 @@ product.description[:110] }}{% endblock %} {% block og_type %}product{% endblock
   <div class="col-md-6">
     {# Buy box first: on phones it sits right under the photo. #}
     <h1 class="product-title">{{ product.name }}</h1>
-    <p class="product-detail-price">{{ price(product.price_cents) }}</p>
+    <p class="product-detail-price">{{ product.price_cents|eur }}</p>
 
     {% if product.stock > 0 %}
     <p class="stock-label">{{ product.stock }} in stock</p>
@@ -75,9 +74,7 @@ product.description[:110] }}{% endblock %} {% block og_type %}product{% endblock
     <p class="stock-label stock-label-out">Out of stock</p>
     {% endif %}
 
-    {{ spec_board(product) }}
-
-    {% include "_trust.html" %}
+    <p class="product-specs">{{ product.get_technical_summary() }}</p>
 
     {% if product.description %}
     <section class="product-description" aria-labelledby="description-title">

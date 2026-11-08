@@ -1,17 +1,14 @@
-"""Product page: breadcrumb (visible + JSON-LD), spec board, buy box, trust list."""
+"""Product page: breadcrumb (visible + JSON-LD), technical summary and buy box."""
 
 import json
 import re
-from pathlib import Path
 
 import pytest
 
 from app.extensions import db
-from app.models import GearProduct, Product, VehicleProduct
+from app.models import Product
 from app.seed import seed_products
 
-ROOT = Path(__file__).resolve().parent.parent
-PAGES_CSS = (ROOT / "app" / "static" / "css" / "pages.css").read_text(encoding="utf-8")
 SITE = "http://127.0.0.1:5000"
 
 
@@ -24,10 +21,6 @@ def seeded(app):
 
 def page(client, slug):
     return client.get(f"/product/{slug}").get_data(as_text=True)
-
-
-def board(html):
-    return re.search(r'<dl class="spec-board.*?</dl>', html, re.S).group(0)
 
 
 def json_ld_blocks(html):
@@ -79,55 +72,22 @@ def test_breadcrumb_json_ld_escapes_the_product_name(seeded, client):
     assert json_ld_blocks(html)[1]["itemListElement"][2]["name"] == "</script><script>alert(1)"
 
 
-# --- spec board ---
+# --- technical summary ---
 
 
-def test_vehicle_spec_board_uses_the_database_values(seeded, client):
+@pytest.mark.parametrize("slug", ["ktm-250-exc-f", "enduro-helmet-pro"])
+def test_technical_summary_comes_from_the_subclass(seeded, client, slug):
     with seeded.app_context():
-        v = VehicleProduct.query.filter_by(slug="ktm-250-exc-f").one()
-        cc, hp, legal = v.engine_cc, v.horsepower, v.is_street_legal
-    html = board(page(client, "ktm-250-exc-f"))
+        summary = Product.query.filter_by(slug=slug).one().get_technical_summary()
 
-    assert re.findall(r"<dt>(.*?)</dt>", html) == ["Engine", "Power", "Road use"]
-    assert f'<span class="spec-number">{cc}</span> <span class="spec-unit">cc</span>' in html
-    assert f'<span class="spec-number">{hp}</span> <span class="spec-unit">hp</span>' in html
-    road = "Street legal" if legal else "Off-road only"
-    assert f'<dd class="spec-text">{road}</dd>' in html
-
-
-def test_gear_spec_board_is_one_size_cell(seeded, client):
-    with seeded.app_context():
-        size = GearProduct.query.filter_by(slug="enduro-helmet-pro").one().gear_size
-    html = board(page(client, "enduro-helmet-pro"))
-
-    assert 'class="spec-board spec-board-gear"' in html
-    assert re.findall(r"<dt>(.*?)</dt>", html) == ["Size"]
-    assert f'<dd class="spec-size">{size}</dd>' in html
-    assert f"This item is sold in size {size} only." in html
-    assert "cc" not in html and "hp" not in html
-
-
-def test_road_use_text_may_wrap_but_is_never_cut():
-    rule = re.search(r"\.spec-text\s*\{([^}]*)\}", PAGES_CSS).group(1)
-    cell = re.search(r"\.spec-cell\s*\{([^}]*)\}", PAGES_CSS).group(1)
-
-    for forbidden in ("white-space: nowrap", "text-overflow", "overflow: hidden"):
-        assert forbidden not in rule
-        assert forbidden not in cell
-    assert "minmax(0, 1fr)" in re.search(r"\.spec-board\s*\{([^}]*)\}", PAGES_CSS).group(1)
+    assert f'<p class="product-specs">{summary}</p>' in page(client, slug)
 
 
 # --- buy box ---
 
 
-def test_price_has_small_decimals(seeded, client):
-    html = page(client, "ktm-250-exc-f")
-
-    assert re.search(
-        r'<p class="product-detail-price"><span class="price"><span class="price-whole">10,999</span>'
-        r'<span class="price-rest">\.00 EUR</span></span></p>',
-        html,
-    )
+def test_price_comes_from_the_database(seeded, client):
+    assert '<p class="product-detail-price">10,999.00 EUR</p>' in page(client, "ktm-250-exc-f")
 
 
 @pytest.mark.parametrize("stock, expected_max", [(2, 2), (20, 10)])
@@ -148,7 +108,7 @@ def test_buy_box_comes_before_specs_and_description(seeded, client):
 
     photo = html.index('class="product-photo')
     form = html.index('class="qty-form"')
-    assert photo < form < html.index('class="spec-board') < html.index('class="product-description"')
+    assert photo < form < html.index('class="product-specs"') < html.index('class="product-description"')
 
 
 def test_sold_out_page_has_no_buy_form(seeded, client):
@@ -159,14 +119,3 @@ def test_sold_out_page_has_no_buy_form(seeded, client):
 
     assert ">Out of stock</p>" in html
     assert "btn-buy" not in html
-
-
-def test_trust_list_states_three_real_facts(seeded, client):
-    trust = re.search(r'<ul class="trust-list">.*?</ul>', page(client, "ktm-250-exc-f"), re.S).group(0)
-
-    assert re.findall(r"<span>(.*?)</span>", trust) == [
-        "Secure card payment on Stripe's page",
-        "Follow your order from paid to delivered",
-        "Cancel an unpaid order anytime from My orders",
-    ]
-    assert trust.count("<svg") == 3

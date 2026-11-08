@@ -1,6 +1,4 @@
-{% extends "base.html" %} {% from "_icons.html" import icon %} {% from "_ui.html"
-import price %} {% from "_checkout_steps.html" import checkout_steps %} {% set
-own_panels = true %} {% block title %}Cart - ATV & Enduro Shop{% endblock %} {%
+{% extends "base.html" %} {% set own_panels = true %} {% block title %}Cart - ATV & Enduro Shop{% endblock %} {%
 block content %} {% if not lines %}
 <section class="panel cart-empty">
   <h1>Your cart</h1>
@@ -14,7 +12,7 @@ block content %} {% if not lines %}
     >
   </div>
 </section>
-{% else %} {{ checkout_steps("cart") }}
+{% else %}
 
 <div class="row g-4 align-items-start">
   <div class="col-lg-8">
@@ -68,7 +66,7 @@ block content %} {% if not lines %}
                 aria-label="Decrease quantity of {{ line.product.name }}"
                 {% if line.quantity <= 1 %}disabled{% endif %}
               >
-                {{ icon("dash-lg") }}
+                &minus;
               </button>
               <span class="stepper-value"
                 ><span class="visually-hidden">Quantity: </span>{{ line.quantity }}</span
@@ -81,7 +79,7 @@ block content %} {% if not lines %}
                 aria-label="Increase quantity of {{ line.product.name }}"
                 {% if line.quantity >= line.max_quantity %}disabled{% endif %}
               >
-                {{ icon("plus-lg") }}
+                +
               </button>
             </form>
 
@@ -95,7 +93,7 @@ block content %} {% if not lines %}
                 type="submit"
                 aria-label="Remove {{ line.product.name }}"
               >
-                {{ icon("trash3") }}
+                Remove
               </button>
             </form>
 
@@ -119,13 +117,12 @@ block content %} {% if not lines %}
         </div>
         <div class="summary-total">
           <dt>Total</dt>
-          <dd>{{ price(total_cents) }}</dd>
+          <dd>{{ total_cents|eur }}</dd>
         </div>
       </dl>
       <a class="btn btn-primary btn-checkout" href="{{ url_for('checkout.start') }}"
         >Proceed to checkout</a
       >
-      {% include "_trust.html" %}
     </section>
   </aside>
 </div>

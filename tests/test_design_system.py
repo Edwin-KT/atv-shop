@@ -1,4 +1,4 @@
-"""Design system foundation: local fonts, colour tokens, icons, plate and price macros."""
+"""Design system foundation: local fonts and colour tokens."""
 
 import re
 from pathlib import Path
@@ -8,17 +8,6 @@ import pytest
 ROOT = Path(__file__).resolve().parent.parent
 STATIC = ROOT / "app" / "static"
 BASE_CSS = (STATIC / "css" / "base.css").read_text(encoding="utf-8")
-
-ICON_NAMES = [
-    "bag", "check-lg", "chevron-right", "dash-lg", "list", "lock", "person",
-    "plus-lg", "search", "shield-check", "trash3", "truck", "x-circle",
-]
-
-
-def render(app, source, **context):
-    with app.app_context():
-        return app.jinja_env.from_string(source).render(**context)
-
 
 def token(name):
     return re.search(rf"--color-{name}:\s*(#[0-9a-fA-F]{{6}})", BASE_CSS).group(1)
@@ -95,55 +84,6 @@ def test_text_colour_pairs_meet_wcag_aa(text, background):
 def test_signal_orange_is_too_light_for_small_text_on_white():
     """Documents the rule in base.css: --color-accent is never small text on white."""
     assert contrast(token("accent"), token("surface")) < 4.5
-
-
-# --- icons ---
-
-
-@pytest.mark.parametrize("name", ICON_NAMES)
-def test_icons_are_decorative_svgs_with_a_path(app, name):
-    svg = render(app, '{% from "_icons.html" import icon %}{{ icon(name) }}', name=name)
-
-    assert svg.startswith("<svg")
-    assert 'aria-hidden="true"' in svg
-    assert 'focusable="false"' in svg
-    assert 'viewBox="0 0 16 16"' in svg
-    assert re.search(r'<path[^>]* d="M[^"]+"', svg)
-
-
-def test_icon_size_can_be_changed(app):
-    svg = render(app, '{% from "_icons.html" import icon %}{{ icon("search", 24) }}')
-
-    assert 'width="24" height="24"' in svg
-
-
-# --- plate and price macros ---
-
-
-def test_plate_shows_the_number_and_unit_as_one_string(app):
-    html = render(app, '{% from "_ui.html" import plate %}{{ plate(250, "cc") }}')
-
-    assert html.startswith('<span class="plate">')
-    assert '<span class="plate-number">250</span><span class="plate-unit">cc</span>' in html
-    assert re.sub(r"<[^>]+>", "", html) == "250cc"
-
-
-def test_plate_without_unit(app):
-    html = render(app, '{% from "_ui.html" import plate %}{{ plate("#12") }}')
-
-    assert re.sub(r"<[^>]+>", "", html) == "#12"
-    assert "plate-unit" not in html
-
-
-@pytest.mark.parametrize(
-    "cents, whole, rest",
-    [(1299900, "12,999", ".00 EUR"), (18900, "189", ".00 EUR"), (5, "0", ".05 EUR")],
-)
-def test_price_splits_whole_part_and_decimals(app, cents, whole, rest):
-    html = render(app, '{% from "_ui.html" import price %}{{ price(cents) }}', cents=cents)
-
-    assert f'<span class="price-whole">{whole}</span><span class="price-rest">{rest}</span>' in html
-    assert re.sub(r"<[^>]+>", "", html) == f"{whole}{rest}"  # reads as one price
 
 
 # --- pattern ---

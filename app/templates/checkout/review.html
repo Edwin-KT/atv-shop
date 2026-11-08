@@ -1,7 +1,5 @@
-{% extends "base.html" %} {% from "_ui.html" import price %} {% from
-"_checkout_steps.html" import checkout_steps %} {% set own_panels = true %} {%
-block title %}Checkout - ATV & Enduro Shop{% endblock %} {% block content %} {{
-checkout_steps("review") }}
+{% extends "base.html" %} {% set own_panels = true %} {% block title %}Checkout
+- ATV & Enduro Shop{% endblock %} {% block content %}
 
 <form method="post" class="checkout-form">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
@@ -71,7 +69,7 @@ checkout_steps("review") }}
         <dl class="summary">
           <div class="summary-total">
             <dt>Total</dt>
-            <dd>{{ price(total_cents) }}</dd>
+            <dd>{{ total_cents|eur }}</dd>
           </div>
         </dl>
         <button class="btn btn-primary btn-checkout" type="submit">
@@ -81,7 +79,6 @@ checkout_steps("review") }}
           Pay with card reserves your items, then you pay on Stripe's secure
           page.
         </p>
-        {% include "_trust.html" %}
         <a class="checkout-back" href="{{ url_for('cart.view_cart') }}"
           >Back to cart</a
         >

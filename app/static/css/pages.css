@@ -19,7 +19,9 @@
   gap: var(--space-2);
 }
 
-.breadcrumb-nav .icon {
+/* A slash between the breadcrumb steps (pure CSS, no icon). */
+.breadcrumb-nav li + li::before {
+  content: "/";
   color: var(--color-muted);
 }
 
@@ -105,122 +107,6 @@
   text-transform: uppercase;
 }
 
-/* Spec board: big numbers with small labels, thin lines between the cells. */
-.spec-board {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin: 0 0 var(--space-5);
-  border: var(--border-thin);
-}
-
-.spec-cell {
-  padding: var(--space-3) var(--space-4) var(--space-4);
-}
-
-.spec-cell + .spec-cell {
-  border-left: var(--border-thin);
-}
-
-.spec-board dt {
-  margin-bottom: var(--space-1);
-  color: var(--color-muted);
-  font-size: var(--text-label);
-  font-weight: 600;
-}
-
-.spec-board dd {
-  margin: 0;
-}
-
-.spec-number {
-  font-family: var(--font-display);
-  font-size: clamp(2rem, 5vw, 2.5rem);
-  font-weight: 700;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.spec-unit {
-  font-weight: 600;
-}
-
-/* "Off-road only" / "Street legal" may wrap to two lines; never cut or hidden. */
-.spec-text {
-  font-family: var(--font-display);
-  font-size: clamp(1.125rem, 3.6vw, 1.5rem);
-  font-weight: 700;
-  line-height: 1.1;
-  text-transform: uppercase;
-  overflow-wrap: break-word;
-}
-
-/* Gear: one wide cell, the size letter in a bordered square on the left. */
-.spec-board-gear {
-  grid-template-columns: 1fr;
-}
-
-.spec-board-gear .spec-cell {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-areas:
-    "size label"
-    "size note";
-  align-items: center;
-  column-gap: var(--space-4);
-  padding: var(--space-4);
-}
-
-.spec-board-gear dt {
-  grid-area: label;
-  align-self: end;
-}
-
-.spec-size {
-  grid-area: size;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 4rem;
-  height: 4rem;
-  padding: 0 var(--space-2);
-  border: 2px solid var(--color-ink);
-  font-family: var(--font-display);
-  font-size: 2.25rem;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.spec-note {
-  grid-area: note;
-  align-self: start;
-  color: var(--color-ink-soft);
-  font-size: var(--text-small);
-}
-
-/* Trust list: three true facts with icons. */
-.trust-list {
-  margin: 0 0 var(--space-6);
-  padding: var(--space-4) 0 0;
-  border-top: var(--border-thin);
-  list-style: none;
-  color: var(--color-ink-soft);
-  font-size: var(--text-small);
-}
-
-.trust-list li {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.trust-list li + li {
-  margin-top: var(--space-2);
-}
-
-.trust-list .icon {
-  color: var(--color-ink);
-}
-
 .product-description h2 {
   font-size: var(--text-h3);
 }
@@ -235,71 +121,6 @@
     max-width: 18rem;
     margin: 0 auto;
   }
-}
-
-/* ---------- checkout steps: Cart -> Review -> Payment -> Confirmed ---------- */
-
-.checkout-steps {
-  display: flex;
-  gap: var(--space-2);
-  margin: 0 0 var(--space-5);
-  padding: 0;
-  list-style: none;
-}
-
-.step {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  gap: var(--space-2);
-  color: var(--color-muted);
-  font-size: var(--text-small);
-  font-weight: 600;
-}
-
-/* A thin line joins each step to the next one. */
-.step:not(:last-child)::after {
-  content: "";
-  flex: 1;
-  min-width: var(--space-4);
-  height: 2px;
-  background-color: var(--color-line-strong);
-}
-
-.step-mark {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border: 2px solid var(--color-line-strong);
-  border-radius: 50%;
-  font-family: var(--font-display);
-  font-size: 1rem;
-  line-height: 1;
-}
-
-.step-done,
-.step-current {
-  color: var(--color-ink);
-}
-
-.step-done .step-mark {
-  border-color: var(--color-ink);
-  background-color: var(--color-ink);
-  color: #ffffff;
-}
-
-.step-done::after {
-  background-color: var(--color-ink);
-}
-
-/* The current step carries the signal orange (ink digit: 4.9:1). */
-.step-current .step-mark {
-  border-color: var(--color-accent);
-  background-color: var(--color-accent);
-  color: var(--color-ink);
 }
 
 /* ---------- cart: lines ---------- */
@@ -466,10 +287,6 @@
   text-transform: uppercase;
 }
 
-.cart-summary .trust-list {
-  margin-bottom: 0;
-}
-
 .checkout-hint {
   margin: calc(var(--space-3) * -1) 0 var(--space-4);
   color: var(--color-muted);
@@ -493,21 +310,6 @@
   gap: var(--space-3);
 }
 
-.checkout-result-head {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  margin-bottom: var(--space-4);
-}
-
-.checkout-result-head h1 {
-  margin: 0;
-}
-
-.checkout-result-head .plate-number {
-  font-size: 2rem;
-}
-
 /* Desktop: the summary stays in view while the list scrolls. */
 @media (min-width: 992px) {
   .cart-aside {
@@ -521,15 +323,6 @@
   .cart-line {
     grid-template-columns: 6rem minmax(0, 1fr);
     gap: var(--space-4);
-  }
-
-  .step:not(.step-current) .step-label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
   }
 }
 
@@ -639,12 +432,8 @@
   font-size: clamp(2rem, 4vw, 2.75rem);
 }
 
-.featured-band .spec-line {
+.featured-band .product-specs {
   margin-bottom: var(--space-5);
-}
-
-.featured-band .spec {
-  border-color: #55524d;
   color: #ecebe7;
 }
 

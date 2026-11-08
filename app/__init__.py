@@ -7,6 +7,7 @@ from app.access_log import configure_access_log
 from app.config import Config
 from app.extensions import csrf, db, limiter, login_manager
 from app.logging_config import configure_logging
+from app.money import format_price
 from app.security import reject_nul_bytes
 from app.security_headers import register_security_headers
 
@@ -86,6 +87,11 @@ def create_app(test_config=None):
             if photo.is_file():
                 return url_for("static", filename=f"img/products/{product.image_filename}")
         return url_for("static", filename="img/placeholder.svg")
+
+    @app.template_filter("eur")
+    def eur(cents):
+        """Prices are stored in cents: {{ 1299900|eur }} -> '12,999.00 EUR'."""
+        return format_price(cents)
 
     app.jinja_env.globals["product_image_url"] = product_image_path
     app.extensions["product_image_path"] = product_image_path

@@ -132,8 +132,6 @@ h3 {
 }
 
 /* Prices, specs and order numbers line up like a timing board. */
-.price,
-.plate,
 table {
   font-variant-numeric: tabular-nums;
 }

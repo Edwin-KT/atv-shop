@@ -1,5 +1,4 @@
-{% extends "base.html" %} {% from "_checkout_steps.html" import checkout_steps
-%} {% set own_panels = true %} {% block title %}{{ "Payment cancelled" if
+{% extends "base.html" %} {% set own_panels = true %} {% block title %}{{ "Payment cancelled" if
 order.status == "pending" else "Order " ~ order.id }} - ATV & Enduro Shop{%
 endblock %} {% block content %}
 {# Stripe sends the customer here when they leave its payment page; the link can
@@ -18,7 +17,7 @@ endblock %} {% block content %}
     >Back to the shop</a
   >
 </section>
-{% else %} {{ checkout_steps("payment") }}
+{% else %}
 <section class="panel checkout-result">
   <h1>Payment cancelled</h1>
   <p>

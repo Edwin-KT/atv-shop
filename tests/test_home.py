@@ -105,11 +105,11 @@ def test_featured_band_shows_price_and_specs_from_the_database(seeded, client):
     band = re.search(r'id="heroCarousel".*?</section>', html, re.S).group(0)
     with seeded.app_context():
         ktm = VehicleProduct.query.filter_by(slug="ktm-250-exc-f").one()
-        whole, cc = f"{ktm.price_cents // 100:,}", ktm.engine_cc
+        price, summary = f"{ktm.price_cents // 100:,}.00 EUR", ktm.get_technical_summary()
 
     assert "<h2 class=\"featured-title\">Featured vehicles</h2>" in band
-    assert f'<span class="price-whole">{whole}</span><span class="price-rest">.00 EUR</span>' in band
-    assert f'<span class="plate-number">{cc}</span>' in band  # real engine size, not the model name
+    assert price in band
+    assert summary in band  # real engine size and power, not typed by hand
 
 
 # --- category tiles ---
@@ -152,48 +152,27 @@ def test_tiles_have_no_sequence_numbers(seeded, client):
 # --- product cards ---
 
 
-def test_vehicle_cards_show_engine_power_and_road_use(seeded, client):
+def test_cards_show_the_technical_summary_of_their_subclass(seeded, client):
     html = home(client)
     with seeded.app_context():
-        vehicles = [
-            (v.slug, v.engine_cc, v.horsepower, v.is_street_legal) for v in VehicleProduct.query.all()
-        ]
+        products = [(p.slug, p.get_technical_summary()) for p in VehicleProduct.query.all()]
+        products += [(p.slug, p.get_technical_summary()) for p in GearProduct.query.all()]
 
-    for slug, cc, hp, legal in vehicles:
-        card = card_for(html, slug)
-        assert f'<span class="plate-number">{cc}</span><span class="plate-unit">cc</span>' in card
-        assert f'<li class="spec">{hp} hp</li>' in card
-        road = "Street legal" if legal else "Off-road only"
-        assert f'<li class="spec">{road}</li>' in card
+    for slug, summary in products:
+        assert f'<p class="product-specs">{summary}</p>' in card_for(html, slug)
 
 
-def test_gear_cards_show_the_size(seeded, client):
-    html = home(client)
-    with seeded.app_context():
-        gear = [(g.slug, g.gear_size) for g in GearProduct.query.all()]
-
-    for slug, size in gear:
-        card = card_for(html, slug)
-        assert f'<li class="spec">Size {size}</li>' in card
-        assert "plate" not in card
-
-
-def test_card_price_has_small_decimals(seeded, client):
+def test_card_price_comes_from_the_database(seeded, client):
     card = card_for(home(client), "enduro-helmet-pro")
 
-    assert re.search(
-        r'<p class="product-price"><span class="price"><span class="price-whole">189</span>'
-        r'<span class="price-rest">\.00 EUR</span></span></p>',
-        card,
-    )
+    assert '<p class="product-price">189.00 EUR</p>' in card
 
 
-def test_quick_add_button_has_an_icon_and_a_label(seeded, client):
+def test_quick_add_button_has_a_label(seeded, client):
     card = card_for(home(client), "enduro-helmet-pro")
     button = re.search(r'<button\s+class="quick-add-btn".*?</button>', card, re.S).group(0)
 
     assert 'aria-label="Add Enduro Helmet Pro to cart"' in button
-    assert "icon-plus-lg" in button
 
 
 def test_images_below_the_banner_load_lazily(seeded, client):

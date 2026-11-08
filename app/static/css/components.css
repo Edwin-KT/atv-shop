@@ -138,24 +138,21 @@
   text-decoration: underline;
 }
 
-/* Spec line: engine plate + small outlined facts (all from the database). */
-.spec-line {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
+/* Technical summary from the database, e.g. "ENDURO | 249 cc | 40 hp | off-road only". */
+.product-specs {
+  color: var(--color-ink-soft);
+  font-size: var(--text-small);
 }
 
-.spec-line .plate {
-  min-width: 0;
-  padding: 0.05rem 0.4rem 0;
-}
-
-.spec-line .plate-number {
-  font-size: 1.125rem;
+/* Prices: bold condensed digits that line up like a timing board. */
+.product-price,
+.product-detail-price,
+.featured-price,
+.summary-total dd {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .spec {
@@ -306,55 +303,6 @@ main .form-check-input:checked {
 .alert,
 .list-group-item {
   overflow-wrap: anywhere;
-}
-
-/* ---------- icons (inline SVG from _icons.html) ---------- */
-
-.icon {
-  display: inline-block;
-  flex-shrink: 0;
-  vertical-align: -0.125em;
-}
-
-/* ---------- race number plate: only real numbers (cc, order no., cart count) ---------- */
-
-.plate {
-  display: inline-flex;
-  align-items: baseline;
-  justify-content: center;
-  min-width: 2.75rem;
-  padding: 0.1rem 0.5rem 0;
-  border: 2px solid var(--color-ink);
-  background-color: var(--color-surface);
-  color: var(--color-ink);
-  font-family: var(--font-display);
-  font-weight: 700;
-  line-height: 1.1;
-  white-space: nowrap;
-}
-
-.plate-number {
-  font-size: 1.375rem;
-}
-
-.plate-unit {
-  margin-left: 0.1rem;
-  font-size: 0.8125rem;
-  text-transform: lowercase;
-}
-
-/* ---------- price with small decimals: "12,999" + ".00 EUR" ---------- */
-
-.price {
-  font-family: var(--font-display);
-  font-weight: 700;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.price-rest {
-  margin-left: 0.05em;
-  font-size: 0.55em;
 }
 
 /* ---------- livery stripe: max 3 uses per page ---------- */

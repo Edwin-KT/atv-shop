@@ -459,7 +459,6 @@ def test_cancel_page_for_a_pending_order_offers_to_cancel(app, client):
     assert "Payment cancelled" in html
     assert "was not paid" in html
     assert 'action="/orders/1/cancel"' in html
-    assert 'class="checkout-steps"' in html
 
 
 def test_cancel_page_for_a_paid_order_says_it_is_paid(app, client):
@@ -470,7 +469,6 @@ def test_cancel_page_for_a_paid_order_says_it_is_paid(app, client):
     assert re.search(r'href="/orders"\s*>My orders</a>', html)
     assert "was not paid" not in html
     assert "Cancel order" not in html
-    assert 'class="checkout-steps"' not in html
 
 
 def test_cancel_page_for_a_shipped_order_also_says_it_is_paid(app, client):
@@ -489,4 +487,3 @@ def test_cancel_page_for_a_cancelled_order_says_it_was_cancelled(app, client):
     assert "back in stock" in html
     assert "was not paid" not in html
     assert "Cancel order" not in html
-    assert 'class="checkout-steps"' not in html

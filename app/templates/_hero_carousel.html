@@ -1,4 +1,3 @@
-{% from "_ui.html" import price, spec_line %}
 {# Featured vehicles: the image carousel (#heroCarousel) as a dark band under the banner. #}
 {% if featured %}
 <section
@@ -29,8 +28,8 @@
           </div>
           <div class="col-md-7">
             <h3 class="featured-name">{{ product.name }}</h3>
-            <p class="featured-price">{{ price(product.price_cents) }}</p>
-            {{ spec_line(product) }}
+            <p class="featured-price">{{ product.price_cents|eur }}</p>
+            <p class="product-specs">{{ product.get_technical_summary() }}</p>
             <a
               class="btn btn-light"
               href="{{ url_for('main.product_detail', slug=product.slug) }}"

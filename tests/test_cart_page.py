@@ -1,27 +1,17 @@
-"""Cart page (stepper without JavaScript, remove, summary) and checkout progress steps."""
+"""Cart page: stepper without JavaScript, remove button and summary."""
 
 import re
 
 import pytest
 
-from app.extensions import db
-from app.models import Order, Product
+from app.models import Product
 from app.seed import seed_products
-
-PASSWORD = "parola-sigura-123"
-
 
 @pytest.fixture()
 def ids(app):
     with app.app_context():
         seed_products()
         return {p.slug: p.id for p in Product.query.all()}
-
-
-def login(client, email="ana@gmail.com"):
-    client.post("/register", data={"email": email, "phone": "0712345678", "password": PASSWORD})
-    client.post("/login", data={"email": email, "password": PASSWORD})
-    return client
 
 
 def add(client, product_id, quantity):
@@ -48,21 +38,6 @@ def buttons(form):
         label = re.search(r'aria-label="([^"]+)"', button).group(1)
         found.append((int(value), label, "disabled" in button))
     return found
-
-
-def steps(html):
-    """(current step label, labels of completed steps) or None when there are no steps."""
-    block = re.search(r'<ol class="checkout-steps" aria-label="Checkout progress">.*?</ol>', html, re.S)
-    if block is None:
-        return None
-    block = block.group(0)
-    assert block.count('aria-current="step"') == 1
-    current = re.search(
-        r'aria-current="step">\s*<span class="step-mark">\d</span>\s*<span class="step-label">(\w+)</span>',
-        block,
-    ).group(1)
-    done = re.findall(r'class="step step-done">.*?<span class="step-label">(\w+)<', block, re.S)
-    return current, done
 
 
 # --- stepper ---
@@ -118,19 +93,18 @@ def test_remove_button_is_labelled_and_protected(ids, client):
 
     assert 'name="csrf_token"' in form
     assert 'aria-label="Remove Enduro Helmet Pro"' in form
-    assert "icon-trash3" in form
+    assert re.search(r">\s*Remove\s*</button>", form)
 
 
 # --- summary ---
 
 
-def test_summary_has_the_big_total_checkout_button_and_trust_list(ids, client):
+def test_summary_has_the_total_and_the_checkout_button(ids, client):
     add(client, ids["enduro-helmet-pro"], 2)
     summary = re.search(r'<section class="panel cart-summary">.*?</section>', page(client, "/cart"), re.S).group(0)
 
-    assert '<span class="price-whole">378</span><span class="price-rest">.00 EUR</span>' in summary
+    assert "378.00 EUR" in summary
     assert re.search(r'href="/checkout"\s*>Proceed to checkout</a', summary)
-    assert '<ul class="trust-list">' in summary
 
 
 def test_cart_explains_when_items_are_reserved(ids, client):
@@ -144,82 +118,6 @@ def test_cart_explains_when_items_are_reserved(ids, client):
 def test_empty_cart_has_no_steps_and_links_to_categories(client):
     html = page(client, "/cart")
 
-    assert steps(html) is None
     assert "Your cart is empty" in html
     assert re.search(r'href="/category/enduro"\s*>Shop enduro bikes</a', html)
     assert re.search(r'href="/category/atv"\s*>Shop ATVs</a', html)
-
-
-# --- checkout steps on every page of the flow ---
-
-
-def test_cart_page_is_step_one(ids, client):
-    add(client, ids["enduro-helmet-pro"], 1)
-
-    assert steps(page(client, "/cart")) == ("Cart", [])
-
-
-def test_review_page_is_step_two(ids, client):
-    login(client)
-    add(client, ids["enduro-helmet-pro"], 1)
-
-    assert steps(page(client, "/checkout")) == ("Review", ["Cart"])
-
-
-def checkout(app, client, ids):
-    login(client)
-    add(client, ids["enduro-helmet-pro"], 1)
-    client.post("/checkout")
-    with app.app_context():
-        order = Order.query.one()
-        return order.id, order.stripe_session_id
-
-
-def test_paid_success_page_is_the_last_step_with_the_order_plate(app, ids, client):
-    order_id, session_id = checkout(app, client, ids)
-    app.extensions["payment_gateway"].mark_paid(session_id)
-
-    html = page(client, f"/checkout/success?session_id={session_id}")
-
-    assert steps(html) == ("Confirmed", ["Cart", "Review", "Payment"])
-    assert f'<span class="plate-number">#{order_id}</span>' in html
-    assert "Thank you for your order" in html
-
-
-def test_unpaid_success_page_stays_on_payment(app, ids, client):
-    _, session_id = checkout(app, client, ids)  # not paid at the provider
-
-    assert steps(page(client, f"/checkout/success?session_id={session_id}")) == (
-        "Payment", ["Cart", "Review"]
-    )
-
-
-def test_cancel_page_shows_steps_only_while_the_order_is_pending(app, ids, client):
-    order_id, _ = checkout(app, client, ids)
-
-    assert steps(page(client, f"/checkout/cancel/{order_id}")) == ("Payment", ["Cart", "Review"])
-
-    client.post(f"/orders/{order_id}/cancel")
-    assert steps(page(client, f"/checkout/cancel/{order_id}")) is None
-
-
-# --- review page ---
-
-
-def test_review_page_pay_button_is_inside_the_csrf_form(ids, client):
-    login(client)
-    add(client, ids["enduro-helmet-pro"], 1)
-    html = page(client, "/checkout")
-    form = re.search(r'<form method="post" class="checkout-form">.*?</form>', html, re.S).group(0)
-
-    assert 'name="csrf_token"' in form
-    assert re.search(r'<button class="btn btn-primary btn-checkout" type="submit">\s*Pay with card', form)
-    assert '<div class="table-responsive">' in form
-    assert 'name="document_id"' not in form  # only gear in the cart
-
-
-def test_review_page_offers_a_document_for_vehicles(ids, client):
-    login(client)
-    add(client, ids["ktm-250-exc-f"], 1)
-
-    assert 'name="document_id"' in page(client, "/checkout")

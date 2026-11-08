@@ -29,7 +29,7 @@ def create_app(test_config=None):
     limiter.init_app(app)
     app.before_request(reject_nul_bytes)
 
-    from app.services.stripe_gateway import StripeGateway
+    from app.services.payment import StripeGateway
 
     app.extensions["payment_gateway"] = app.config.get("PAYMENT_GATEWAY") or StripeGateway(
         app.config.get("STRIPE_SECRET_KEY")

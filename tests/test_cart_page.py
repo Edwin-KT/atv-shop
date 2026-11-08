@@ -70,12 +70,27 @@ def test_remove_button_sends_quantity_zero_with_csrf(ids, client):
     assert "Your cart is empty" in page(client)
 
 
-def test_summary_panel_has_the_total_and_the_checkout_button(ids, client):
+def summary_of(client):
+    return re.search(r'<section class="panel cart-summary">.*?</section>', page(client), re.S).group(0)
+
+
+def test_summary_panel_has_the_total_and_the_pay_form(ids, client):
+    client.post("/register", data={"email": "ana@gmail.com", "phone": "0712345678", "password": "parola-sigura-123"})
+    client.post("/login", data={"email": "ana@gmail.com", "password": "parola-sigura-123"})
     add(client, ids["enduro-helmet-pro"], 2)
-    summary = re.search(r'<section class="panel cart-summary">.*?</section>', page(client), re.S).group(0)
+    summary = summary_of(client)
 
     assert '<p class="cart-total">378.00 EUR</p>' in summary
-    assert re.search(r'href="/checkout">Proceed to checkout</a', summary)
+    assert re.search(r'<form method="post" action="/checkout">.*Pay with card</button>', summary, re.S)
+    assert "Log in to pay" not in summary
+
+
+def test_anonymous_cart_shows_a_login_link_instead_of_the_pay_form(ids, client):
+    add(client, ids["enduro-helmet-pro"], 1)
+    summary = summary_of(client)
+
+    assert 'href="/login?next=/cart">Log in to pay</a>' in summary
+    assert 'action="/checkout"' not in summary
 
 
 def test_cart_explains_when_items_are_reserved(ids, client):

@@ -20,7 +20,6 @@ class Order(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    document_id = db.Column(db.Integer, db.ForeignKey("secure_documents.id"))  # vehicle papers
     status = db.Column(db.String(20), nullable=False, default=STATUS_PENDING)
     stripe_session_id = db.Column(db.String(255), unique=True)
     created_at = db.Column(

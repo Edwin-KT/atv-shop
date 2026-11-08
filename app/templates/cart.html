@@ -67,7 +67,16 @@
     <section class="panel cart-summary">
       <h2>Total amount</h2>
       <p class="cart-total">{{ total_cents|eur }}</p>
-      <a class="btn btn-primary btn-checkout" href="{{ url_for('checkout.start') }}">Proceed to checkout</a>
+      {% if current_user.is_authenticated %}
+      {# A POST form (with CSRF): it creates the order, then sends the customer to Stripe. #}
+      <form method="post" action="{{ url_for('checkout.start') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button class="btn btn-primary btn-checkout" type="submit">Pay with card</button>
+      </form>
+      {% else %}
+      {# Paying needs an account; after logging in the customer comes back to the cart. #}
+      <a class="btn btn-primary btn-checkout" href="{{ url_for('auth.login', next=url_for('cart.view_cart')) }}">Log in to pay</a>
+      {% endif %}
     </section>
   </div>
 </div>

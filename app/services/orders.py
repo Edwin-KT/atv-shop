@@ -2,12 +2,12 @@ from datetime import datetime, timezone
 
 from sqlalchemy import update
 
-from app.exceptions import EmptyCartError, OutOfStockError, PaymentError
+from app.exceptions import OutOfStockError, PaymentError
 from app.extensions import db
 from app.models import Order, OrderItem, Product
 from app.models.order import STATUS_CANCELLED, STATUS_PAID, STATUS_PENDING
 from app.services.cart import CartLine
-from app.services.payment_interface import PaymentGateway, PaymentItem
+from app.services.payment import PaymentGateway
 
 _products = Product.__table__
 
@@ -24,12 +24,9 @@ def _reserve_stock(product_id: int, product_name: str, quantity: int) -> None:
         raise OutOfStockError(product_name)
 
 
-def create_order(user_id: int, lines: list[CartLine], document_id: int | None) -> Order:
+def create_order(user_id: int, lines: list[CartLine]) -> Order:
     """Create a pending order and reserve its stock. All or nothing."""
-    if not lines:
-        raise EmptyCartError("Your cart is empty.")
-
-    order = Order(user_id=user_id, document_id=document_id, status=STATUS_PENDING)
+    order = Order(user_id=user_id, status=STATUS_PENDING)
     try:
         for line in lines:
             product = line.product
@@ -49,39 +46,29 @@ def create_order(user_id: int, lines: list[CartLine], document_id: int | None) -
     return order
 
 
-def start_payment(order: Order, gateway: PaymentGateway, success_url: str, cancel_url: str):
-    """Open the hosted payment page. If the provider fails, release the stock."""
-    items = [
-        PaymentItem(item.product.name, item.unit_price_cents, item.quantity)
-        for item in order.items
-    ]
+def start_payment(order: Order, gateway: PaymentGateway, success_url: str, cancel_url: str) -> str:
+    """Open the hosted payment page and return its URL. If the provider fails,
+    the order is cancelled so its stock is released."""
     try:
-        session = gateway.create_checkout_session(
-            str(order.id), items, success_url, cancel_url
-        )
+        session_id, payment_url = gateway.create_checkout(order, success_url, cancel_url)
     except PaymentError:
         cancel_order(order)
         raise
 
-    order.stripe_session_id = session.session_id
+    order.stripe_session_id = session_id
     db.session.commit()
-    return session
+    return payment_url
 
 
 def confirm_payment(order: Order, gateway: PaymentGateway) -> bool:
     """Ask the provider if the order was paid; mark it paid when it was.
 
-    Safe to call repeatedly. Raises PaymentError if the provider cannot be asked
-    or answers about a different order."""
+    Safe to call repeatedly. Raises PaymentError if the provider cannot be asked."""
     if order.is_paid:
         return True
     if order.status != STATUS_PENDING or not order.stripe_session_id:
         return False
-
-    result = gateway.get_payment_result(order.stripe_session_id)
-    if result.order_reference != str(order.id):
-        raise PaymentError("The payment does not belong to this order.")
-    if not result.paid:
+    if not gateway.is_paid(order.stripe_session_id):
         return False
 
     order.status = STATUS_PAID
@@ -98,7 +85,7 @@ def cancel_order(order: Order, gateway: PaymentGateway | None = None) -> bool:
 
     if gateway is not None and order.stripe_session_id:
         try:
-            gateway.cancel_checkout_session(order.stripe_session_id)
+            gateway.expire(order.stripe_session_id)
         except PaymentError:
             pass  # the session expires on its own; the local order is cancelled anyway
 

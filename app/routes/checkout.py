@@ -1,5 +1,3 @@
-import re
-
 from flask import (
     Blueprint,
     abort,
@@ -14,21 +12,12 @@ from flask_login import current_user, login_required
 
 from app.exceptions import OutOfStockError, PaymentError
 from app.extensions import db, limiter
-from app.models import Order, SecureDocument
-from app.money import format_price
+from app.models import Order
 from app.services.audit import record_event
-from app.services.cart import cart_total_cents, clear_cart, get_cart_lines
+from app.services.cart import clear_cart, get_cart_lines
 from app.services.orders import cancel_order, confirm_payment, create_order, start_payment
 
 bp = Blueprint("checkout", __name__)
-
-# Stripe Checkout session ids look like "cs_test_a1B2..." or "cs_live_...".
-_SESSION_ID = re.compile(r"cs_[A-Za-z0-9_]{1,250}")
-
-
-def _valid_session_id(session_id: str) -> bool:
-    """Extra defence: only well-formed ids ever reach the database query."""
-    return bool(_SESSION_ID.fullmatch(session_id))
 
 
 def _gateway():
@@ -42,46 +31,21 @@ def _own_order_or_404(order_id: int) -> Order:
     return order
 
 
-def _review_context(lines):
-    documents = (
-        SecureDocument.query.filter_by(user_id=current_user.id)
-        .order_by(SecureDocument.created_at.desc())
-        .all()
-    )
-    total_cents = cart_total_cents(lines)
-    return {
-        "lines": lines,
-        "total_cents": total_cents,
-        "total_display": format_price(total_cents),
-        "has_vehicle": any(line.product.product_type == "vehicle" for line in lines),
-        "documents": documents,
-    }
-
-
 @bp.route("/checkout", methods=["GET", "POST"])
 @login_required
 @limiter.limit("10 per minute", methods=["POST"])
 def start():
+    # Only reachable by GET when the login page sends the customer back here.
+    if request.method == "GET":
+        return redirect(url_for("cart.view_cart"))
+
     lines = get_cart_lines()
     if not lines:
         flash("Your cart is empty.", "info")
         return redirect(url_for("cart.view_cart"))
 
-    context = _review_context(lines)
-    if request.method == "GET":
-        return render_template("checkout/review.html", errors=[], **context)
-
-    document_id = None
-    chosen = request.form.get("document_id", type=int)
-    if chosen:  # optional: only validated when the customer picked one
-        document = db.session.get(SecureDocument, chosen)
-        if document is None or document.user_id != current_user.id:
-            errors = ["The selected document is not valid."]
-            return render_template("checkout/review.html", errors=errors, **context), 400
-        document_id = document.id
-
     try:
-        order = create_order(current_user.id, lines, document_id)
+        order = create_order(current_user.id, lines)
     except OutOfStockError as exc:
         flash(str(exc), "danger")
         return redirect(url_for("cart.view_cart"))
@@ -91,25 +55,23 @@ def start():
     )
     cancel_url = url_for("checkout.cancelled", order_id=order.id, _external=True)
     try:
-        session = start_payment(order, _gateway(), success_url, cancel_url)
+        payment_url = start_payment(order, _gateway(), success_url, cancel_url)
     except PaymentError as exc:
         record_event("payment_failed", user_id=current_user.id, details=str(exc)[:200])
         flash("The payment service is unavailable. Your order was not placed.", "danger")
         return redirect(url_for("cart.view_cart"))
 
     record_event("order_created", user_id=current_user.id, details=f"order_id={order.id}")
-    return redirect(session.url, code=303)
+    return redirect(payment_url, code=303)  # to Stripe's payment page
 
 
 @bp.get("/checkout/success")
 @login_required
 def success():
+    # Stripe adds ?session_id=... to the success URL. Only the owner's order matches;
+    # the ORM sends the value as a bound parameter, so it is never run as SQL.
     session_id = request.args.get("session_id", "")
-    order = None
-    if _valid_session_id(session_id):
-        order = Order.query.filter_by(
-            stripe_session_id=session_id, user_id=current_user.id
-        ).first()
+    order = Order.query.filter_by(stripe_session_id=session_id, user_id=current_user.id).first()
     if order is None:
         abort(404)
 

@@ -1,16 +1,13 @@
-class ShopError(Exception):
-    """Base class for errors raised by the shop's business logic."""
+"""Our own exception types. Each one is raised by a service and caught in a route."""
 
 
-class EmptyCartError(ShopError):
-    pass
+class OutOfStockError(Exception):
+    """Not enough stock left for a product at checkout."""
 
-
-class OutOfStockError(ShopError):
     def __init__(self, product_name: str):
         super().__init__(f"Not enough stock for {product_name}.")
         self.product_name = product_name
 
 
-class PaymentError(ShopError):
+class PaymentError(Exception):
     """The payment provider failed or returned something unexpected."""

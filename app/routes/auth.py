@@ -12,6 +12,16 @@ bp = Blueprint("auth", __name__)
 CAPTCHA_ERROR = "Please confirm that you are not a robot."
 
 
+def safe_next_url(target: str | None) -> str:
+    r"""Where to go after login. Only a path on this site ("/cart") is followed;
+    "https://evil.com", "//evil.com" and "/\evil.com" (browsers read the last two as
+    another site) fall back to the home page, so the login page cannot be used to
+    send people to a phishing site (open redirect)."""
+    if target and target.startswith("/") and not target.startswith(("//", "/\\")):
+        return target
+    return url_for("main.index")
+
+
 @bp.route("/register", methods=["GET", "POST"])
 @limiter.limit("5 per minute", methods=["POST"])
 def register():
@@ -80,7 +90,8 @@ def login():
     login_user(user)
     record_event("login_success", user_id=user.id)
     flash("Logged in.", "success")
-    return redirect(url_for("main.index"))
+    # The login form posts to its own URL, so ?next=... is still in the query string.
+    return redirect(safe_next_url(request.args.get("next")))
 
 
 @bp.post("/logout")

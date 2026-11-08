@@ -1,11 +1,9 @@
 import re
-import uuid
 
 import pytest
 
 from app.exceptions import PaymentError
-from app.models import AuditLog, Order, Product, SecureDocument, User
-from app.routes.checkout import _valid_session_id
+from app.models import AuditLog, Order, Product
 from app.seed import seed_products
 from app.services.users import create_admin
 
@@ -33,22 +31,6 @@ def add_to_cart(client, ids, slug, quantity=1):
     client.post(f"/cart/add/{ids[slug]}", data={"quantity": quantity})
 
 
-def add_document(app, email="ana@gmail.com"):
-    with app.app_context():
-        user = User.query.filter_by(email=email).one()
-        document = SecureDocument(
-            user_id=user.id,
-            original_filename="talon.pdf",
-            stored_filename=f"{uuid.uuid4().hex}.pdf",
-            size_bytes=10,
-        )
-        from app.extensions import db
-
-        db.session.add(document)
-        db.session.commit()
-        return document.id
-
-
 def gateway(app):
     return app.extensions["payment_gateway"]
 
@@ -67,10 +49,30 @@ def checkout_gear(app, client, quantity=1):
 # --- starting a checkout ---
 
 def test_checkout_requires_login(client):
-    response = client.get("/checkout")
+    response = client.post("/checkout")
 
     assert response.status_code == 302
     assert "/login" in response.headers["Location"]
+
+
+def test_cart_has_a_csrf_pay_button_that_posts_to_checkout(app, client):
+    register_and_login(client)
+    add_to_cart(client, product_ids(app), "enduro-helmet-pro")
+    html = client.get("/cart").get_data(as_text=True)
+
+    form = re.search(r'<form method="post" action="/checkout">.*?</form>', html, re.S).group(0)
+    assert 'name="csrf_token"' in form
+    assert "Pay with card" in form
+
+
+def test_get_checkout_goes_back_to_the_cart(client):
+    """After logging in, Flask-Login sends the customer back to /checkout with a GET."""
+    register_and_login(client)
+
+    response = client.get("/checkout")
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/cart")
 
 
 def test_empty_cart_redirects_back_to_cart(client):
@@ -94,7 +96,6 @@ def test_checkout_creates_order_reserves_stock_and_redirects_to_payment(app, cli
         order = Order.query.one()
         assert order.status == "pending"
         assert order.stripe_session_id is not None
-        assert order.document_id is None
     with client.session_transaction() as sess:
         assert sess["cart"]  # cart is only cleared after the payment is confirmed
 
@@ -109,7 +110,7 @@ def test_payment_amounts_come_from_the_database(app, client):
     client.post("/checkout", data={"price_cents": 1})
 
     items = gateway(app).sessions[last_session_id(app)]["items"]
-    assert items[0].unit_amount_cents == 18_900
+    assert items == [("Enduro Helmet Pro", 18_900, 1)]  # not the 1 cent sent by the client
 
 
 def test_success_and_cancel_urls_are_sent_to_the_gateway(app, client):
@@ -202,11 +203,11 @@ def test_refreshing_the_success_page_logs_payment_once(app, client):
         assert events.count("order_paid") == 1
 
 
-def test_unknown_session_returns_404(client):
+@pytest.mark.parametrize("session_id", ["cs_nope", "", "' OR 1=1 --"])
+def test_unknown_session_returns_404(client, session_id):
     register_and_login(client)
 
-    assert client.get("/checkout/success?session_id=cs_nope").status_code == 404
-    assert client.get("/checkout/success").status_code == 404
+    assert client.get("/checkout/success", query_string={"session_id": session_id}).status_code == 404
 
 
 # --- cancelling ---
@@ -221,7 +222,7 @@ def test_cancel_releases_stock_and_expires_the_session(app, client):
 
     assert response.status_code == 302
     assert stock(app, "enduro-helmet-pro") == 20
-    assert session_id in gateway(app).cancelled
+    assert session_id in gateway(app).expired  # the Stripe page can no longer be paid
     with app.app_context():
         assert Order.query.one().status == "cancelled"
 
@@ -287,40 +288,19 @@ def test_ordered_product_cannot_be_deleted(app):
         assert Product.query.filter_by(slug="enduro-helmet-pro").count() == 1
 
 
-def test_document_attached_to_an_order_cannot_be_deleted(app, client):
-    register_and_login(client)
-    document_id = add_document(app)
-    add_to_cart(client, product_ids(app), "ktm-250-exc-f")
-    client.post("/checkout", data={"document_id": document_id})
-
-    client.post(f"/documents/{document_id}/delete")
-
-    with app.app_context():
-        assert SecureDocument.query.count() == 1
-
-def test_vehicle_checkout_works_without_a_document(app, client):
-    register_and_login(client)
-    add_to_cart(client, product_ids(app), "ktm-250-exc-f")
-
-    response = client.post("/checkout")
-
-    assert response.status_code == 303
-    with app.app_context():
-        assert Order.query.one().document_id is None 
-
-# --- success page: ownership, refresh, provider errors, session id format ---
+# --- success page: ownership, refresh, provider errors ---
 
 def count_payment_checks(monkeypatch, app):
     """Wrap the fake gateway so the test can see how often Stripe would be asked."""
     fake = gateway(app)
     calls = []
-    original = fake.get_payment_result
+    original = fake.is_paid
 
     def spy(session_id):
         calls.append(session_id)
         return original(session_id)
 
-    monkeypatch.setattr(fake, "get_payment_result", spy)
+    monkeypatch.setattr(fake, "is_paid", spy)
     return calls
 
 
@@ -369,7 +349,7 @@ def test_provider_error_on_success_redirects_to_orders(app, client, monkeypatch)
     def provider_down(_session_id):
         raise PaymentError("Stripe is down")
 
-    monkeypatch.setattr(gateway(app), "get_payment_result", provider_down)
+    monkeypatch.setattr(gateway(app), "is_paid", provider_down)
 
     response = client.get(f"/checkout/success?session_id={session_id}")
 
@@ -378,19 +358,6 @@ def test_provider_error_on_success_redirects_to_orders(app, client, monkeypatch)
     with app.app_context():
         assert Order.query.one().status == "pending"
         assert "payment_check_failed" in [e.event_type for e in AuditLog.query.all()]
-
-
-@pytest.mark.parametrize("session_id", ["cs_test_a1B2", "cs_live_x", "cs_fake_1"])
-def test_session_id_format_accepts_stripe_ids(session_id):
-    assert _valid_session_id(session_id)
-
-
-@pytest.mark.parametrize(
-    "session_id",
-    ["", "cs_", "\x00", "cs_fake_1\x00", "' OR 1=1 --", "{CHECKOUT_SESSION_ID}", "cs_" + "a" * 300],
-)
-def test_session_id_format_rejects_anything_else(session_id):
-    assert not _valid_session_id(session_id)
 
 
 # --- order status after payment, as the customer sees it ---

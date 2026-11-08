@@ -25,7 +25,7 @@ def make_order(app, status="paid", quantity=1):
             db.session.add(user)
             db.session.commit()
         product = Product.query.filter_by(slug="enduro-helmet-pro").one()
-        order = create_order(user.id, [CartLine(product, quantity)], None)
+        order = create_order(user.id, [CartLine(product, quantity)])
         order.status = status
         db.session.commit()
         return order.id

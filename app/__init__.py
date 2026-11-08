@@ -1,31 +1,35 @@
 from pathlib import Path
 
 from flask import Flask, render_template, url_for
-from sqlalchemy import text
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.activity_log import setup_activity_log
 from app.config import Config
 from app.extensions import csrf, db, limiter, login_manager
 from app.money import format_price
-from app.security import reject_nul_bytes
-from app.security_headers import register_security_headers
+from app.security import add_security_headers
 
 
 def create_app(test_config=None):
+    """Application factory: builds and configures one Flask app."""
     app = Flask(__name__)
     app.config.from_object(Config)
-
     if test_config:
         app.config.update(test_config)
 
+    # On Render the app runs behind a proxy that talks HTTPS to the browser and
+    # plain HTTP to us. ProxyFix trusts that ONE proxy's X-Forwarded-Proto and
+    # X-Forwarded-For headers, so request.is_secure (HSTS), url_for(_external=True)
+    # (Stripe's return URLs) and request.remote_addr (log, rate limit) are correct.
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
+
     setup_activity_log(app)
-    register_security_headers(app)
+    app.after_request(add_security_headers)
 
     db.init_app(app)
-    csrf.init_app(app)
+    csrf.init_app(app)  # every POST form must send a valid csrf_token
     login_manager.init_app(app)
-    limiter.init_app(app)
-    app.before_request(reject_nul_bytes)
+    limiter.init_app(app)  # at most 100 requests per minute per IP
 
     from app.services.payment import StripeGateway
 
@@ -71,7 +75,7 @@ def create_app(test_config=None):
         from app.catalog import CATEGORIES
 
         return {"nav_categories": [(key, info["label"]) for key, info in CATEGORIES.items()]}
-    
+
     def product_image_path(product):
         """Path of the product photo, or of the placeholder if the file does not exist."""
         if product.image_filename:
@@ -88,72 +92,25 @@ def create_app(test_config=None):
     app.jinja_env.globals["product_image_url"] = product_image_path
     app.extensions["product_image_path"] = product_image_path
 
-    @app.errorhandler(400)
-    def bad_request(error):
-        # Also used for missing or invalid CSRF tokens, so the message stays general.
-        return (
-            render_template(
-                "error.html",
-                title="Bad request",
-                message="The request could not be processed. Please go back and try again.",
-            ),
-            400,
-        )
+    # One error page for every error we expect: (title, message) per status code.
+    limit_mb = app.config["MAX_CONTENT_LENGTH"] // (1024 * 1024)
+    error_pages = {
+        # 400 is also what a missing or wrong CSRF token gives, so the text stays general.
+        400: ("Bad request", "The request could not be processed. Please go back and try again."),
+        403: ("Access denied", "You do not have permission to open this page."),
+        404: ("Page not found", "The page you are looking for does not exist."),
+        413: ("File too large", f"Uploads are limited to {limit_mb} MB."),
+        429: ("Too many requests", "You are sending requests too fast. Please wait a minute and try again."),
+    }
 
-    @app.errorhandler(404)
-    def not_found(error):
-        return (
-            render_template(
-                "error.html",
-                title="Page not found",
-                message="The page you are looking for does not exist.",
-            ),
-            404,
-        )
+    def show_error_page(error):
+        title, message = error_pages[error.code]
+        return render_template("error.html", title=title, message=message), error.code
 
-    @app.errorhandler(403)
-    def forbidden(error):
-        return (
-            render_template(
-                "error.html",
-                title="Access denied",
-                message="You do not have permission to open this page.",
-            ),
-            403,
-        )
-
-    @app.errorhandler(413)
-    def file_too_large(error):
-        limit_mb = app.config["MAX_CONTENT_LENGTH"] // (1024 * 1024)
-        return (
-            render_template(
-                "error.html",
-                title="File too large",
-                message=f"Uploads are limited to {limit_mb} MB.",
-            ),
-            413,
-        )
-
-    @app.errorhandler(429)
-    def too_many_requests(error):
-        # No extra log line needed: the request line in the activity log shows status=429.
-        page = render_template(
-            "error.html",
-            title="Too many requests",
-            message="You are sending requests too fast. Please wait a minute and try again.",
-        )
-        return page, 429, {"Retry-After": "60"}
+    for code in error_pages:
+        app.register_error_handler(code, show_error_page)
 
     with app.app_context():
-        db.create_all()
-
-    @app.get("/health")
-    def health():
-        return {"status": "ok"}
-
-    @app.get("/health/db")
-    def health_db():
-        db.session.execute(text("SELECT 1"))
-        return {"database": "ok"}
+        db.create_all()  # no migrations: creates the tables that do not exist yet
 
     return app

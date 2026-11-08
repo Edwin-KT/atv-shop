@@ -2,22 +2,9 @@ import pytest
 
 from app.extensions import db
 from app.models import User
-from app.security import admin_required
 from app.services.users import create_admin
 
 PASSWORD = "parola-sigura-123"
-
-
-@pytest.fixture()
-def protected_app(app):
-    """The app plus a throwaway admin-only route, used just to test the decorator."""
-
-    @app.get("/admin-only")
-    @admin_required
-    def admin_only():
-        return "secret"
-
-    return app
 
 
 def add_user(app, email, role):
@@ -32,30 +19,42 @@ def login(client, email):
     client.post("/login", data={"email": email, "password": PASSWORD})
 
 
-def test_anonymous_is_redirected_to_login(protected_app):
-    response = protected_app.test_client().get("/admin-only")
+# Every admin URL goes through check_admin() (bp.before_request in routes/admin.py).
+ADMIN_URLS = ["/admin/", "/admin/orders", "/admin/log", "/admin/products/new?type=gear"]
+
+
+@pytest.mark.parametrize("url", ADMIN_URLS)
+def test_anonymous_is_redirected_to_login(client, url):
+    response = client.get(url)
 
     assert response.status_code == 302
     assert "/login" in response.headers["Location"]
 
 
-def test_customer_gets_403(protected_app):
-    add_user(protected_app, "ana@gmail.com", "customer")
-    client = protected_app.test_client()
+@pytest.mark.parametrize("url", ADMIN_URLS)
+def test_customer_gets_403_on_admin_pages(app, url):
+    add_user(app, "ana@gmail.com", "customer")
+    client = app.test_client()
     login(client, "ana@gmail.com")
 
-    assert client.get("/admin-only").status_code == 403
+    assert client.get(url).status_code == 403
 
 
-def test_admin_gets_access(protected_app):
-    add_user(protected_app, "boss@gmail.com", "admin")
-    client = protected_app.test_client()
+def test_customer_cannot_delete_a_product(app):
+    add_user(app, "ana@gmail.com", "customer")
+    client = app.test_client()
+    login(client, "ana@gmail.com")
+
+    assert client.post("/admin/products/1/delete").status_code == 403
+
+
+@pytest.mark.parametrize("url", ADMIN_URLS)
+def test_admin_gets_access(app, url):
+    add_user(app, "boss@gmail.com", "admin")
+    client = app.test_client()
     login(client, "boss@gmail.com")
 
-    response = client.get("/admin-only")
-
-    assert response.status_code == 200
-    assert response.data == b"secret"
+    assert client.get(url).status_code == 200
 
 
 def test_registration_always_creates_a_customer(app, client):

@@ -17,6 +17,9 @@ def test_post_without_csrf_token_is_rejected():
     )
 
     assert response.status_code == 400
+    html = response.get_data(as_text=True)
+    assert "Bad request" in html  # our own error page, not a raw error
+    assert '<section class="panel">' in html
 
 
 def test_forms_contain_csrf_token():

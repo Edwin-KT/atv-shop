@@ -1,49 +1,48 @@
-from functools import wraps
+"""Security helpers: the admin check and the HTTP security headers."""
 
 from flask import abort, request
 from flask_login import current_user
 
 from app.extensions import login_manager
 
+# Content Security Policy: the browser only loads scripts, styles, fonts and images
+# from our own site (plus Google's reCAPTCHA). Inline <script> and style="..." are
+# blocked, so even injected HTML could not run JavaScript (XSS protection).
+CSP = "; ".join(
+    [
+        "default-src 'self'",
+        "script-src 'self' https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/",
+        "style-src 'self'",
+        "img-src 'self' data:",
+        "font-src 'self'",
+        "frame-src https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/",
+        "form-action 'self' https://checkout.stripe.com",  # the redirect to Stripe's payment page
+        "frame-ancestors 'none'",  # no other site may show our pages in a frame
+        "base-uri 'self'",
+        "object-src 'none'",
+    ]
+)
 
-def check_admin_access():
-    """Return a redirect for anonymous users, abort(403) for non-admins,
-    or None when the current user is an admin."""
+
+def check_admin():
+    """Runs before every route of the admin blueprint (see routes/admin.py):
+    anonymous visitors go to the login page, customers get 403 Forbidden."""
     if not current_user.is_authenticated:
-        return login_manager.unauthorized()
+        return login_manager.unauthorized()  # redirect to /login?next=...
     if not current_user.is_admin:
         abort(403)
-    return None
+    return None  # an admin: Flask continues with the route
 
 
-def admin_required(view):
-    """Decorator version, for single routes outside the admin blueprint."""
-
-    @wraps(view)
-    def wrapped(*args, **kwargs):
-        denied = check_admin_access()
-        if denied is not None:
-            return denied
-        return view(*args, **kwargs)
-
-    return wrapped
-
-
-def _has_nul(text) -> bool:
-    return isinstance(text, str) and "\x00" in text
-
-
-def reject_nul_bytes():
-    """before_request: answer 400 if any parameter contains a NUL byte.
-
-    PostgreSQL text fields cannot store NUL, so such a value would crash the
-    first query that uses it (500). Checked once here for every route: path
-    parameters, query string, form fields and uploaded file names."""
-    values = list((request.view_args or {}).values())
-    for params in (request.args, request.form):
-        for key, value in params.items(multi=True):
-            values += [key, value]
-    values += [upload.filename for upload in request.files.values()]
-
-    if any(_has_nul(value) for value in values):
-        abort(400)
+def add_security_headers(response):
+    """after_request: the headers checked by securityheaders.com (grade A)."""
+    response.headers["Content-Security-Policy"] = CSP
+    response.headers["X-Content-Type-Options"] = "nosniff"  # no guessing of file types
+    response.headers["X-Frame-Options"] = "DENY"  # older browsers: no framing (clickjacking)
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    # HSTS: "use only HTTPS for this site for a year". Only sent over HTTPS
+    # (behind Render's proxy this works thanks to ProxyFix in create_app).
+    if request.is_secure:
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response

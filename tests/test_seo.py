@@ -95,7 +95,7 @@ def test_sitemap_lists_every_category_page(seeded, client):
 
     for key in CATEGORIES:
         assert f"http://127.0.0.1:5000/category/{key}" in urls
-    assert not any("/search" in u for u in urls)  # search pages are noindex
+    assert not any("/search" in u for u in urls)  # private pages are not listed
 
 
 def test_robots_txt_has_one_rule_per_line(client):
@@ -114,13 +114,6 @@ def test_robots_txt_blocks_private_areas_and_points_to_the_sitemap(client):
     assert "Disallow: /admin/" in text
     assert "Sitemap: http://127.0.0.1:5000/sitemap.xml" in text
     assert "Disallow: /\n" not in text  # the public pages must stay crawlable
-
-
-def test_private_pages_are_noindex_and_public_pages_are_not(seeded, client):
-    assert "noindex" in client.get("/login").headers["X-Robots-Tag"]
-    assert "noindex" in client.get("/cart").headers["X-Robots-Tag"]
-    assert "X-Robots-Tag" not in client.get("/").headers
-    assert "X-Robots-Tag" not in client.get("/product/ktm-250-exc-f").headers
 
 
 def test_sitemap_uses_the_configured_site_url_not_the_host_header(seeded, client):

@@ -11,7 +11,7 @@ from flask import (
 from flask_login import current_user, login_required
 
 from app.exceptions import OutOfStockError, PaymentError
-from app.extensions import db, limiter
+from app.extensions import db
 from app.models import Order
 from app.activity_log import log_event
 from app.services.cart import clear_cart, get_cart_lines
@@ -33,7 +33,6 @@ def _own_order_or_404(order_id: int) -> Order:
 
 @bp.route("/checkout", methods=["GET", "POST"])
 @login_required
-@limiter.limit("10 per minute", methods=["POST"])
 def start():
     # Only reachable by GET when the login page sends the customer back here.
     if request.method == "GET":

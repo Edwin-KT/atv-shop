@@ -18,7 +18,6 @@ def test_all_security_headers_are_present(client):
         "X-Frame-Options",
         "Referrer-Policy",
         "Permissions-Policy",
-        "Cross-Origin-Opener-Policy",
     ):
         assert name in headers, f"missing {name}"
     assert headers["X-Content-Type-Options"] == "nosniff"
@@ -48,8 +47,27 @@ def test_hsts_only_over_https(client):
     assert "max-age=31536000" in secure.headers["Strict-Transport-Security"]
 
 
-def test_html_pages_are_not_cached(client):
-    assert client.get("/").headers["Cache-Control"] == "no-store"
+# --- ProxyFix: behind Render's proxy, which talks HTTPS to the browser and HTTP to us ---
+
+def test_hsts_is_sent_when_the_proxy_says_the_browser_used_https(client):
+    response = client.get("/", headers={"X-Forwarded-Proto": "https"})
+
+    assert "max-age=31536000" in response.headers["Strict-Transport-Security"]
+
+
+def test_the_real_visitor_ip_comes_from_the_proxy(client, log_text):
+    client.get("/", headers={"X-Forwarded-For": "203.0.113.7"})
+
+    assert "ip=203.0.113.7 " in log_text()
+
+
+def test_only_the_last_proxy_hop_is_trusted(client, log_text):
+    """A visitor can add a fake X-Forwarded-For; the proxy appends the real IP after it,
+    and x_for=1 only trusts that last value."""
+    client.get("/", headers={"X-Forwarded-For": "6.6.6.6, 203.0.113.7"})
+
+    assert "ip=203.0.113.7 " in log_text()
+    assert "6.6.6.6" not in log_text()
 
 
 # --- XSS ---

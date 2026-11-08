@@ -3,7 +3,7 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, u
 from app.activity_log import log_event, read_last_lines
 from app.extensions import db
 from app.models import Order, OrderItem, Product
-from app.security import check_admin_access
+from app.security import check_admin
 from app.services.products import (
     PRODUCT_CLASSES,
     create_product,
@@ -14,7 +14,7 @@ from app.services.products import (
 bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 # Runs before EVERY route of this blueprint, including routes added later.
-bp.before_request(check_admin_access)
+bp.before_request(check_admin)
 
 
 def _values_from_product(product: Product) -> dict:

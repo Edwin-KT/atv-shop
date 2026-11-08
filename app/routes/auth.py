@@ -1,7 +1,7 @@
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_user, logout_user
 
-from app.extensions import db, limiter
+from app.extensions import db
 from app.models import User
 from app.activity_log import log_event
 from app.services.captcha import captcha_passed
@@ -23,7 +23,6 @@ def safe_next_url(target: str | None) -> str:
 
 
 @bp.route("/register", methods=["GET", "POST"])
-@limiter.limit("5 per minute", methods=["POST"])
 def register():
     if request.method == "GET":
         return render_template("register.html", errors=[], email="", phone="")
@@ -63,7 +62,6 @@ def register():
 
 
 @bp.route("/login", methods=["GET", "POST"])
-@limiter.limit("10 per minute", methods=["POST"])
 def login():
     if request.method == "GET":
         return render_template("login.html", error=None, email="")

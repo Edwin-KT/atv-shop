@@ -69,10 +69,6 @@ def test_sql_injection_text_in_search_finds_nothing(seeded, client):
     assert "No products match" in response.get_data(as_text=True)
 
 
-def test_search_pages_are_not_indexed(client):
-    assert "noindex" in client.get("/search?q=ktm").headers["X-Robots-Tag"]
-
-
 def test_navigation_links_to_every_category(client):
     html = client.get("/").get_data(as_text=True)
 

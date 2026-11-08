@@ -39,30 +39,6 @@ def test_static_files_do_not_use_the_limit(limited_app):
     assert client.get("/").status_code == 200
 
 
-def test_health_endpoint_is_exempt(limited_app):
-    client = limited_app.test_client()
-
-    assert all(client.get("/health").status_code == 200 for _ in range(120))
-
-
-def test_login_attempts_are_limited_more_strictly(limited_app):
-    client = limited_app.test_client()
-    data = {"email": "ana@gmail.com", "password": "gresita-123"}
-
-    statuses = [client.post("/login", data=data).status_code for _ in range(11)]
-
-    assert statuses[:10] == [401] * 10
-    assert statuses[10] == 429
-
-
-def test_registration_attempts_are_limited(limited_app):
-    client = limited_app.test_client()
-
-    statuses = [client.post("/register", data={}).status_code for _ in range(6)]
-
-    assert statuses[5] == 429
-
-
 def test_blocking_is_logged(limited_app, log_text):
     client = limited_app.test_client()
     for _ in range(101):

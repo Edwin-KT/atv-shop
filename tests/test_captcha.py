@@ -3,7 +3,7 @@ import requests
 
 from app.extensions import db
 from app.models import User
-from app.services.captcha import VERIFY_URL, RecaptchaVerifier
+from app.services.captcha import VERIFY_URL, ask_google
 
 PASSWORD = "parola-sigura-123"
 REGISTER = {"email": "ana@gmail.com", "phone": "0712345678", "password": PASSWORD}
@@ -31,9 +31,15 @@ def create_user(app):
         db.session.commit()
 
 
-# --- the verifier (unit tests, network mocked) ---
+# --- asking Google (unit tests, network faked) ---
 
-def test_verifier_accepts_token_confirmed_by_google(monkeypatch):
+
+def ask(app, token):
+    with app.test_request_context("/login", method="POST", environ_base={"REMOTE_ADDR": "127.0.0.1"}):
+        return ask_google(token)
+
+
+def test_google_is_asked_with_the_secret_token_and_ip(app, monkeypatch):
     captured = {}
 
     def fake_post(url, data, timeout):
@@ -42,53 +48,56 @@ def test_verifier_accepts_token_confirmed_by_google(monkeypatch):
 
     monkeypatch.setattr(requests, "post", fake_post)
 
-    assert RecaptchaVerifier("secret").verify("token-1", "1.2.3.4") is True
+    assert ask(app, "token-1") is True
     assert captured["url"] == VERIFY_URL
-    assert captured["data"] == {"secret": "secret", "response": "token-1", "remoteip": "1.2.3.4"}
+    assert captured["data"]["response"] == "token-1"
+    assert captured["data"]["secret"] == app.config["RECAPTCHA_SECRET_KEY"]
+    assert captured["data"]["remoteip"] == "127.0.0.1"
     assert captured["timeout"] > 0
 
 
-def test_verifier_rejects_token_refused_by_google(monkeypatch):
+def test_token_refused_by_google_fails(app, monkeypatch):
     monkeypatch.setattr(requests, "post", lambda *a, **k: FakeResponse({"success": False}))
 
-    assert RecaptchaVerifier("secret").verify("token-1") is False
+    assert ask(app, "token-1") is False
 
 
-def test_verifier_fails_closed_on_network_error(monkeypatch):
+def test_fails_closed_on_network_error(app, monkeypatch):
     def boom(*args, **kwargs):
         raise requests.ConnectionError("down")
 
     monkeypatch.setattr(requests, "post", boom)
 
-    assert RecaptchaVerifier("secret").verify("token-1") is False
+    assert ask(app, "token-1") is False
 
 
-def test_verifier_fails_closed_on_bad_answer(monkeypatch):
+def test_fails_closed_on_a_bad_answer(app, monkeypatch):
     monkeypatch.setattr(requests, "post", lambda *a, **k: FakeResponse(status=500))
-    assert RecaptchaVerifier("secret").verify("token-1") is False
+    assert ask(app, "token-1") is False
 
     class NotJson(FakeResponse):
         def json(self):
             raise ValueError("not json")
 
     monkeypatch.setattr(requests, "post", lambda *a, **k: NotJson())
-    assert RecaptchaVerifier("secret").verify("token-1") is False
+    assert ask(app, "token-1") is False
 
 
 @pytest.mark.parametrize("token", ["", None, "x" * 5000])
-def test_verifier_does_not_call_google_for_unusable_tokens(monkeypatch, token):
+def test_unusable_tokens_are_not_sent_to_google(app, monkeypatch, token):
     def must_not_run(*args, **kwargs):
         raise AssertionError("network call made")
 
     monkeypatch.setattr(requests, "post", must_not_run)
 
-    assert RecaptchaVerifier("secret").verify(token) is False
+    assert ask(app, token) is False
 
 
-def test_verifier_without_secret_key_rejects_everything(monkeypatch):
+def test_without_a_secret_key_everything_fails(app, monkeypatch):
     monkeypatch.setattr(requests, "post", lambda *a, **k: FakeResponse({"success": True}))
+    app.config["RECAPTCHA_SECRET_KEY"] = ""
 
-    assert RecaptchaVerifier(None).verify("token-1") is False
+    assert ask(app, "token-1") is False
 
 
 # --- registration ---
@@ -187,7 +196,13 @@ def test_nothing_is_checked_when_captcha_is_disabled(client):
     assert b"recaptcha" not in client.get("/login").data
 
 
-def test_get_requests_do_not_call_the_verifier(captcha_app):
+def test_get_requests_do_not_ask_google(captcha_app, google_calls):
     captcha_app.test_client().get("/login")
 
-    assert captcha_app.extensions["captcha_verifier"].calls == []
+    assert google_calls == []
+
+
+def test_the_submitted_token_is_what_google_checks(captcha_app, google_calls):
+    captcha_app.test_client().post("/login", data={**LOGIN, "g-recaptcha-response": "valid-token"})
+
+    assert google_calls == ["valid-token"]

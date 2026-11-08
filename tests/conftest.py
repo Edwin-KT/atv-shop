@@ -7,7 +7,6 @@ from pathlib import Path
 os.environ.setdefault("ACTIVITY_LOG", str(Path(tempfile.gettempdir()) / "atv-shop-tests.log"))
 
 import pytest  # noqa: E402
-from fake_captcha import FakeCaptcha  # noqa: E402
 from fake_gateway import FakeGateway  # noqa: E402
 
 from app import create_app  # noqa: E402
@@ -25,7 +24,6 @@ def build_app(tmp_path, rate_limit: bool = False, captcha: bool = False):
             "PAYMENT_GATEWAY": FakeGateway(),
             "RATELIMIT_ENABLED": rate_limit,
             "CAPTCHA_ENABLED": captcha,
-            "CAPTCHA_VERIFIER": FakeCaptcha(),
         }
     )
 
@@ -48,9 +46,34 @@ def limited_app(tmp_path):
     return app
 
 
+class FakeGoogleAnswer:
+    def __init__(self, success):
+        self.success = success
+
+    def raise_for_status(self):
+        pass
+
+    def json(self):
+        return {"success": self.success}
+
+
 @pytest.fixture()
-def captcha_app(tmp_path):
-    """Same app, but with the CAPTCHA switched ON (and a fake verifier)."""
+def google_calls(monkeypatch):
+    """Replaces the call to Google: only the token "valid-token" is accepted.
+    Returns the list of tokens the app sent, so a test can check them."""
+    calls = []
+
+    def fake_post(url, data, timeout):
+        calls.append(data["response"])
+        return FakeGoogleAnswer(data["response"] == "valid-token")
+
+    monkeypatch.setattr("app.services.captcha.requests.post", fake_post)
+    return calls
+
+
+@pytest.fixture()
+def captcha_app(tmp_path, google_calls):
+    """Same app, but with the CAPTCHA switched ON (Google is faked, see google_calls)."""
     return build_app(tmp_path, captcha=True)
 
 

@@ -1,44 +1,42 @@
+"""reCAPTCHA v2 on the register and login forms, checked on the server.
+
+The widget in the browser puts a token in the form field "g-recaptcha-response".
+The server sends that token to Google and only continues when Google says it is
+valid. Any problem counts as "not passed" (fail closed): no token, no secret key,
+Google unreachable or an unexpected answer."""
+
 import requests
 from flask import current_app, request
 
 from app.activity_log import log_event
 
 VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify"
-FORM_FIELD = "g-recaptcha-response"
-MAX_TOKEN_LENGTH = 4096
-
-
-class RecaptchaVerifier:
-    """Asks Google whether a CAPTCHA token is valid."""
-
-    def __init__(self, secret_key: str | None, timeout: float = 5.0):
-        self._secret_key = secret_key
-        self._timeout = timeout
-
-    def verify(self, token: str, remote_ip: str | None = None) -> bool:
-        """True only when Google confirms the token. Any problem means False
-        (fail closed): missing token, no secret key, network error, bad answer."""
-        if not token or len(token) > MAX_TOKEN_LENGTH or not self._secret_key:
-            return False
-        try:
-            response = requests.post(
-                VERIFY_URL,
-                data={"secret": self._secret_key, "response": token, "remoteip": remote_ip},
-                timeout=self._timeout,
-            )
-            response.raise_for_status()
-            return response.json().get("success") is True
-        except (requests.RequestException, ValueError):
-            return False
 
 
 def captcha_passed() -> bool:
-    """Check the CAPTCHA of the current form submission and log failures."""
-    if not current_app.config["CAPTCHA_ENABLED"]:
+    """Check the CAPTCHA of the form that was just submitted; log failures."""
+    if not current_app.config["CAPTCHA_ENABLED"]:  # switched off in most tests
         return True
 
-    verifier = current_app.extensions["captcha_verifier"]
-    passed = verifier.verify(request.form.get(FORM_FIELD, ""), request.remote_addr)
-    if not passed:
-        log_event("captcha_failed", details=f"path={request.path}")
-    return passed
+    if ask_google(request.form.get("g-recaptcha-response", "")):
+        return True
+    log_event("captcha_failed", details=f"path={request.path}")
+    return False
+
+
+def ask_google(token: str) -> bool:
+    """True only when Google confirms the token."""
+    secret_key = current_app.config["RECAPTCHA_SECRET_KEY"]
+    # Real tokens are a few hundred characters; anything empty or huge is not sent.
+    if not token or len(token) > 4096 or not secret_key:
+        return False
+    try:
+        response = requests.post(
+            VERIFY_URL,
+            data={"secret": secret_key, "response": token, "remoteip": request.remote_addr},
+            timeout=5,  # never let a slow Google block the login page for long
+        )
+        response.raise_for_status()  # an HTTP error status (e.g. 500) counts as failed
+        return response.json().get("success") is True
+    except (requests.RequestException, ValueError):  # network error, or not JSON
+        return False

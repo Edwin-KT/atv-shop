@@ -33,12 +33,6 @@ def create_app(test_config=None):
         app.config.get("STRIPE_SECRET_KEY")
     )
 
-    from app.services.captcha import RecaptchaVerifier
-
-    app.extensions["captcha_verifier"] = app.config.get("CAPTCHA_VERIFIER") or RecaptchaVerifier(
-        app.config.get("RECAPTCHA_SECRET_KEY")
-    )
-
     from app import models  # noqa: F401  (models must be imported before create_all)
     from app.cli import register_commands
     from app.routes import admin, auth, cart, checkout, documents, main, seo

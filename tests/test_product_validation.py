@@ -1,7 +1,7 @@
 import pytest
 from werkzeug.datastructures import MultiDict
 
-from app.services.products import (
+from app.validators import (
     parse_int,
     parse_price_to_cents,
     slugify,
@@ -37,7 +37,8 @@ def test_slugify():
 
 @pytest.mark.parametrize(
     "value, expected",
-    [("189", 18900), ("189.00", 18900), ("189,5", 18950), ("0.99", 99), (" 5.05 ", 505)],
+    [("189", 18900), ("189.00", 18900), ("189,5", 18950), ("0.99", 99), (" 5.05 ", 505),
+     ("0.29", 29), ("1.15", 115)],  # float would give 28 and 114: Decimal is exact
 )
 def test_valid_prices(value, expected):
     assert parse_price_to_cents(value) == expected

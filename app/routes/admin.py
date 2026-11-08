@@ -2,19 +2,17 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, u
 
 from app.activity_log import log_event, read_last_lines
 from app.extensions import db
-from app.models import Order, OrderItem, Product
+from app.models import GearProduct, Order, OrderItem, Product, VehicleProduct
 from app.security import check_admin
-from app.services.products import (
-    PRODUCT_CLASSES,
-    create_product,
-    update_product,
-    validate_product_form,
-)
+from app.validators import slugify, validate_product_form
 
 bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 # Runs before EVERY route of this blueprint, including routes added later.
 bp.before_request(check_admin)
+
+# ?type=vehicle or ?type=gear in the "new product" URL -> which class to create.
+PRODUCT_CLASSES = {"vehicle": VehicleProduct, "gear": GearProduct}
 
 
 def _values_from_product(product: Product) -> dict:
@@ -58,13 +56,18 @@ def new_product():
         )
 
     clean, errors = validate_product_form(request.form, product_type)
+    slug = slugify(clean["name"])
+    if not errors and Product.query.filter_by(slug=slug).first():
+        errors.append("A product with this name already exists.")
     if errors:
         return render_template(
             "admin/product_form.html", product=None, product_type=product_type,
             values=request.form, errors=errors, action_url=action_url,
         ), 400
 
-    product = create_product(product_type, clean)
+    product = PRODUCT_CLASSES[product_type](slug=slug, **clean)
+    db.session.add(product)
+    db.session.commit()
     log_event("product_created", details=f"product_id={product.id}")
     flash("Product created.", "success")
     return redirect(url_for("admin.dashboard"))
@@ -91,7 +94,9 @@ def edit_product(product_id):
             values=request.form, errors=errors, action_url=action_url,
         ), 400
 
-    update_product(product, clean)
+    for column, value in clean.items():  # the slug is not changed, so old links keep working
+        setattr(product, column, value)
+    db.session.commit()
     log_event("product_updated", details=f"product_id={product.id}")
     flash("Product updated.", "success")
     return redirect(url_for("admin.dashboard"))

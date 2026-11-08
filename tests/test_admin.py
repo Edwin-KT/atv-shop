@@ -114,17 +114,17 @@ def test_admin_creates_gear(app):
         assert product.image_filename is None
 
 
-def test_same_name_gets_a_unique_slug(app):
+def test_a_second_product_with_the_same_name_is_refused(app):
+    """The name gives the URL (/product/yamaha-raptor-700), so it must be unique."""
     client = admin_client(app)
-
-    client.post("/admin/products/new?type=vehicle", data=VEHICLE_FORM)
     client.post("/admin/products/new?type=vehicle", data=VEHICLE_FORM)
 
+    response = client.post("/admin/products/new?type=vehicle", data=VEHICLE_FORM)
+
+    assert response.status_code == 400
+    assert b"A product with this name already exists." in response.data
     with app.app_context():
-        assert {p.slug for p in Product.query.all()} == {
-            "yamaha-raptor-700",
-            "yamaha-raptor-700-2",
-        }
+        assert Product.query.count() == 1
 
 
 @pytest.mark.parametrize(

@@ -93,3 +93,35 @@ def test_dashboard_links_to_orders(app):
     html = admin_client(app).get("/admin/").get_data(as_text=True)
 
     assert 'href="/admin/orders"' in html
+
+
+def test_a_product_that_was_ordered_can_still_be_edited(app):
+    """Regression: the edit page refused products that appear in orders, so the advice
+    "set its stock to 0 instead" (shown when deleting them) could not be followed."""
+    make_order(app)
+    client = admin_client(app)
+    with app.app_context():
+        helmet = Product.query.filter_by(slug="enduro-helmet-pro").one()
+        helmet_id, price = helmet.id, f"{helmet.price_cents / 100:.2f}"
+
+    assert client.get(f"/admin/products/{helmet_id}/edit").status_code == 200
+    response = client.post(
+        f"/admin/products/{helmet_id}/edit",
+        data={"name": "Enduro Helmet Pro", "price": price, "stock": "0", "gear_size": "L"},
+    )
+
+    assert response.status_code == 302
+    with app.app_context():
+        assert db.session.get(Product, helmet_id).stock == 0
+
+
+def test_a_product_that_was_ordered_still_cannot_be_deleted(app):
+    make_order(app)
+    client = admin_client(app)
+    with app.app_context():
+        helmet_id = Product.query.filter_by(slug="enduro-helmet-pro").one().id
+
+    client.post(f"/admin/products/{helmet_id}/delete")
+
+    with app.app_context():
+        assert db.session.get(Product, helmet_id) is not None  # order history stays intact

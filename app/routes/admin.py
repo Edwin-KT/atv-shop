@@ -72,13 +72,9 @@ def new_product():
 
 @bp.route("/products/<int:product_id>/edit", methods=["GET", "POST"])
 def edit_product(product_id):
+    # Products that appear in orders can be edited (e.g. stock set to 0); only deleting
+    # them is refused, so the order history keeps pointing at a real product.
     product = db.get_or_404(Product, product_id)
-    if OrderItem.query.filter_by(product_id=product.id).first():
-        flash(
-            "This product appears in orders and cannot be deleted. Set its stock to 0 instead.",
-            "warning",
-        )
-        return redirect(url_for("admin.dashboard"))
     action_url = url_for("admin.edit_product", product_id=product.id)
 
     if request.method == "GET":

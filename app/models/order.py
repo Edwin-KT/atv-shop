@@ -3,41 +3,18 @@ from datetime import datetime, timezone
 from app.extensions import db
 from app.money import format_price
 
+# An order is created "pending" (stock reserved, waiting for Stripe), then becomes
+# "paid" when Stripe confirms the payment, or "cancelled" (stock given back).
 STATUS_PENDING = "pending"
 STATUS_PAID = "paid"
-STATUS_PROCESSING = "processing"
-STATUS_SHIPPED = "shipped"
-STATUS_DELIVERED = "delivered"
 STATUS_CANCELLED = "cancelled"
-
-ALL_STATUSES = (
-    STATUS_PENDING, STATUS_PAID, STATUS_PROCESSING,
-    STATUS_SHIPPED, STATUS_DELIVERED, STATUS_CANCELLED,
-)
-# Every status an order can have once Stripe confirmed the payment.
-PAID_STATUSES = (STATUS_PAID, STATUS_PROCESSING, STATUS_SHIPPED, STATUS_DELIVERED)
-# Forward-only fulfilment: each status has at most one next step.
-NEXT_STATUS = {
-    STATUS_PAID: STATUS_PROCESSING,
-    STATUS_PROCESSING: STATUS_SHIPPED,
-    STATUS_SHIPPED: STATUS_DELIVERED,
-}
-STATUS_LABELS = {
-    STATUS_PENDING: "Awaiting payment",
-    STATUS_PAID: "Paid",
-    STATUS_PROCESSING: "Processing",
-    STATUS_SHIPPED: "Shipped",
-    STATUS_DELIVERED: "Delivered",
-    STATUS_CANCELLED: "Cancelled",
-}
 
 
 class Order(db.Model):
     __tablename__ = "orders"
     __table_args__ = (
         db.CheckConstraint(
-            "status IN (" + ", ".join(f"'{s}'" for s in ALL_STATUSES) + ")",
-            name="ck_orders_status_allowed",
+            "status IN ('pending', 'paid', 'cancelled')", name="ck_orders_status_allowed"
         ),
     )
 
@@ -58,15 +35,7 @@ class Order(db.Model):
 
     @property
     def is_paid(self) -> bool:
-        return self.status in PAID_STATUSES
-
-    @property
-    def next_status(self) -> str | None:
-        return NEXT_STATUS.get(self.status)
-
-    @property
-    def status_label(self) -> str:
-        return STATUS_LABELS.get(self.status, self.status)
+        return self.status == STATUS_PAID
 
     @property
     def total_cents(self) -> int:

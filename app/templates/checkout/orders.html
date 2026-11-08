@@ -9,7 +9,7 @@ endblock %} {% block content %}
       >Order #{{ order.id }} &middot; {{ order.created_at.strftime('%Y-%m-%d
       %H:%M') }}</span
     >
-    {% include "_order_status.html" %}
+    <span class="badge status-{{ order.status }}">{{ order.status }}</span>
   </div>
   <ul class="list-group list-group-flush">
     {% for item in order.items %}

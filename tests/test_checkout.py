@@ -410,39 +410,26 @@ def paid_and_set_status(app, client, status):
     return session_id
 
 
-@pytest.mark.parametrize(
-    "status, label",
-    [("processing", "Processing"), ("shipped", "Shipped"), ("delivered", "Delivered")],
-)
-def test_orders_page_shows_the_fulfilment_status(app, client, status, label):
-    paid_and_set_status(app, client, status)
-
-    html = client.get("/orders").get_data(as_text=True)
-
-    assert f">{label}</span" in html
-    assert "Cancel order" not in html
-
-
-def test_success_page_for_a_shipped_order_still_says_paid(app, client):
-    session_id = paid_and_set_status(app, client, "shipped")
+def test_success_page_opened_twice_records_the_payment_once(app, client):
+    session_id = paid_and_set_status(app, client, "paid")
 
     response = client.get(f"/checkout/success?session_id={session_id}")
 
     assert b"Thank you for your order" in response.data
     with app.app_context():
-        assert Order.query.one().status == "shipped"  # not reset to "paid"
+        assert Order.query.one().status == "paid"
         events = [e.event_type for e in AuditLog.query.all()]
         assert events.count("order_paid") == 1
 
 
-def test_shipped_order_cannot_be_cancelled_and_keeps_stock(app, client):
-    paid_and_set_status(app, client, "shipped")
+def test_paid_order_cannot_be_cancelled_and_keeps_stock(app, client):
+    paid_and_set_status(app, client, "paid")
 
     client.post("/orders/1/cancel")
 
     assert stock(app, "enduro-helmet-pro") == 19
     with app.app_context():
-        assert Order.query.one().status == "shipped"
+        assert Order.query.one().status == "paid"
 
 
 # --- cancel page (Stripe's cancel_url) shows the order's real status ---
@@ -469,12 +456,6 @@ def test_cancel_page_for_a_paid_order_says_it_is_paid(app, client):
     assert re.search(r'href="/orders"\s*>My orders</a>', html)
     assert "was not paid" not in html
     assert "Cancel order" not in html
-
-
-def test_cancel_page_for_a_shipped_order_also_says_it_is_paid(app, client):
-    paid_and_set_status(app, client, "shipped")
-
-    assert "This order is already paid" in cancel_page(client)
 
 
 def test_cancel_page_for_a_cancelled_order_says_it_was_cancelled(app, client):

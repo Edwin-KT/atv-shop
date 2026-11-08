@@ -1,70 +1,39 @@
-{% extends "base.html" %} {% block title %}Orders - ATV & Enduro Shop{%
-endblock %} {% block content %}
+{% extends "base.html" %}
+{% block title %}Orders - ATV & Enduro Shop{% endblock %}
+{% block content %}
 <section class="panel">
-<a href="{{ url_for('admin.dashboard') }}">&larr; Back to products</a>
-<h1 class="mt-3 mb-4">Orders</h1>
+  <a href="{{ url_for('admin.dashboard') }}">&larr; Back to products</a>
+  <h1 class="mt-3 mb-4">Orders</h1>
 
-<nav class="d-flex flex-wrap gap-2 mb-4" aria-label="Filter orders by status">
-  <a
-    class="btn btn-sm {{ 'btn-dark' if not status else 'btn-outline-dark' }}"
-    href="{{ url_for('admin.orders') }}"
-    >All</a
-  >
-  {% for value in statuses %}
-  <a
-    class="btn btn-sm {{ 'btn-dark' if status == value else 'btn-outline-dark' }}"
-    href="{{ url_for('admin.orders', status=value) }}"
-    >{{ value|capitalize }}</a
-  >
-  {% endfor %}
-</nav>
-
-<div class="table-responsive">
-  <table class="table align-middle">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Date (UTC)</th>
-        <th>Customer</th>
-        <th>Items</th>
-        <th>Total</th>
-        <th>Status</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for order in orders %}
-      <tr>
-        <td>#{{ order.id }}</td>
-        <td>{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-        <td>{{ order.user.email }}</td>
-        <td>{{ order.items|sum(attribute='quantity') }}</td>
-        <td>{{ order.total_display }}</td>
-        <td>{% include "_order_status.html" %}</td>
-        <td>
-          {% if order.next_status %}
-          <form
-            method="post"
-            action="{{ url_for('admin.advance_order', order_id=order.id) }}"
-          >
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            <input type="hidden" name="status" value="{{ order.status }}" />
-            <button class="btn btn-sm btn-primary" type="submit">
-              Mark as {{ order.next_status }}
-            </button>
-          </form>
-          {% else %}
-          <span class="text-muted">&ndash;</span>
-          {% endif %}
-        </td>
-      </tr>
-      {% else %}
-      <tr>
-        <td colspan="7" class="text-muted">No orders.</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Date (UTC)</th>
+          <th>Customer</th>
+          <th>Items</th>
+          <th>Total</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in orders %}
+        <tr>
+          <td>#{{ order.id }}</td>
+          <td>{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td>{{ order.user.email }}</td>
+          <td>{{ order.items|sum(attribute='quantity') }}</td>
+          <td>{{ order.total_cents|eur }}</td>
+          <td><span class="badge status-{{ order.status }}">{{ order.status }}</span></td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" class="text-muted">No orders yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </section>
 {% endblock %}

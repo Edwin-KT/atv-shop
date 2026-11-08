@@ -3,10 +3,8 @@ from flask_login import current_user
 
 from app.extensions import db
 from app.models import AuditLog, Order, OrderItem, Product
-from app.models.order import ALL_STATUSES
 from app.security import check_admin_access
 from app.services.audit import record_event
-from app.services.orders import advance_order_status
 from app.services.products import (
     PRODUCT_CLASSES,
     create_product,
@@ -132,33 +130,6 @@ def audit_log():
 
 @bp.get("/orders")
 def orders():
-    status = request.args.get("status", "")
-    query = Order.query.order_by(Order.id.desc())
-    if status in ALL_STATUSES:
-        query = query.filter_by(status=status)
-    else:
-        status = ""  # unknown or missing filter: show every order
-    return render_template(
-        "admin/orders.html", orders=query.all(), status=status, statuses=ALL_STATUSES
-    )
-
-
-@bp.post("/orders/<int:order_id>/advance")
-def advance_order(order_id):
-    order = db.session.get(Order, order_id)
-    if order is None:
-        abort(404)
-
-    expected = request.form.get("status", "")
-    new_status = advance_order_status(order.id, expected)
-    if new_status is None:
-        flash("The order was not changed: it cannot move forward or it was already updated.", "warning")
-    else:
-        # Only written when the UPDATE changed exactly one row.
-        record_event(
-            "order_status_changed",
-            user_id=current_user.id,
-            details=f"order_id={order.id} {expected}->{new_status}",
-        )
-        flash(f"Order #{order.id} is now {new_status}.", "success")
-    return redirect(url_for("admin.orders"))
+    """Read-only list of every order, newest first."""
+    all_orders = Order.query.order_by(Order.id.desc()).all()
+    return render_template("admin/orders.html", orders=all_orders)

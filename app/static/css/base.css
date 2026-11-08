@@ -143,6 +143,22 @@ h2 {
   text-transform: uppercase;
 }
 
+/* Order status badges: yellow = waiting for payment, green = paid, grey = cancelled. */
+.status-pending {
+  background-color: #ffd43b;
+  color: var(--color-ink);
+}
+
+.status-paid {
+  background-color: #237032; /* darker than --color-success: white text stays readable */
+  color: #ffffff;
+}
+
+.status-cancelled {
+  background-color: var(--color-muted);
+  color: #ffffff;
+}
+
 .alert {
   border-left-width: 0.3rem;
   overflow-wrap: anywhere;

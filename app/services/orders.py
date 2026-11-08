@@ -5,12 +5,11 @@ from sqlalchemy import update
 from app.exceptions import EmptyCartError, OutOfStockError, PaymentError
 from app.extensions import db
 from app.models import Order, OrderItem, Product
-from app.models.order import NEXT_STATUS, STATUS_CANCELLED, STATUS_PAID, STATUS_PENDING
+from app.models.order import STATUS_CANCELLED, STATUS_PAID, STATUS_PENDING
 from app.services.cart import CartLine
 from app.services.payment_interface import PaymentGateway, PaymentItem
 
 _products = Product.__table__
-_orders = Order.__table__
 
 
 def _reserve_stock(product_id: int, product_name: str, quantity: int) -> None:
@@ -74,7 +73,7 @@ def confirm_payment(order: Order, gateway: PaymentGateway) -> bool:
 
     Safe to call repeatedly. Raises PaymentError if the provider cannot be asked
     or answers about a different order."""
-    if order.is_paid:  # paid, processing, shipped or delivered
+    if order.is_paid:
         return True
     if order.status != STATUS_PENDING or not order.stripe_session_id:
         return False
@@ -113,25 +112,3 @@ def cancel_order(order: Order, gateway: PaymentGateway | None = None) -> bool:
     db.session.commit()
     return True
 
-
-def advance_order_status(order_id: int, expected_status: str) -> str | None:
-    """Move an order exactly one step forward (paid -> processing -> shipped -> delivered).
-
-    `expected_status` is the status the admin saw. The UPDATE only matches if the
-    order still has it, so a double click or two admins at once can never skip a
-    step. Returns the new status, or None if nothing was changed. Stock is not
-    touched: it was reserved at checkout."""
-    new_status = NEXT_STATUS.get(expected_status)
-    if new_status is None:  # pending, cancelled, delivered or an unknown value
-        return None
-
-    result = db.session.execute(
-        update(_orders)
-        .where(_orders.c.id == order_id, _orders.c.status == expected_status)
-        .values(status=new_status)
-    )
-    if result.rowcount != 1:
-        db.session.rollback()
-        return None
-    db.session.commit()
-    return new_status

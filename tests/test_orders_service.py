@@ -8,7 +8,6 @@ from app.models import Order, OrderItem, Product, User
 from app.seed import seed_products
 from app.services.cart import CartLine
 from app.services.orders import (
-    advance_order_status,
     cancel_order,
     confirm_payment,
     create_order,
@@ -161,75 +160,35 @@ def test_paid_order_cannot_be_cancelled(app):
         assert get("enduro-helmet-pro").stock == 19
 
 
-# --- forward-only status after payment ---
+# --- order status ---
 
-def paid_order(user_id, status="paid"):
+def paid_order(user_id):
     order = create_order(user_id, [CartLine(get("enduro-helmet-pro"), 1)], None)
-    order.status = status
+    order.status = "paid"
     db.session.commit()
     return order
 
 
-def test_advance_order_status_walks_forward_one_step_at_a_time(app):
-    with app.app_context():
-        order = paid_order(setup_data())
-
-        assert advance_order_status(order.id, "paid") == "processing"
-        assert advance_order_status(order.id, "processing") == "shipped"
-        assert advance_order_status(order.id, "shipped") == "delivered"
-        assert db.session.get(Order, order.id).status == "delivered"
-
-
-@pytest.mark.parametrize("status", ["pending", "cancelled", "delivered"])
-def test_orders_without_a_next_step_do_not_move(app, status):
-    with app.app_context():
-        order = paid_order(setup_data(), status)
-
-        assert advance_order_status(order.id, status) is None
-        assert db.session.get(Order, order.id).status == status
-
-
-def test_unknown_expected_status_changes_nothing(app):
-    with app.app_context():
-        order = paid_order(setup_data())
-
-        assert advance_order_status(order.id, "lost") is None
-        assert db.session.get(Order, order.id).status == "paid"
-
-
-def test_stale_expected_status_changes_nothing(app):
-    with app.app_context():
-        order = paid_order(setup_data())
-        advance_order_status(order.id, "paid")
-
-        assert advance_order_status(order.id, "paid") is None  # someone was faster
-        assert db.session.get(Order, order.id).status == "processing"
-
-
-@pytest.mark.parametrize(
-    "status, expected",
-    [("pending", False), ("paid", True), ("processing", True),
-     ("shipped", True), ("delivered", True), ("cancelled", False)],
-)
-def test_is_paid_covers_every_status_after_payment(status, expected):
+@pytest.mark.parametrize("status, expected", [("pending", False), ("paid", True), ("cancelled", False)])
+def test_only_paid_orders_are_paid(status, expected):
     assert Order(status=status).is_paid is expected
 
 
-def test_confirm_payment_does_not_ask_stripe_again_after_shipping(app):
+def test_confirm_payment_does_not_ask_stripe_again_once_paid(app):
     with app.app_context():
-        order = paid_order(setup_data(), "shipped")
+        order = paid_order(setup_data())
 
         class NoNetwork(FakeGateway):
             def get_payment_result(self, session_id):
                 raise AssertionError("an already paid order must not be checked again")
 
         assert confirm_payment(order, NoNetwork()) is True
-        assert order.status == "shipped"
 
 
-def test_database_rejects_unknown_order_status(app):
+@pytest.mark.parametrize("status", ["shipped", "lost"])
+def test_database_rejects_unknown_order_status(app, status):
     with app.app_context():
         order = paid_order(setup_data())
-        order.status = "lost"
+        order.status = status
         with pytest.raises(IntegrityError):
             db.session.commit()

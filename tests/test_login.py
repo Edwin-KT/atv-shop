@@ -65,7 +65,7 @@ def test_login_with_next_goes_back_to_that_page(app, client):
     assert response.headers["Location"] == "/cart"
 
 
-@pytest.mark.parametrize("target", ["https://evil.com", "//evil.com", "/\evil.com", "cart", ""])
+@pytest.mark.parametrize("target", ["https://evil.com", "//evil.com", r"/\evil.com", "cart", ""])
 def test_login_never_redirects_to_another_site(app, client, target):
     create_user(app)
 

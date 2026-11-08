@@ -13,7 +13,7 @@ from flask_login import current_user, login_required
 
 from app.extensions import db
 from app.models import SecureDocument
-from app.services.audit import record_event
+from app.activity_log import log_event
 from app.services.file_security import UploadRejected, store_uploaded_pdf
 
 from pathlib import Path
@@ -50,7 +50,7 @@ def upload():
             current_app.config["MAX_CONTENT_LENGTH"],
         )
     except UploadRejected as exc:
-        record_event("document_upload_rejected", user_id=current_user.id, details=str(exc))
+        log_event("document_upload_rejected", details=str(exc))
         return _render_page([str(exc)], 400)
 
     document = SecureDocument(
@@ -62,7 +62,7 @@ def upload():
     db.session.add(document)
     db.session.commit()
 
-    record_event("document_uploaded", user_id=current_user.id, details=f"document_id={document.id}")
+    log_event("document_uploaded", details=f"document_id={document.id}")
     flash("Document uploaded.", "success")
     return redirect(url_for("documents.list_documents"))
 
@@ -99,6 +99,6 @@ def delete(document_id):
     db.session.commit()
     file_path.unlink(missing_ok=True)
 
-    record_event("document_deleted", user_id=current_user.id, details=f"document_id={deleted_id}")
+    log_event("document_deleted", details=f"document_id={deleted_id}")
     flash("Document deleted.", "info")
     return redirect(url_for("documents.list_documents"))

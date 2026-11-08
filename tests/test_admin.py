@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy import text
 
 from app.extensions import db
-from app.models import AuditLog, GearProduct, Product, VehicleProduct
+from app.models import GearProduct, Product, VehicleProduct
 from app.services.users import create_admin
 
 PASSWORD = "parola-sigura-123"
@@ -244,22 +244,20 @@ def test_delete_unknown_product_returns_404(app):
     assert admin_client(app).post("/admin/products/999/delete").status_code == 404
 
 
-def test_admin_actions_are_audited(app):
+def test_admin_actions_are_logged(app, log_text):
     client = admin_client(app)
     client.post("/admin/products/new?type=vehicle", data=VEHICLE_FORM)
     client.post("/admin/products/1/edit", data=VEHICLE_FORM)
     client.post("/admin/products/1/delete")
 
-    with app.app_context():
-        events = [e.event_type for e in AuditLog.query.order_by(AuditLog.id)]
-
+    events = [line.split("event=")[1].split()[0] for line in log_text().splitlines() if "event=" in line]
     assert events[-3:] == ["product_created", "product_updated", "product_deleted"]
 
-def test_admin_can_read_audit_log(app):
+def test_admin_can_read_the_activity_log(app):
     client = admin_client(app)
     client.post("/admin/products/new?type=vehicle", data=VEHICLE_FORM)
 
-    html = client.get("/admin/logs").get_data(as_text=True)
+    html = client.get("/admin/log").get_data(as_text=True)
 
     assert "product_created" in html
     assert "login_success" in html

@@ -13,7 +13,7 @@ from flask_login import current_user, login_required
 from app.exceptions import OutOfStockError, PaymentError
 from app.extensions import db, limiter
 from app.models import Order
-from app.services.audit import record_event
+from app.activity_log import log_event
 from app.services.cart import clear_cart, get_cart_lines
 from app.services.orders import cancel_order, confirm_payment, create_order, start_payment
 
@@ -57,11 +57,11 @@ def start():
     try:
         payment_url = start_payment(order, _gateway(), success_url, cancel_url)
     except PaymentError as exc:
-        record_event("payment_failed", user_id=current_user.id, details=str(exc)[:200])
+        log_event("payment_failed", details=str(exc)[:200])
         flash("The payment service is unavailable. Your order was not placed.", "danger")
         return redirect(url_for("cart.view_cart"))
 
-    record_event("order_created", user_id=current_user.id, details=f"order_id={order.id}")
+    log_event("order_created", details=f"order_id={order.id}")
     return redirect(payment_url, code=303)  # to Stripe's payment page
 
 
@@ -79,14 +79,14 @@ def success():
     try:
         paid = confirm_payment(order, _gateway())
     except PaymentError as exc:
-        record_event("payment_check_failed", user_id=current_user.id, details=str(exc)[:200])
+        log_event("payment_check_failed", details=str(exc)[:200])
         flash("We could not verify the payment yet. Check your orders in a minute.", "warning")
         return redirect(url_for("checkout.orders"))
 
     if paid:
         clear_cart()
         if not was_paid:
-            record_event("order_paid", user_id=current_user.id, details=f"order_id={order.id}")
+            log_event("order_paid", details=f"order_id={order.id}")
     return render_template("checkout/success.html", order=order, paid=paid)
 
 
@@ -120,6 +120,6 @@ def cancel(order_id):
         return redirect(url_for("checkout.orders"))
 
     if cancel_order(order, _gateway()):
-        record_event("order_cancelled", user_id=current_user.id, details=f"order_id={order.id}")
+        log_event("order_cancelled", details=f"order_id={order.id}")
         flash("Order cancelled. The items are back in stock.", "info")
     return redirect(url_for("checkout.orders"))

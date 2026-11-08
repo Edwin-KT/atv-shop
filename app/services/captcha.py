@@ -1,7 +1,7 @@
 import requests
 from flask import current_app, request
 
-from app.services.audit import record_event
+from app.activity_log import log_event
 
 VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify"
 FORM_FIELD = "g-recaptcha-response"
@@ -33,12 +33,12 @@ class RecaptchaVerifier:
 
 
 def captcha_passed() -> bool:
-    """Check the CAPTCHA of the current form submission and audit failures."""
+    """Check the CAPTCHA of the current form submission and log failures."""
     if not current_app.config["CAPTCHA_ENABLED"]:
         return True
 
     verifier = current_app.extensions["captcha_verifier"]
     passed = verifier.verify(request.form.get(FORM_FIELD, ""), request.remote_addr)
     if not passed:
-        record_event("captcha_failed", details=f"path={request.path}")
+        log_event("captcha_failed", details=f"path={request.path}")
     return passed

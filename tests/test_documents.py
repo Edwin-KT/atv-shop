@@ -1,7 +1,7 @@
 from io import BytesIO
 from pathlib import Path
 
-from app.models import AuditLog, SecureDocument
+from app.models import SecureDocument
 from pdf_samples import PNG_BYTES, make_pdf, make_pdf_with_javascript
 
 PASSWORD = "parola-sigura-123"
@@ -131,16 +131,13 @@ def test_anonymous_cannot_download_document(app, client):
     assert response.status_code == 302
 
 
-def test_upload_events_are_audited(app, client):
+def test_upload_events_are_logged(app, client, log_text):
     login(client)
     post_file(client, make_pdf(), "talon.pdf")
     post_file(client, PNG_BYTES, "fake.pdf")
 
-    with app.app_context():
-        events = [e.event_type for e in AuditLog.query.order_by(AuditLog.id)]
-
-    assert "document_uploaded" in events
-    assert "document_upload_rejected" in events
+    assert "event=document_uploaded" in log_text()
+    assert "event=document_upload_rejected" in log_text()
 
 
 def test_owner_can_delete_document(app, client):
@@ -191,12 +188,9 @@ def test_delete_requires_post(client):
     assert client.get("/documents/1/delete").status_code == 405
 
 
-def test_document_deletion_is_audited(app, client):
+def test_document_deletion_is_logged(app, client, log_text):
     login(client)
     post_file(client, make_pdf(), "talon.pdf")
     client.post("/documents/1/delete")
 
-    with app.app_context():
-        events = [e.event_type for e in AuditLog.query.order_by(AuditLog.id)]
-
-    assert "document_deleted" in events
+    assert "event=document_deleted" in log_text()

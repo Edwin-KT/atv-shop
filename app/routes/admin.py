@@ -1,10 +1,9 @@
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
-from flask_login import current_user
 
+from app.activity_log import log_event, read_last_lines
 from app.extensions import db
-from app.models import AuditLog, Order, OrderItem, Product
+from app.models import Order, OrderItem, Product
 from app.security import check_admin_access
-from app.services.audit import record_event
 from app.services.products import (
     PRODUCT_CLASSES,
     create_product,
@@ -66,7 +65,7 @@ def new_product():
         ), 400
 
     product = create_product(product_type, clean)
-    record_event("product_created", user_id=current_user.id, details=f"product_id={product.id}")
+    log_event("product_created", details=f"product_id={product.id}")
     flash("Product created.", "success")
     return redirect(url_for("admin.dashboard"))
 
@@ -97,7 +96,7 @@ def edit_product(product_id):
         ), 400
 
     update_product(product, clean)
-    record_event("product_updated", user_id=current_user.id, details=f"product_id={product.id}")
+    log_event("product_updated", details=f"product_id={product.id}")
     flash("Product updated.", "success")
     return redirect(url_for("admin.dashboard"))
 
@@ -117,15 +116,15 @@ def delete_product(product_id):
     db.session.delete(product)
     db.session.commit()
 
-    record_event("product_deleted", user_id=current_user.id, details=f"product_id={deleted_id}")
+    log_event("product_deleted", details=f"product_id={deleted_id}")
     flash("Product deleted.", "info")
     return redirect(url_for("admin.dashboard"))
 
 
-@bp.get("/logs")
-def audit_log():
-    entries = AuditLog.query.order_by(AuditLog.id.desc()).limit(100).all()
-    return render_template("admin/audit_log.html", entries=entries)
+@bp.get("/log")
+def activity_log():
+    """The newest 100 lines of logs/activity.log."""
+    return render_template("admin/log.html", lines=read_last_lines(100))
 
 
 @bp.get("/orders")

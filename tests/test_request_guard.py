@@ -8,7 +8,6 @@ from sqlalchemy import event
 
 from app import create_app
 from app.extensions import db
-from app.models import AuditLog
 
 
 @contextmanager
@@ -54,7 +53,7 @@ def test_nul_in_checkout_session_id_is_rejected(app, client):
     assert queries == []
 
 
-def test_nul_in_login_form_is_rejected(app, client):
+def test_nul_in_login_form_is_rejected(app, client, log_text):
     with count_queries(app) as queries:
         response = client.post(
             "/login", data={"email": "ana\x00@gmail.com", "password": "parola-sigura-123"}
@@ -62,8 +61,7 @@ def test_nul_in_login_form_is_rejected(app, client):
 
     assert response.status_code == 400
     assert queries == []
-    with app.app_context():
-        assert AuditLog.query.count() == 0  # no "login_failed" with a NUL in it
+    assert "event=login_failed" not in log_text()  # no event with a NUL in it
 
 
 def test_nul_in_url_path_is_rejected(app, client):

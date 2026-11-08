@@ -3,7 +3,7 @@ from flask_login import current_user, login_user, logout_user
 
 from app.extensions import db, limiter
 from app.models import User
-from app.services.audit import record_event
+from app.activity_log import log_event
 from app.services.captcha import captcha_passed
 from app.validators import is_valid_email, is_valid_password, is_valid_phone
 
@@ -57,7 +57,7 @@ def register():
     db.session.add(user)
     db.session.commit()
 
-    record_event("user_registered", user_id=user.id)
+    log_event("user_registered", user_id=user.id)
     flash("Account created. You can log in now.", "success")
     return redirect(url_for("auth.login"))
 
@@ -78,7 +78,7 @@ def login():
     user = User.query.filter_by(email=email).first()
     if user is None or not user.check_password(password):
         # !r escapes newlines: stops "log injection" (a user typing fake log lines)
-        record_event(
+        log_event(
             "login_failed",
             user_id=user.id if user else None,
             details=f"email={email[:100]!r}",
@@ -88,7 +88,7 @@ def login():
         ), 401
 
     login_user(user)
-    record_event("login_success", user_id=user.id)
+    log_event("login_success")  # after login_user(), so the user is known
     flash("Logged in.", "success")
     # The login form posts to its own URL, so ?next=... is still in the query string.
     return redirect(safe_next_url(request.args.get("next")))
@@ -97,7 +97,7 @@ def login():
 @bp.post("/logout")
 def logout():
     if current_user.is_authenticated:
-        record_event("logout", user_id=current_user.id)  # before logout_user()
+        log_event("logout")  # before logout_user(), while the user is still known
     logout_user()
     flash("Logged out.", "info")
     return redirect(url_for("main.index"))

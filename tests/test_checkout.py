@@ -3,7 +3,7 @@ import re
 import pytest
 
 from app.exceptions import PaymentError
-from app.models import AuditLog, Order, Product
+from app.models import Order, Product
 from app.seed import seed_products
 from app.services.users import create_admin
 
@@ -144,7 +144,7 @@ def test_out_of_stock_at_checkout_creates_no_order(app, client):
     assert stock(app, "enduro-helmet-pro") == 1
 
 
-def test_payment_provider_failure_releases_stock(app, client):
+def test_payment_provider_failure_releases_stock(app, client, log_text):
     register_and_login(client)
     gateway(app).fail_next_create = True
 
@@ -155,12 +155,12 @@ def test_payment_provider_failure_releases_stock(app, client):
     assert stock(app, "enduro-helmet-pro") == 20
     with app.app_context():
         assert Order.query.one().status == "cancelled"
-        assert "payment_failed" in [e.event_type for e in AuditLog.query.all()]
+    assert "event=payment_failed" in log_text()
 
 
 # --- returning from the payment page ---
 
-def test_paid_order_is_confirmed_and_cart_cleared(app, client):
+def test_paid_order_is_confirmed_and_cart_cleared(app, client, log_text):
     register_and_login(client)
     checkout_gear(app, client)
     session_id = last_session_id(app)
@@ -172,9 +172,9 @@ def test_paid_order_is_confirmed_and_cart_cleared(app, client):
     assert b"Thank you for your order" in response.data
     with app.app_context():
         assert Order.query.one().status == "paid"
-        assert "order_paid" in [e.event_type for e in AuditLog.query.all()]
     with client.session_transaction() as sess:
         assert sess.get("cart", {}) == {}
+    assert "event=order_paid order_id=1" in log_text()
 
 
 def test_success_page_does_not_trust_the_url_alone(app, client):
@@ -189,7 +189,7 @@ def test_success_page_does_not_trust_the_url_alone(app, client):
         assert Order.query.one().status == "pending"
 
 
-def test_refreshing_the_success_page_logs_payment_once(app, client):
+def test_refreshing_the_success_page_logs_payment_once(app, client, log_text):
     register_and_login(client)
     checkout_gear(app, client)
     session_id = last_session_id(app)
@@ -198,9 +198,7 @@ def test_refreshing_the_success_page_logs_payment_once(app, client):
     client.get(f"/checkout/success?session_id={session_id}")
     client.get(f"/checkout/success?session_id={session_id}")
 
-    with app.app_context():
-        events = [e.event_type for e in AuditLog.query.all()]
-        assert events.count("order_paid") == 1
+    assert log_text().count("event=order_paid") == 1
 
 
 @pytest.mark.parametrize("session_id", ["cs_nope", "", "' OR 1=1 --"])
@@ -304,7 +302,7 @@ def count_payment_checks(monkeypatch, app):
     return calls
 
 
-def test_other_user_opening_my_success_link_changes_nothing(app, client, monkeypatch):
+def test_other_user_opening_my_success_link_changes_nothing(app, client, monkeypatch, log_text):
     register_and_login(client)
     checkout_gear(app, client)
     session_id = last_session_id(app)
@@ -318,7 +316,7 @@ def test_other_user_opening_my_success_link_changes_nothing(app, client, monkeyp
     assert calls == []
     with app.app_context():
         assert Order.query.one().status == "pending"
-        assert "order_paid" not in [e.event_type for e in AuditLog.query.all()]
+    assert "event=order_paid" not in log_text()
 
 
 def test_refreshing_the_success_page_keeps_stock_and_paid_at(app, client, monkeypatch):
@@ -341,7 +339,7 @@ def test_refreshing_the_success_page_keeps_stock_and_paid_at(app, client, monkey
         assert order.paid_at == first_paid_at
 
 
-def test_provider_error_on_success_redirects_to_orders(app, client, monkeypatch):
+def test_provider_error_on_success_redirects_to_orders(app, client, monkeypatch, log_text):
     register_and_login(client)
     checkout_gear(app, client)
     session_id = last_session_id(app)
@@ -357,7 +355,7 @@ def test_provider_error_on_success_redirects_to_orders(app, client, monkeypatch)
     assert response.headers["Location"].endswith("/orders")
     with app.app_context():
         assert Order.query.one().status == "pending"
-        assert "payment_check_failed" in [e.event_type for e in AuditLog.query.all()]
+    assert "event=payment_check_failed" in log_text()
 
 
 # --- order status after payment, as the customer sees it ---
@@ -377,7 +375,7 @@ def paid_and_set_status(app, client, status):
     return session_id
 
 
-def test_success_page_opened_twice_records_the_payment_once(app, client):
+def test_success_page_opened_twice_records_the_payment_once(app, client, log_text):
     session_id = paid_and_set_status(app, client, "paid")
 
     response = client.get(f"/checkout/success?session_id={session_id}")
@@ -385,8 +383,7 @@ def test_success_page_opened_twice_records_the_payment_once(app, client):
     assert b"Thank you for your order" in response.data
     with app.app_context():
         assert Order.query.one().status == "paid"
-        events = [e.event_type for e in AuditLog.query.all()]
-        assert events.count("order_paid") == 1
+    assert log_text().count("event=order_paid") == 1
 
 
 def test_paid_order_cannot_be_cancelled_and_keeps_stock(app, client):

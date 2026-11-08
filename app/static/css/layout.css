@@ -306,6 +306,19 @@ main {
   background-color: var(--color-accent);
 }
 
+/* ---------- admin: activity log ---------- */
+
+/* Log lines keep their spacing but wrap on small screens instead of widening the page. */
+.activity-log {
+  max-height: 70vh;
+  padding: var(--space);
+  overflow: auto;
+  background-color: var(--color-page);
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 /* ---------- footer: dark band ---------- */
 
 .site-footer {

@@ -26,6 +26,9 @@ class Config:
     # Outside static/, so the web server never serves it directly.
     UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", str(BASE_DIR / "private_uploads"))
 
+    # The activity log (one line per request and per important action).
+    ACTIVITY_LOG = os.environ.get("ACTIVITY_LOG", str(BASE_DIR / "logs" / "activity.log"))
+
     STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")
     
     CAPTCHA_ENABLED = os.environ.get("CAPTCHA_ENABLED", "true").lower() == "true"

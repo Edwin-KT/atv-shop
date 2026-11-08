@@ -1,8 +1,3 @@
-import logging
-
-from app.models import AuditLog
-
-
 def test_request_101_in_a_minute_is_blocked(limited_app):
     client = limited_app.test_client()
 
@@ -68,15 +63,12 @@ def test_registration_attempts_are_limited(limited_app):
     assert statuses[5] == 429
 
 
-def test_blocking_is_audited_and_logged(limited_app, caplog):
-    caplog.set_level(logging.INFO, logger="shop.access")
+def test_blocking_is_logged(limited_app, log_text):
     client = limited_app.test_client()
     for _ in range(101):
         client.get("/")
 
-    with limited_app.app_context():
-        assert "rate_limited" in [e.event_type for e in AuditLog.query.all()]
-    assert "status=429" in caplog.text
+    assert "GET '/' status=429" in log_text().splitlines()[-1]
 
 
 def test_limit_is_off_in_the_normal_test_app(client):

@@ -2,7 +2,7 @@ import pytest
 import requests
 
 from app.extensions import db
-from app.models import AuditLog, User
+from app.models import User
 from app.services.captcha import VERIFY_URL, RecaptchaVerifier
 
 PASSWORD = "parola-sigura-123"
@@ -29,11 +29,6 @@ def create_user(app):
         user.set_password(PASSWORD)
         db.session.add(user)
         db.session.commit()
-
-
-def event_types(app):
-    with app.app_context():
-        return [e.event_type for e in AuditLog.query.order_by(AuditLog.id)]
 
 
 # --- the verifier (unit tests, network mocked) ---
@@ -149,14 +144,14 @@ def test_login_with_valid_captcha_works(captcha_app):
     assert b"Logout" in client.get("/").data
 
 
-def test_captcha_is_checked_before_the_password(captcha_app):
+def test_captcha_is_checked_before_the_password(captcha_app, log_text):
     """A bot with a wrong CAPTCHA learns nothing about passwords: no login_failed event."""
     create_user(captcha_app)
 
     captcha_app.test_client().post("/login", data={**LOGIN, "password": "gresita-123"})
 
-    assert "login_failed" not in event_types(captcha_app)
-    assert "captcha_failed" in event_types(captcha_app)
+    assert "event=login_failed" not in log_text()
+    assert "event=captcha_failed" in log_text()
 
 
 def test_wrong_password_with_valid_captcha_is_still_rejected(captcha_app):

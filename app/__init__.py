@@ -3,10 +3,9 @@ from pathlib import Path
 from flask import Flask, render_template, url_for
 from sqlalchemy import text
 
-from app.access_log import configure_access_log
+from app.activity_log import setup_activity_log
 from app.config import Config
 from app.extensions import csrf, db, limiter, login_manager
-from app.logging_config import configure_logging
 from app.money import format_price
 from app.security import reject_nul_bytes
 from app.security_headers import register_security_headers
@@ -19,8 +18,7 @@ def create_app(test_config=None):
     if test_config:
         app.config.update(test_config)
 
-    configure_logging(app)
-    configure_access_log(app)
+    setup_activity_log(app)
     register_security_headers(app)
 
     db.init_app(app)
@@ -144,9 +142,7 @@ def create_app(test_config=None):
 
     @app.errorhandler(429)
     def too_many_requests(error):
-        from app.services.audit import record_event
-
-        record_event("rate_limited", details=str(error.description)[:200])
+        # No extra log line needed: the request line in the activity log shows status=429.
         page = render_template(
             "error.html",
             title="Too many requests",

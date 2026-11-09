@@ -10,6 +10,7 @@ class FakeGateway(PaymentGateway):
         self.paid = set()
         self.expired = set()
         self.fail_next_create = False
+        self.fail_next_expire = False
         self._counter = 0
 
     def create_checkout(self, order, success_url, cancel_url):
@@ -32,6 +33,9 @@ class FakeGateway(PaymentGateway):
         return session_id in self.paid
 
     def expire(self, session_id):
+        if self.fail_next_expire:
+            self.fail_next_expire = False
+            raise PaymentError("fake failure")
         self.expired.add(session_id)
 
     def mark_paid(self, session_id):

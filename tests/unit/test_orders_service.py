@@ -102,3 +102,19 @@ def test_cancel_gives_the_stock_back_only_once(app):
 
         assert get("enduro-helmet-pro").stock == 20
         assert order.status == "cancelled"
+
+
+def test_cancel_changes_nothing_when_the_payment_page_cannot_be_closed(app):
+    """The customer might still pay on that page, so the order must stay pending."""
+    seed(app)
+    with app.app_context():
+        order = create_order(customer_id(), [CartLine(get("enduro-helmet-pro"), 2)])
+        gateway = FakeGateway()
+        start_payment(order, gateway, "http://s", "http://c")
+        gateway.fail_next_expire = True
+
+        with pytest.raises(PaymentError):
+            cancel_order(order, gateway)
+
+        assert order.status == "pending"
+        assert get("enduro-helmet-pro").stock == 18  # still reserved

@@ -84,3 +84,54 @@ def test_stripe_is_paid_reads_the_payment_status(monkeypatch, status, expected):
     )
 
     assert StripeGateway("sk_test_x").is_paid("cs_test_1") is expected
+
+
+class FakeStripeSessions:
+    """Stands in for stripe.checkout.Session: one session with a given status."""
+
+    def __init__(self, monkeypatch, status):
+        self.status = status
+        self.expired = []
+        monkeypatch.setattr(stripe.checkout.Session, "retrieve", self.retrieve)
+        monkeypatch.setattr(stripe.checkout.Session, "expire", self.expire)
+
+    def retrieve(self, session_id, **kwargs):
+        return SimpleNamespace(status=self.status)
+
+    def expire(self, session_id, **kwargs):
+        self.expired.append(session_id)
+
+
+def test_stripe_expire_closes_an_open_payment_page(monkeypatch):
+    stripe_sessions = FakeStripeSessions(monkeypatch, status="open")
+
+    StripeGateway("sk_test_x").expire("cs_test_1")
+
+    assert stripe_sessions.expired == ["cs_test_1"]
+
+
+def test_stripe_expire_accepts_a_page_that_already_expired(monkeypatch):
+    """Stripe closes pages by itself after 24 hours; such orders must stay cancellable."""
+    stripe_sessions = FakeStripeSessions(monkeypatch, status="expired")
+
+    StripeGateway("sk_test_x").expire("cs_test_1")  # does not raise
+
+    assert stripe_sessions.expired == []
+
+
+def test_stripe_expire_refuses_a_page_that_was_paid(monkeypatch):
+    stripe_sessions = FakeStripeSessions(monkeypatch, status="complete")
+
+    with pytest.raises(PaymentError, match="already completed"):
+        StripeGateway("sk_test_x").expire("cs_test_1")
+    assert stripe_sessions.expired == []
+
+
+def test_stripe_expire_errors_become_payment_errors(monkeypatch):
+    def boom(session_id, **kwargs):
+        raise stripe.StripeError("network down")
+
+    monkeypatch.setattr(stripe.checkout.Session, "retrieve", boom)
+
+    with pytest.raises(PaymentError):
+        StripeGateway("sk_test_x").expire("cs_test_1")

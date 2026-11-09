@@ -12,7 +12,7 @@ from flask_login import current_user, login_required
 
 from app.exceptions import OutOfStockError, PaymentError
 from app.extensions import db
-from app.models import Order
+from app.models import STATUS_PENDING, Order
 from app.activity_log import log_event
 from app.services.cart import clear_cart, get_cart_lines
 from app.services.orders import cancel_order, confirm_payment, create_order, start_payment
@@ -102,6 +102,18 @@ def orders():
     user_orders = (
         Order.query.filter_by(user_id=current_user.id).order_by(Order.id.desc()).all()
     )
+    # A customer may pay and close the Stripe tab before the success page loads:
+    # ask Stripe again about the orders that still wait for a payment.
+    for order in user_orders:
+        if order.status != STATUS_PENDING:
+            continue
+        try:
+            if confirm_payment(order, _gateway()):
+                log_event("order_paid", details=f"order_id={order.id}")
+        except PaymentError as exc:
+            log_event("payment_check_failed", details=str(exc)[:200])
+            flash("We could not reach the payment service, so a status may be out of date.", "warning")
+            break  # Stripe is down: do not wait for it once per order
     return render_template("checkout/orders.html", orders=user_orders)
 
 
@@ -114,11 +126,16 @@ def cancel(order_id):
         if confirm_payment(order, _gateway()):
             flash("This order was already paid, so it cannot be cancelled.", "warning")
             return redirect(url_for("checkout.orders"))
-    except PaymentError:
-        flash("We could not check the payment status. Try again in a minute.", "warning")
+        cancelled = cancel_order(order, _gateway())  # closes the Stripe page first
+    except PaymentError as exc:
+        # Stripe could not be asked, or its page could not be closed: the customer
+        # might still pay there, so the order stays as it is.
+        log_event("order_cancel_failed", details=str(exc)[:200])
+        flash("We could not reach the payment service, so the order was not cancelled. "
+              "Try again in a minute.", "warning")
         return redirect(url_for("checkout.orders"))
 
-    if cancel_order(order, _gateway()):
+    if cancelled:
         log_event("order_cancelled", details=f"order_id={order.id}")
         flash("Order cancelled. The items are back in stock.", "info")
     return redirect(url_for("checkout.orders"))

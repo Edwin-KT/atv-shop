@@ -216,6 +216,18 @@ def test_a_paid_order_cannot_be_cancelled(app, customer):
     assert the_order(app).status == "paid"
 
 
+def test_cancel_is_refused_when_stripe_cannot_close_the_payment_page(app, customer, log_text):
+    checkout(app, customer)
+    gateway(app).fail_next_expire = True
+
+    response = customer.post("/orders/1/cancel", follow_redirects=True)
+
+    assert "the order was not cancelled" in response.get_data(as_text=True)
+    assert the_order(app).status == "pending"
+    assert stock(app) == 19  # still reserved: the customer may still pay
+    assert "event=order_cancel_failed" in log_text()
+
+
 def test_cancel_needs_a_post(app, customer):
     checkout(app, customer)
 
@@ -241,3 +253,40 @@ def test_my_orders_lists_items_total_and_status(app, customer):
     assert "Order #1" in html and "Enduro Helmet Pro" in html
     assert "378.00 EUR" in html
     assert re.search(r'<span class="badge status-pending">pending</span>', html)
+
+
+def test_my_orders_shows_a_payment_made_after_the_stripe_tab_was_closed(app, customer, log_text):
+    """The customer paid but never came back to the success page."""
+    checkout(app, customer)
+    pay_at_stripe(app)
+
+    html = page(customer, "/orders")
+
+    assert '<span class="badge status-paid">paid</span>' in html
+    assert the_order(app).status == "paid"
+    assert "event=order_paid" in log_text()
+
+
+def test_my_orders_still_loads_when_stripe_is_down(app, customer, monkeypatch, log_text):
+    checkout(app, customer)
+
+    def stripe_down(_session_id):
+        raise PaymentError("Stripe is down")
+
+    monkeypatch.setattr(gateway(app), "is_paid", stripe_down)
+
+    html = page(customer, "/orders")
+
+    assert '<span class="badge status-pending">pending</span>' in html
+    assert "a status may be out of date" in html
+    assert "event=payment_check_failed" in log_text()
+
+
+def test_my_orders_does_not_ask_stripe_about_finished_orders(app, customer, monkeypatch):
+    checkout(app, customer)
+    customer.get(f"/checkout/success?session_id={pay_at_stripe(app)}")  # now paid
+    calls = count_payment_checks(monkeypatch, app)
+
+    page(customer, "/orders")
+
+    assert calls == []

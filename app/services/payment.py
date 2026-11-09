@@ -27,7 +27,8 @@ class PaymentGateway(ABC):
     @abstractmethod
     def expire(self, session_id: str) -> None:
         """Close an unpaid payment page, so a cancelled order can no longer be paid.
-        Raises PaymentError."""
+        A page that already expired on its own is not an error. Raises PaymentError
+        when the page cannot be closed (provider unreachable, or already paid)."""
 
 
 class StripeGateway(PaymentGateway):
@@ -74,7 +75,13 @@ class StripeGateway(PaymentGateway):
         return session.payment_status == "paid"
 
     def expire(self, session_id):
+        # Stripe can only expire an "open" session, and closes them by itself after
+        # 24 hours; asking first keeps those old orders cancellable.
         try:
-            stripe.checkout.Session.expire(session_id, api_key=self._key())
+            session = stripe.checkout.Session.retrieve(session_id, api_key=self._key())
+            if session.status == "open":
+                stripe.checkout.Session.expire(session_id, api_key=self._key())
         except stripe.StripeError as exc:
             raise PaymentError("Stripe could not cancel the checkout session.") from exc
+        if session.status == "complete":  # the customer has just paid
+            raise PaymentError("The checkout session is already completed.")

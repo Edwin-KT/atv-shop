@@ -78,15 +78,15 @@ def confirm_payment(order: Order, gateway: PaymentGateway) -> bool:
 
 def cancel_order(order: Order, gateway: PaymentGateway | None = None) -> bool:
     """Cancel a pending order and put its items back in stock. Returns False
-    if there was nothing to cancel, so stock is never restored twice."""
+    if there was nothing to cancel, so stock is never restored twice.
+
+    The payment page is closed first. If that fails, PaymentError is raised and
+    nothing changes: otherwise the customer could still pay a cancelled order."""
     if order.status != STATUS_PENDING:
         return False
 
     if gateway is not None and order.stripe_session_id:
-        try:
-            gateway.expire(order.stripe_session_id)
-        except PaymentError:
-            pass  # the session expires on its own; the local order is cancelled anyway
+        gateway.expire(order.stripe_session_id)  # raises PaymentError
 
     for item in order.items:
         db.session.execute(

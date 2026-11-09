@@ -1,37 +1,25 @@
-{% extends "base.html" %} {% block title %}Login - ATV & Enduro Shop{% endblock
-%} {% block content %}
+{% extends "base.html" %}
+{% block title %}Login - ATV & Enduro Shop{% endblock %}
+{% block content %}
 <section class="panel panel-narrow">
-<h1>Login</h1>
+  <h1>Login</h1>
 
-{% if error %}
-<div class="alert alert-danger">{{ error }}</div>
-{% endif %}
+  {% if error %}
+  <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
 
-<form method="post">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-  <div class="mb-3">
-    <label class="form-label" for="email">Email</label>
-    <input
-      class="form-control"
-      id="email"
-      name="email"
-      type="email"
-      value="{{ email }}"
-      required
-    />
-  </div>
-  <div class="mb-3">
-    <label class="form-label" for="password">Password</label>
-    <input
-      class="form-control"
-      id="password"
-      name="password"
-      type="password"
-      required
-    />
-  </div>
-  {% include "_captcha.html" %}
-  <button class="btn btn-primary" type="submit">Login</button>
-</form>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <div class="mb-3">
+      <label class="form-label" for="email">Email</label>
+      <input class="form-control" id="email" name="email" type="email" value="{{ email }}" required />
+    </div>
+    <div class="mb-3">
+      <label class="form-label" for="password">Password</label>
+      <input class="form-control" id="password" name="password" type="password" required />
+    </div>
+    {% include "_captcha.html" %}
+    <button class="btn btn-primary" type="submit">Login</button>
+  </form>
 </section>
 {% endblock %}

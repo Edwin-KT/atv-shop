@@ -8,13 +8,17 @@ import re
 from pathlib import Path
 
 from app.cli import seed_products
-from app.models import VehicleProduct
+from app.models import STATUS_CANCELLED, STATUS_PAID, STATUS_PENDING, VehicleProduct
 from helpers import register_and_login
 
 ROOT = Path(__file__).resolve().parents[2]  # the project folder
 STATIC = ROOT / "app" / "static"
 TEMPLATES = ROOT / "app" / "templates"
 CSS_FILES = ["base.css", "layout.css", "animations.css"]
+APP = ROOT / "app"
+# Classes with no CSS rule on purpose: JavaScript looks for them (Google's reCAPTCHA
+# script puts the widget in .g-recaptcha; Bootstrap's carousel slides when it has .slide).
+JS_HOOKS = {"g-recaptcha", "slide"}
 
 
 def css(name):
@@ -56,6 +60,67 @@ def test_templates_have_no_inline_styles_or_event_handlers():
         text = template.read_text(encoding="utf-8")
         assert 'style="' not in text, template.name
         assert not re.search(r"\son[a-z]+=", text), template.name
+
+
+def flash_categories():
+    """Every category passed to flash() in the app; base.html shows each as alert-<category>."""
+    source = "\n".join(path.read_text(encoding="utf-8") for path in APP.rglob("*.py"))
+    categories = re.findall(r'flash\(.*?,\s*"([a-z]+)",?\s*\)', source, re.S)
+    # Every call names its category (Flask's default, "message", has no Bootstrap rule).
+    assert len(categories) == source.count("flash("), "a flash() call without a category"
+    return set(categories)
+
+
+def classes_in_templates():
+    """The class names written in the templates, plus every name a class built from a
+    variable can become (status-{{ order.status }} -> status-pending, status-paid...)."""
+    possible_values = {
+        "status-": {STATUS_PENDING, STATUS_PAID, STATUS_CANCELLED},  # order badges
+        "alert-": flash_categories(),  # flashed messages in base.html
+    }
+    names = set()
+    for template in TEMPLATES.rglob("*.html"):
+        for value in re.findall(r'class="([^"]*)"', template.read_text(encoding="utf-8")):
+            for prefix in re.findall(r"([\w-]+-)\{\{", value):
+                assert prefix in possible_values, f"{template.name}: {prefix}{{{{ ... }}}} has no known values"
+                names |= {prefix + value for value in possible_values[prefix]}
+            names |= set(re.findall(r"'([\w-]+)'", value))  # {{ 'active' if ... }}
+            names |= set(re.sub(r"[\w-]*\{\{.*?\}\}", " ", value).split())
+    return names
+
+
+def classes_with_rules(text):
+    """Class names used in the selectors of a CSS text (declarations are ignored)."""
+    text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+    selectors = re.sub(r"\{[^{}]*\}", "{}", text)
+    return set(re.findall(r"\.(-?[_a-zA-Z][\w-]*)", selectors))
+
+
+def our_css_classes():
+    return set().union(*(classes_with_rules(css(name)) for name in CSS_FILES))
+
+
+def test_every_class_in_the_templates_has_a_css_rule():
+    bootstrap = classes_with_rules((STATIC / "vendor" / "bootstrap" / "bootstrap.min.css").read_text(encoding="utf-8"))
+
+    without_rule = classes_in_templates() - our_css_classes() - bootstrap - JS_HOOKS
+
+    assert without_rule == set()
+
+
+def test_every_class_built_from_a_variable_has_a_rule():
+    """Checked one by one: a new order status or flash category needs its own rule."""
+    bootstrap = classes_with_rules((STATIC / "vendor" / "bootstrap" / "bootstrap.min.css").read_text(encoding="utf-8"))
+
+    for status in (STATUS_PENDING, STATUS_PAID, STATUS_CANCELLED):
+        assert f"status-{status}" in our_css_classes(), status
+    for category in flash_categories():
+        assert f"alert-{category}" in bootstrap, category
+    assert flash_categories() == {"success", "info", "warning", "danger"}
+
+
+def test_every_class_in_our_css_is_used():
+    assert our_css_classes() - classes_in_templates() == set()
 
 
 # --- N5.02: responsive ---

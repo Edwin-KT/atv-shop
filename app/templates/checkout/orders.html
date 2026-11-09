@@ -1,23 +1,18 @@
-{% extends "base.html" %} {% block title %}My orders - ATV & Enduro Shop{%
-endblock %} {% block content %}
+{% extends "base.html" %}
+{% block title %}My orders - ATV & Enduro Shop{% endblock %}
+{% block content %}
 <h1 class="mb-4">My orders</h1>
 
 {% for order in orders %}
 <div class="card mb-3">
   <div class="card-header d-flex justify-content-between align-items-center">
-    <span
-      >Order #{{ order.id }} &middot; {{ order.created_at.strftime('%Y-%m-%d
-      %H:%M') }}</span
-    >
+    <span>Order #{{ order.id }} &middot; {{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
     <span class="badge status-{{ order.status }}">{{ order.status }}</span>
   </div>
   <ul class="list-group list-group-flush">
     {% for item in order.items %}
     <li class="list-group-item d-flex justify-content-between">
-      <span
-        >{{ item.quantity }} &times; {{ item.product.name }} ({{
-        item.unit_price_cents|eur }})</span
-      >
+      <span>{{ item.quantity }} &times; {{ item.product.name }} ({{ item.unit_price_cents|eur }})</span>
       <span>{{ item.line_total_cents|eur }}</span>
     </li>
     {% endfor %}
@@ -31,13 +26,12 @@ endblock %} {% block content %}
       data-confirm="Cancel this order and release the items?"
     >
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-      <button class="btn btn-sm btn-outline-danger" type="submit">
-        Cancel order
-      </button>
+      <button class="btn btn-sm btn-outline-danger" type="submit">Cancel order</button>
     </form>
     {% endif %}
   </div>
 </div>
 {% else %}
 <p class="text-muted">You have no orders yet.</p>
-{% endfor %} {% endblock %}
+{% endfor %}
+{% endblock %}

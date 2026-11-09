@@ -1,78 +1,64 @@
-{% extends "base.html" %} {% block title %}{{
-product.name }} - ATV & Enduro Shop{% endblock %} {% block meta_description %}{{
-product.name }}: {{ product.get_technical_summary() }}. {{
-product.description[:110] }}{% endblock %} {% block content %}
+{% extends "base.html" %}
+{% block title %}{{ product.name }} - ATV & Enduro Shop{% endblock %}
+{% block meta_description %}{{ product.name }}: {{ product.get_technical_summary() }}. {{ product.description[:110] }}{% endblock %}
+{% block content %}
 <section class="panel">
-<nav class="breadcrumb-nav" aria-label="Breadcrumb">
-  <ol>
-    <li><a href="{{ url_for('main.index') }}">Shop</a></li>
-    <li>
-      <a
-        href="{{ url_for('main.category', key=product.category_key) }}"
-        >{{ category.label }}</a
-      >
-    </li>
-    <li>
-      <span aria-current="page"
-        >{{ product.name }}</span
-      >
-    </li>
-  </ol>
-</nav>
+  <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{{ url_for('main.index') }}">Shop</a></li>
+      <li><a href="{{ url_for('main.category', key=product.category_key) }}">{{ category.label }}</a></li>
+      <li><span aria-current="page">{{ product.name }}</span></li>
+    </ol>
+  </nav>
 
-<div class="row g-4 g-lg-5 product-layout">
-  <div class="col-md-6">
-    <div class="product-photo ratio ratio-1x1">
-      <img
-        src="{{ url_for('static', filename=product.image_path) }}"
-        alt="{{ product.name }}"
-        class="object-fit-contain"
-        width="600"
-        height="600"
-        fetchpriority="high"
-      />
+  <div class="row g-4 g-lg-5">
+    <div class="col-md-6">
+      <div class="product-photo ratio ratio-1x1">
+        <img
+          src="{{ url_for('static', filename=product.image_path) }}"
+          alt="{{ product.name }}"
+          class="object-fit-contain"
+          width="600"
+          height="600"
+          fetchpriority="high"
+        />
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      {# Buy box first: on phones it sits right under the photo. #}
+      <h1>{{ product.name }}</h1>
+      <p class="product-detail-price">{{ product.price_cents|eur }}</p>
+
+      {% if product.stock > 0 %}
+      <p class="stock-label">{{ product.stock }} in stock</p>
+      <form class="qty-form" method="post" action="{{ url_for('cart.add', product_id=product.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <label class="visually-hidden" for="quantity">Quantity</label>
+        <input
+          id="quantity"
+          class="form-control"
+          type="number"
+          name="quantity"
+          value="1"
+          min="1"
+          max="{{ max_quantity }}"
+        />
+        <button class="btn btn-primary btn-buy" type="submit">Add to cart</button>
+      </form>
+      {% else %}
+      <p class="stock-label stock-label-out">Out of stock</p>
+      {% endif %}
+
+      <p class="product-specs">{{ product.get_technical_summary() }}</p>
+
+      {% if product.description %}
+      <section aria-labelledby="description-title">
+        <h2 id="description-title">Description</h2>
+        <p>{{ product.description }}</p>
+      </section>
+      {% endif %}
     </div>
   </div>
-
-  <div class="col-md-6">
-    {# Buy box first: on phones it sits right under the photo. #}
-    <h1 class="product-title">{{ product.name }}</h1>
-    <p class="product-detail-price">{{ product.price_cents|eur }}</p>
-
-    {% if product.stock > 0 %}
-    <p class="stock-label">{{ product.stock }} in stock</p>
-
-    <form
-      method="post"
-      action="{{ url_for('cart.add', product_id=product.id) }}"
-      class="qty-form"
-    >
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-      <label class="visually-hidden" for="quantity">Quantity</label>
-      <input
-        id="quantity"
-        class="form-control"
-        type="number"
-        name="quantity"
-        value="1"
-        min="1"
-        max="{{ max_quantity }}"
-      />
-      <button class="btn btn-primary btn-buy" type="submit">Add to cart</button>
-    </form>
-    {% else %}
-    <p class="stock-label stock-label-out">Out of stock</p>
-    {% endif %}
-
-    <p class="product-specs">{{ product.get_technical_summary() }}</p>
-
-    {% if product.description %}
-    <section class="product-description" aria-labelledby="description-title">
-      <h2 id="description-title">Description</h2>
-      <p>{{ product.description }}</p>
-    </section>
-    {% endif %}
-  </div>
-</div>
 </section>
 {% endblock %}

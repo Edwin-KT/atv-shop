@@ -26,12 +26,7 @@
        a sticky element only sticks inside its parent. #}
     <nav class="navbar navbar-expand-lg sticky-top site-header" aria-label="Main">
       <div class="container">
-        <a
-          class="navbar-brand wordmark"
-          href="{{ url_for('main.index') }}"
-          aria-label="ATV &amp; Enduro Shop, home"
-          >ATV<span class="wordmark-amp">&amp;</span>ENDURO</a
-        >
+        <a class="navbar-brand wordmark" href="{{ url_for('main.index') }}" aria-label="ATV &amp; Enduro Shop, home">ATV<span class="wordmark-amp">&amp;</span>ENDURO</a>
         <button
           class="navbar-toggler"
           type="button"
@@ -51,8 +46,7 @@
                 class="nav-link {{ 'active' if request.endpoint == 'main.index' }}"
                 href="{{ url_for('main.index') }}"
                 {% if request.endpoint == 'main.index' %}aria-current="page"{% endif %}
-                >All</a
-              >
+              >All</a>
             </li>
             {% for key, label in nav_categories %}
             {% set url = url_for('main.category', key=key) %}
@@ -61,18 +55,12 @@
                 class="nav-link {{ 'active' if request.path == url }}"
                 href="{{ url }}"
                 {% if request.path == url %}aria-current="page"{% endif %}
-                >{{ label }}</a
-              >
+              >{{ label }}</a>
             </li>
             {% endfor %}
           </ul>
 
-          <form
-            class="header-search"
-            action="{{ url_for('main.search') }}"
-            method="get"
-            role="search"
-          >
+          <form class="header-search" action="{{ url_for('main.search') }}" method="get" role="search">
             <label class="visually-hidden" for="site-search">Search products</label>
             <input
               id="site-search"
@@ -105,9 +93,9 @@
             <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.register') }}">Register</a></li>
             {% endif %}
             <li class="nav-item">
-              <a class="nav-link cart-link" href="{{ url_for('cart.view_cart') }}"
-                >Cart{% if cart_item_count %} <span class="badge cart-count text-bg-light">{{ cart_item_count }}</span>{% endif %}</a
-              >
+              <a class="nav-link" href="{{ url_for('cart.view_cart') }}">
+                Cart{% if cart_item_count %} <span class="badge cart-count text-bg-light">{{ cart_item_count }}</span>{% endif %}
+              </a>
             </li>
           </ul>
         </div>
@@ -124,10 +112,8 @@
     </main>
 
     <footer class="site-footer">
-      <div class="container footer-inner">
-        <a class="wordmark" href="{{ url_for('main.index') }}" aria-label="ATV &amp; Enduro Shop, home"
-          >ATV<span class="wordmark-amp">&amp;</span>ENDURO</a
-        >
+      <div class="container">
+        <a class="wordmark" href="{{ url_for('main.index') }}" aria-label="ATV &amp; Enduro Shop, home">ATV<span class="wordmark-amp">&amp;</span>ENDURO</a>
         <ul class="footer-links">
           {% for key, label in nav_categories %}
           <li><a href="{{ url_for('main.category', key=key) }}">{{ label }}</a></li>

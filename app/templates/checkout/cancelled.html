@@ -1,29 +1,24 @@
-{% extends "base.html" %} {% block title %}{{ "Payment cancelled" if
-order.status == "pending" else "Order " ~ order.id }} - ATV & Enduro Shop{%
-endblock %} {% block content %}
+{% extends "base.html" %}
+{% block title %}{{ "Payment cancelled" if order.status == "pending" else "Order " ~ order.id }} - ATV & Enduro Shop{% endblock %}
+{% block content %}
 {# Stripe sends the customer here when they leave its payment page; the link can
    also be opened again later, so the page always shows the order's real status. #}
 {% if order.is_paid %}
-<section class="panel checkout-result">
+<section class="panel">
   <h1>This order is already paid</h1>
   <p>Order #{{ order.id }} is paid. You can follow its status in My orders.</p>
   <a class="btn btn-primary" href="{{ url_for('checkout.orders') }}">My orders</a>
 </section>
 {% elif order.status == "cancelled" %}
-<section class="panel checkout-result">
+<section class="panel">
   <h1>Order cancelled</h1>
   <p>Order #{{ order.id }} was cancelled and its items are back in stock.</p>
-  <a class="btn btn-primary" href="{{ url_for('main.index') }}"
-    >Back to the shop</a
-  >
+  <a class="btn btn-primary" href="{{ url_for('main.index') }}">Back to the shop</a>
 </section>
 {% else %}
-<section class="panel checkout-result">
+<section class="panel">
   <h1>Payment cancelled</h1>
-  <p>
-    Order #{{ order.id }} was not paid. The items stay reserved until you cancel
-    the order.
-  </p>
+  <p>Order #{{ order.id }} was not paid. The items stay reserved until you cancel the order.</p>
   <form
     method="post"
     action="{{ url_for('checkout.cancel', order_id=order.id) }}"
@@ -31,9 +26,8 @@ endblock %} {% block content %}
   >
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <button class="btn btn-outline-danger" type="submit">Cancel order</button>
-    <a class="btn btn-link" href="{{ url_for('cart.view_cart') }}"
-      >Back to cart</a
-    >
+    <a class="btn btn-link" href="{{ url_for('cart.view_cart') }}">Back to cart</a>
   </form>
 </section>
-{% endif %} {% endblock %}
+{% endif %}
+{% endblock %}

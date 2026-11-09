@@ -253,6 +253,7 @@ def test_my_orders_lists_items_total_and_status(app, customer):
     assert "Order #1" in html and "Enduro Helmet Pro" in html
     assert "378.00 EUR" in html
     assert re.search(r'<span class="badge status-pending">pending</span>', html)
+    assert re.search(r"Order #1 &middot; \d{4}-\d{2}-\d{2} \d{2}:\d{2}</span>", html)  # one plain space
 
 
 def test_my_orders_shows_a_payment_made_after_the_stripe_tab_was_closed(app, customer, log_text):

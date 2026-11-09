@@ -4,7 +4,7 @@
 <section class="panel">
   <a href="{{ url_for('admin.dashboard') }}">&larr; Back to products</a>
   <h1 class="mt-3 mb-2">Activity log</h1>
-  <p class="text-muted">The newest 100 lines of <code>logs/activity.log</code>, newest first.</p>
+  <p class="text-muted">The newest {{ admin_log_lines }} lines of <code>logs/activity.log</code>, newest first.</p>
   {% if lines %}
   {# Autoescaping keeps any text a visitor typed (e.g. an email) harmless here. #}
   <pre class="activity-log">{% for line in lines %}{{ line }}

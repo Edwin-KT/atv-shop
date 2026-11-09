@@ -17,11 +17,11 @@
 
     <div class="mb-3">
       <label class="form-label" for="name">Name</label>
-      <input class="form-control" id="name" name="name" value="{{ values.get('name', '') }}" required maxlength="150">
+      <input class="form-control" id="name" name="name" value="{{ values.get('name', '') }}" required maxlength="{{ max_name_length }}">
     </div>
     <div class="mb-3">
       <label class="form-label" for="description">Description</label>
-      <textarea class="form-control" id="description" name="description" rows="3" maxlength="2000">{{ values.get('description', '') }}</textarea>
+      <textarea class="form-control" id="description" name="description" rows="3" maxlength="{{ max_description_length }}">{{ values.get('description', '') }}</textarea>
     </div>
 
     <div class="row">
@@ -46,7 +46,7 @@
         <div class="col-md-4 mb-3">
           <label class="form-label" for="vehicle_type">Vehicle type</label>
           <select class="form-select" id="vehicle_type" name="vehicle_type" required>
-            {% for option in ['atv', 'enduro'] %}
+            {% for option in vehicle_types %}
               <option value="{{ option }}" {{ 'selected' if values.get('vehicle_type') == option }}>{{ option|upper }}</option>
             {% endfor %}
           </select>
@@ -67,7 +67,7 @@
     {% else %}
       <div class="mb-3">
         <label class="form-label" for="gear_size">Size</label>
-        <input class="form-control" id="gear_size" name="gear_size" maxlength="10" value="{{ values.get('gear_size', '') }}" required>
+        <input class="form-control" id="gear_size" name="gear_size" maxlength="{{ max_gear_size_length }}" value="{{ values.get('gear_size', '') }}" required>
       </div>
     {% endif %}
 

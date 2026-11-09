@@ -20,7 +20,7 @@ class CartLine:
     @property
     def max_quantity(self) -> int:
         """Highest quantity allowed for this line (stock, capped per item)."""
-        return _max_allowed(self.product)
+        return max_allowed(self.product)
 
 
 def _read_cart() -> dict[str, int]:
@@ -32,7 +32,9 @@ def _save_cart(cart: dict[str, int]) -> None:
     session[CART_SESSION_KEY] = cart
 
 
-def _max_allowed(product: Product) -> int:
+def max_allowed(product: Product) -> int:
+    """The most of one product a customer can take: its stock, capped per item
+    (used by the cart and by the quantity box on the product page)."""
     return min(product.stock, MAX_QUANTITY_PER_ITEM)
 
 
@@ -40,7 +42,7 @@ def add_item(product: Product, quantity: int = 1) -> int:
     """Add to the cart; returns the quantity now in the cart (0 = not added)."""
     cart = dict(_read_cart())
     key = str(product.id)
-    new_quantity = min(cart.get(key, 0) + max(quantity, 1), _max_allowed(product))
+    new_quantity = min(cart.get(key, 0) + max(quantity, 1), max_allowed(product))
 
     if new_quantity <= 0:  # out of stock
         cart.pop(key, None)
@@ -54,7 +56,7 @@ def set_quantity(product: Product, quantity: int) -> int:
     """Set an exact quantity; 0 or less removes the product."""
     cart = dict(_read_cart())
     key = str(product.id)
-    new_quantity = min(quantity, _max_allowed(product))
+    new_quantity = min(quantity, max_allowed(product))
 
     if new_quantity <= 0:
         cart.pop(key, None)

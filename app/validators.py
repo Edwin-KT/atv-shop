@@ -17,6 +17,11 @@ WHOLE_NUMBER_PATTERN = re.compile(r"[0-9]{1,9}")
 # Only a plain file name: no folders, no "..", only common image extensions.
 IMAGE_NAME_PATTERN = re.compile(r"[a-z0-9][a-z0-9_-]*\.(jpg|jpeg|png|webp)")
 VEHICLE_TYPES = ("atv", "enduro")
+# Text limits of the product form; the form's maxlength attributes use them too.
+MIN_NAME_LENGTH = 3
+MAX_NAME_LENGTH = 150
+MAX_DESCRIPTION_LENGTH = 2000
+MAX_GEAR_SIZE_LENGTH = 10
 
 
 # ---------- accounts ----------
@@ -75,14 +80,14 @@ def validate_product_form(form, product_type: str):
     clean = {}
 
     clean["name"] = form.get("name", "").strip()
-    if not 3 <= len(clean["name"]) <= 150:
-        errors.append("Name must have between 3 and 150 characters.")
+    if not MIN_NAME_LENGTH <= len(clean["name"]) <= MAX_NAME_LENGTH:
+        errors.append(f"Name must have between {MIN_NAME_LENGTH} and {MAX_NAME_LENGTH} characters.")
     elif not slugify(clean["name"]):
         errors.append("Name must contain letters or digits.")
 
     clean["description"] = form.get("description", "").strip()
-    if len(clean["description"]) > 2000:
-        errors.append("Description is limited to 2000 characters.")
+    if len(clean["description"]) > MAX_DESCRIPTION_LENGTH:
+        errors.append(f"Description is limited to {MAX_DESCRIPTION_LENGTH} characters.")
 
     clean["price_cents"] = parse_price_to_cents(form.get("price", ""))
     if clean["price_cents"] is None:
@@ -110,7 +115,7 @@ def validate_product_form(form, product_type: str):
         clean["is_street_legal"] = form.get("is_street_legal") == "on"  # an unticked box sends nothing
     else:
         clean["gear_size"] = form.get("gear_size", "").strip()
-        if not 1 <= len(clean["gear_size"]) <= 10:
-            errors.append("Size must have between 1 and 10 characters.")
+        if not 1 <= len(clean["gear_size"]) <= MAX_GEAR_SIZE_LENGTH:
+            errors.append(f"Size must have between 1 and {MAX_GEAR_SIZE_LENGTH} characters.")
 
     return clean, errors

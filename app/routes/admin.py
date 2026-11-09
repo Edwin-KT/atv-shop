@@ -124,8 +124,8 @@ def delete_product(product_id):
 
 @bp.get("/log")
 def activity_log():
-    """The newest 100 lines of logs/activity.log."""
-    return render_template("admin/log.html", lines=read_last_lines(100))
+    """The newest ADMIN_LOG_LINES lines of logs/activity.log."""
+    return render_template("admin/log.html", lines=read_last_lines())
 
 
 @bp.get("/orders")

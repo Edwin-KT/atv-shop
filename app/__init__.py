@@ -39,7 +39,10 @@ def create_app(test_config=None):
     from app import models  # noqa: F401  (models must be imported before create_all)
     from app.cli import register_commands
     from app.routes import admin, auth, cart, checkout, documents, main
+    from app import validators
+    from app.activity_log import ADMIN_LOG_LINES
     from app.services.cart import cart_item_count
+    from app.services.catalog import CATEGORIES, MAX_QUERY_LENGTH
 
     register_commands(app)
     app.register_blueprint(main.bp)
@@ -63,15 +66,25 @@ def create_app(test_config=None):
 
     @app.context_processor
     def inject_navigation():
-        from app.routes.main import CATEGORIES
-
         return {"nav_categories": [(key, info["label"]) for key, info in CATEGORIES.items()]}
+
+    @app.context_processor
+    def inject_limits():
+        """The only place templates get the shop's limits from (maxlength, options...),
+        so a limit is written once, in Python, and the HTML always matches the server."""
+        return {
+            "max_query_length": MAX_QUERY_LENGTH,
+            "vehicle_types": validators.VEHICLE_TYPES,
+            "max_name_length": validators.MAX_NAME_LENGTH,
+            "max_description_length": validators.MAX_DESCRIPTION_LENGTH,
+            "max_gear_size_length": validators.MAX_GEAR_SIZE_LENGTH,
+            "admin_log_lines": ADMIN_LOG_LINES,
+        }
 
     @app.template_filter("eur")
     def eur(cents):
         """Prices are stored in whole cents: {{ 1299900|eur }} -> '12,999.00 EUR'."""
         return f"{cents / 100:,.2f} EUR"
-
 
     # One error page for every error we expect: (title, message) per status code.
     limit_mb = app.config["MAX_CONTENT_LENGTH"] // (1024 * 1024)

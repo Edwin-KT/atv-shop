@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-from app.routes.main import CATEGORIES
+from app.services.catalog import CATEGORIES
 from app.cli import seed_products
 
 SITEMAP_NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}

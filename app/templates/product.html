@@ -56,7 +56,7 @@ product.description[:110] }}{% endblock %} {% block content %}
         name="quantity"
         value="1"
         min="1"
-        max="{{ [product.stock, 10]|min }}"
+        max="{{ max_quantity }}"
       />
       <button class="btn btn-primary btn-buy" type="submit">Add to cart</button>
     </form>

@@ -11,6 +11,12 @@ from sqlalchemy import text
 
 from app.extensions import db
 from app.models import GearProduct, Order, Product, VehicleProduct
+from app.validators import (
+    MAX_DESCRIPTION_LENGTH,
+    MAX_GEAR_SIZE_LENGTH,
+    MAX_NAME_LENGTH,
+    VEHICLE_TYPES,
+)
 from helpers import admin_client, page, register_and_login, seed
 
 VEHICLE_FORM = {
@@ -113,6 +119,24 @@ def test_the_dashboard_lists_products_in_a_table(admin):
 
     assert re.search(r'<div class="table-responsive">\s*<table', html)
     assert "Yamaha Raptor 700" in html and "8,999.00 EUR" in html
+
+
+def test_the_form_limits_are_the_server_limits(admin):
+    """maxlength and the vehicle types come from validators.py, never typed in the HTML."""
+    vehicle_form = page(admin, "/admin/products/new?type=vehicle")
+    gear_form = page(admin, "/admin/products/new?type=gear")
+
+    assert re.findall(r'<option value="([a-z]+)"', vehicle_form) == list(VEHICLE_TYPES)
+    assert re.search(rf'name="name"[^>]*maxlength="{MAX_NAME_LENGTH}"', vehicle_form)
+    assert re.search(rf'name="description"[^>]*maxlength="{MAX_DESCRIPTION_LENGTH}"', vehicle_form)
+    assert re.search(rf'name="gear_size"[^>]*maxlength="{MAX_GEAR_SIZE_LENGTH}"', gear_form)
+
+
+def test_a_too_long_name_is_refused_with_the_limit_in_the_message(admin):
+    response = admin.post("/admin/products/new?type=gear", data={**GEAR_FORM, "name": "x" * (MAX_NAME_LENGTH + 1)})
+
+    assert response.status_code == 400
+    assert f"between 3 and {MAX_NAME_LENGTH} characters" in response.get_data(as_text=True)
 
 
 def test_the_edit_form_is_prefilled(admin):

@@ -16,6 +16,7 @@ from flask import current_app, request
 from flask_login import current_user
 
 logger = logging.getLogger("shop.activity")
+ADMIN_LOG_LINES = 100  # how many of the newest lines /admin/log shows
 
 
 def setup_activity_log(app):
@@ -60,7 +61,7 @@ def log_event(event: str, user_id: int | None = None, details: str = ""):
     logger.info(message)
 
 
-def read_last_lines(count: int = 100) -> list[str]:
+def read_last_lines(count: int = ADMIN_LOG_LINES) -> list[str]:
     """The newest `count` lines of the log, newest first (for /admin/log)."""
     log_file = Path(current_app.config["ACTIVITY_LOG"])
     if not log_file.exists():

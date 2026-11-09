@@ -79,10 +79,10 @@
               class="form-control"
               type="search"
               name="q"
-              maxlength="60"
+              maxlength="{{ max_query_length }}"
               required
               placeholder="Search bikes, ATVs and gear"
-              value="{{ request.args.get('q', '') if request.endpoint == 'main.search' else '' }}"
+              value="{{ q|default('') }}"
             />
             <button class="btn btn-dark" type="submit">Search</button>
           </form>

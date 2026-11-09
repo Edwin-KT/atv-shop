@@ -12,6 +12,7 @@ import pytest
 from app.cli import seed_products
 from app.extensions import db
 from app.models import Product
+from app.services.catalog import MAX_QUERY_LENGTH
 from helpers import page, seed
 
 
@@ -99,6 +100,19 @@ def test_an_empty_search_shows_a_hint_not_the_whole_catalog(seeded, client):
 
     assert "Type a product name" in html
     assert "KTM 250 EXC-F" not in html
+
+
+def test_a_long_search_is_cut_once_to_the_limit(seeded, client):
+    html = page(client, "/search?q=" + "k" * (MAX_QUERY_LENGTH + 20))
+
+    assert "k" * MAX_QUERY_LENGTH in html
+    assert "k" * (MAX_QUERY_LENGTH + 1) not in html
+
+
+def test_the_search_box_maxlength_is_the_server_limit(client):
+    box = re.search(r'<input[^>]*name="q"[^>]*>', page(client, "/"), re.S).group(0)
+
+    assert f'maxlength="{MAX_QUERY_LENGTH}"' in box
 
 
 # --- images and sample data ---

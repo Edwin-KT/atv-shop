@@ -1,8 +1,9 @@
 from flask import Flask, render_template
+from werkzeug.exceptions import SecurityError
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.activity_log import setup_activity_log
-from app.config import Config
+from app.config import Config, check_required_settings
 from app.extensions import csrf, db, limiter, login_manager
 from app.security import add_security_headers
 
@@ -13,6 +14,7 @@ def create_app(test_config=None):
     app.config.from_object(Config)
     if test_config:
         app.config.update(test_config)
+    check_required_settings(app)
 
     # On Render the app runs behind a proxy that talks HTTPS to the browser and
     # plain HTTP to us. ProxyFix trusts that ONE proxy's X-Forwarded-Proto and
@@ -88,6 +90,13 @@ def create_app(test_config=None):
 
     for code in error_pages:
         app.register_error_handler(code, show_error_page)
+
+    def refuse_untrusted_host(error):
+        # A Host outside TRUSTED_HOSTS: no URL can be built for it, so the
+        # normal page (full of url_for links) cannot be shown. Plain text instead.
+        return "Bad request: unknown host.", 400, {"Content-Type": "text/plain; charset=utf-8"}
+
+    app.register_error_handler(SecurityError, refuse_untrusted_host)
 
     with app.app_context():
         db.create_all()  # no migrations: creates the tables that do not exist yet

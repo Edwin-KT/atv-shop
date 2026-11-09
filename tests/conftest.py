@@ -22,10 +22,16 @@ from app.extensions import limiter  # noqa: E402
 
 
 def build_app(tmp_path, rate_limit: bool = False, captcha: bool = False):
+    # Every setting a test relies on is given here, so a local .env changes nothing.
     return create_app(
         {
             "TESTING": True,
+            "SECRET_KEY": "test-secret",
             "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+            "SESSION_COOKIE_SECURE": False,
+            "TRUSTED_HOSTS": None,
+            "RECAPTCHA_SITE_KEY": "test-site-key",
+            "RECAPTCHA_SECRET_KEY": "test-secret-key",
             "WTF_CSRF_ENABLED": False,
             "UPLOAD_FOLDER": str(tmp_path / "private_uploads"),
             "ACTIVITY_LOG": str(tmp_path / "activity.log"),

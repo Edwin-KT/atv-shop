@@ -136,6 +136,28 @@ def test_hsts_only_over_https_including_behind_the_proxy(client):
     assert "max-age=31536000" in behind_proxy.headers["Strict-Transport-Security"]
 
 
+def test_only_the_trusted_host_is_accepted(app):
+    """Absolute URLs (sitemap, Stripe return URLs) come from the Host header,
+    so in production a request for any other host is refused."""
+    app.config["TRUSTED_HOSTS"] = ["shop.example"]
+    client = app.test_client()
+
+    assert client.get("/", base_url="http://shop.example").status_code == 200
+    refused = client.get("/", base_url="http://evil.example")
+    assert refused.status_code == 400
+    assert refused.get_data(as_text=True) == "Bad request: unknown host."
+    assert "Content-Security-Policy" in refused.headers  # security headers stay on
+
+
+def test_the_session_cookie_can_be_https_only(app):
+    app.config["SESSION_COOKIE_SECURE"] = True  # SESSION_COOKIE_SECURE=true on Render
+    product_id = seed(app)["enduro-helmet-pro"]
+
+    response = app.test_client().post(f"/cart/add/{product_id}")  # puts the cart in the session
+
+    assert "; Secure" in response.headers["Set-Cookie"]
+
+
 def test_only_the_last_proxy_hop_gives_the_visitor_ip(client, log_text):
     """A visitor can send a fake X-Forwarded-For; the proxy adds the real IP at the end,
     and x_for=1 only trusts that last value (used by the log and the rate limit)."""

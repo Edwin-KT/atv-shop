@@ -82,9 +82,16 @@ def create_app(test_config=None):
         404: ("Page not found", "The page you are looking for does not exist."),
         413: ("File too large", f"Uploads are limited to {limit_mb} MB."),
         429: ("Too many requests", "You are sending requests too fast. Please wait a minute and try again."),
+        # Any unexpected exception (a bug, the database down): no details for the visitor;
+        # Flask writes the traceback to the server log (Render: "Logs").
+        500: ("Something went wrong", "An unexpected error happened on our side. Please try again in a moment."),
     }
 
     def show_error_page(error):
+        if error.code == 500:
+            # After a failed commit the session is unusable until rolled back, and
+            # this page needs it too (the navbar loads the logged-in user).
+            db.session.rollback()
         title, message = error_pages[error.code]
         return render_template("error.html", title=title, message=message), error.code
 

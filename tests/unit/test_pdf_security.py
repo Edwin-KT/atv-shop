@@ -1,10 +1,11 @@
 """UNIT tests for app/services/pdf_security.py: check_and_clean_pdf() and save_pdf(),
 called directly with bytes (no HTTP).
 
-Rubric: N9.05 only approved extensions (.pdf) and real PDF content; N10.03
-protection against hidden content (steganography); N4.02 the UploadRejected
-exception; N6.01 unit tests. The 5 MB limit (N9.04) is an integration test,
-because Flask enforces it on the request (tests/integration/test_documents.py)."""
+Rubric: N9.05 only approved extensions (.pdf) and real PDF content; N10.03 hidden
+content (steganography) and active content (JavaScript, actions) removed by rebuilding
+the PDF; N4.02 the UploadRejected exception; N6.01 unit tests. The 5 MB limit (N9.04)
+is an integration test, because Flask enforces it on the request
+(tests/integration/test_documents.py)."""
 
 from io import BytesIO
 
@@ -14,11 +15,12 @@ from pypdf import PdfReader
 from app.exceptions import UploadRejected
 from app.services.pdf_security import check_and_clean_pdf, save_pdf
 from pdf_samples import (
+    ACTIVE_NAMES,
     PNG_BYTES,
+    make_large_pdf,
     make_pdf,
     make_pdf_with_hidden_payload,
     make_pdf_with_javascript,
-    make_pdf_with_open_action,
 )
 
 
@@ -58,10 +60,29 @@ def test_bytes_hidden_after_eof_are_removed():
     assert secret not in check_and_clean_pdf("talon.pdf", original)
 
 
-@pytest.mark.parametrize("malicious", [make_pdf_with_javascript(), make_pdf_with_open_action()])
-def test_pdf_with_javascript_or_actions_is_rejected(malicious):
-    with pytest.raises(UploadRejected, match="active content"):
-        check_and_clean_pdf("evil.pdf", malicious)
+def test_javascript_and_actions_are_removed_from_the_saved_file():
+    original = make_pdf_with_javascript()
+    # The sample really is dangerous: a PDF reader finds the actions in the document.
+    reader = PdfReader(BytesIO(original))
+    assert "/OpenAction" in reader.trailer["/Root"]
+    assert "/AA" in reader.pages[0] and "/Annots" in reader.pages[0]
+
+    clean = check_and_clean_pdf("evil.pdf", original)
+
+    for name in ACTIVE_NAMES:
+        assert name not in clean, name
+    assert len(PdfReader(BytesIO(clean)).pages) == 1  # the page itself is kept
+
+
+def test_a_large_pdf_with_image_data_is_accepted():
+    """Image bytes that contain /JavaScript by chance are not a reason to refuse."""
+    original, image_bytes = make_large_pdf()
+    assert 4_000_000 < len(original) < 5 * 1024 * 1024
+
+    clean = check_and_clean_pdf("scan.pdf", original)
+
+    assert len(PdfReader(BytesIO(clean)).pages) == 1
+    assert image_bytes in clean  # the page image is copied whole
 
 
 def test_a_damaged_pdf_is_rejected():

@@ -5,14 +5,19 @@
 2. Extension: only ".pdf".
 3. Content: the file must really start like a PDF ("%PDF-"); a PNG renamed to
    .pdf fails here.
-4. Active content: PDFs that can run JavaScript, launch programs or carry hidden
-   attached files are refused.
-5. Hidden content (steganography): the PDF is rebuilt from its pages only. Anything
-   outside the pages (bytes after %%EOF, metadata, attachments) is not copied.
-   This lowers the risk; it cannot prove that the page images hide nothing.
+4. Rebuild: a brand-new PDF is made from the pages only, without their links, form
+   fields and page actions (/Annots, /AA). Everything else is simply not copied:
+   JavaScript and actions that run when the file opens (/OpenAction), attachments,
+   metadata, bytes after %%EOF (hidden content, steganography).
+
+Why the bytes are not searched for names like /JS or /JavaScript: compressed images
+and fonts look like random bytes and often contain those letters by chance, so a
+search would refuse ordinary PDFs. The rebuild removes the real ones instead.
+
+Limits: what is inside a page (its drawing, images and fonts) is copied as it is,
+so this lowers the risk but cannot prove that a page image hides nothing.
 """
 
-import re
 import uuid
 from io import BytesIO
 from pathlib import Path
@@ -22,9 +27,6 @@ from pypdf import PdfReader, PdfWriter
 from app.exceptions import UploadRejected
 
 PDF_START = b"%PDF-"
-# PDF names that mean "run something" or "a file inside the file". The lookahead
-# avoids false alarms on longer names that only start the same way (e.g. /JSFont).
-ACTIVE_CONTENT = re.compile(rb"/(JS|JavaScript|OpenAction|Launch|EmbeddedFile|RichMedia)(?![A-Za-z0-9])")
 
 
 def check_and_clean_pdf(filename: str, data: bytes) -> bytes:
@@ -35,8 +37,6 @@ def check_and_clean_pdf(filename: str, data: bytes) -> bytes:
         raise UploadRejected("The file is empty.")
     if not data.startswith(PDF_START):
         raise UploadRejected("The file is not a real PDF.")
-    if ACTIVE_CONTENT.search(data):
-        raise UploadRejected("The PDF contains active content (scripts, launch actions or embedded files).")
 
     try:
         pages = PdfReader(BytesIO(data)).pages
@@ -44,10 +44,12 @@ def check_and_clean_pdf(filename: str, data: bytes) -> bytes:
             raise UploadRejected("The PDF has no pages.")
         writer = PdfWriter()  # a brand-new, empty PDF
         for page in pages:
-            new_page = writer.add_page(page)
+            # Removed BEFORE copying: add_page also copies every object the page
+            # points to, so deleting them afterwards would leave them in the file.
             for key in ("/Annots", "/AA"):  # links, form fields and page actions
-                if key in new_page:
-                    del new_page[key]
+                if key in page:
+                    del page[key]
+            writer.add_page(page)
         output = BytesIO()
         writer.write(output)
     except UploadRejected:

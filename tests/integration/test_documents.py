@@ -3,7 +3,7 @@ real routes.
 
 Rubric: N2.02 use case "my documents"; N9.04 files over the limit (5 MB) are refused
 with 413; N9.05 only real .pdf files; N10.03 what is stored is the cleaned copy
-(hidden bytes removed); N4.02 UploadRejected is caught and shown to the user.
+(hidden bytes and JavaScript removed); N4.02 UploadRejected is caught and shown to the user.
 The checks themselves are unit-tested in tests/unit/test_pdf_security.py."""
 
 from io import BytesIO
@@ -13,7 +13,14 @@ import pytest
 
 from app.models import SecureDocument
 from helpers import page, register_and_login
-from pdf_samples import PNG_BYTES, make_pdf, make_pdf_with_hidden_payload, make_pdf_with_javascript
+from pdf_samples import (
+    ACTIVE_NAMES,
+    PNG_BYTES,
+    make_large_pdf,
+    make_pdf,
+    make_pdf_with_hidden_payload,
+    make_pdf_with_javascript,
+)
 
 
 @pytest.fixture()
@@ -79,11 +86,23 @@ def test_a_wrong_extension_is_refused(app, customer):
     assert stored_files(app) == []
 
 
-def test_a_pdf_with_javascript_is_refused_and_not_stored(app, customer):
+def test_a_pdf_with_javascript_is_stored_without_it(app, customer):
     response = upload(customer, make_pdf_with_javascript(), "evil.pdf")
 
-    assert response.status_code == 400
-    assert stored_files(app) == []
+    assert response.status_code == 302  # accepted: the cleaned copy is kept
+    (stored,) = stored_files(app)
+    for name in ACTIVE_NAMES:
+        assert name not in stored.read_bytes(), name
+
+
+def test_a_large_pdf_under_the_limit_is_accepted(app, customer):
+    pdf, _ = make_large_pdf()  # about 4.5 MB of image data, like a scan
+
+    response = upload(customer, pdf, "scan.pdf")
+
+    assert response.status_code == 302
+    assert len(stored_files(app)) == 1
+    assert "scan.pdf" in page(customer, "/documents")
 
 
 def test_the_stored_file_is_the_cleaned_copy(app, customer):

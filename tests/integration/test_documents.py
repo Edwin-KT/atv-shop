@@ -149,3 +149,20 @@ def test_the_owner_deletes_the_document_and_its_file(app, customer):
     assert customer.get("/documents/1/download").status_code == 404
     with app.app_context():
         assert SecureDocument.query.count() == 0
+
+
+def test_a_missing_file_gives_a_clear_message_and_can_still_be_deleted(app, customer, log_text):
+    """On Render the disk is wiped on every deploy; the database row stays."""
+    upload(customer, make_pdf(), "talon.pdf")
+    (stored,) = stored_files(app)
+    stored.unlink()
+
+    response = customer.get("/documents/1/download")
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/documents")
+    assert "no longer stored on the server" in page(customer, "/documents")
+    assert "event=document_file_missing" in log_text()
+
+    customer.post("/documents/1/delete")
+    assert "talon.pdf" not in page(customer, "/documents")

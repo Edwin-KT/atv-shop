@@ -75,6 +75,14 @@ def download(document_id):
     if document is None or document.user_id != current_user.id:
         abort(404)
 
+    # The row is in the database but the file can be gone: on Render the server's
+    # disk is wiped on every deploy and restart. Say so instead of a bare 404.
+    if not (Path(current_app.config["UPLOAD_FOLDER"]) / document.stored_filename).is_file():
+        log_event("document_file_missing", details=f"document_id={document.id}")
+        flash("This file is no longer stored on the server. "
+              "Please delete it from the list and upload it again.", "warning")
+        return redirect(url_for("documents.list_documents"))
+
     response = send_from_directory(
         current_app.config["UPLOAD_FOLDER"],
         document.stored_filename,
